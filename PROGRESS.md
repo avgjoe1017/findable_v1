@@ -6,7 +6,7 @@ Last Updated: 2026-01-28
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| **Week 1: Foundation** | In Progress | 1/7 days |
+| **Week 1: Foundation** | In Progress | 2/7 days |
 | Week 2: Crawl & Extract | Not Started | 0/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
@@ -47,15 +47,29 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 2: FastAPI Skeleton + API Conventions ⏳ PENDING
-**Goal:** Stable API base with consistent errors
+#### Day 2: FastAPI Skeleton + API Conventions ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `e463012`
 
-**Tasks:**
-- [ ] App factory refinements
-- [ ] Settings validation
-- [ ] Environment loading
-- [ ] Response envelope conventions
-- [ ] Standard error format
+**Deliverables:**
+- [x] Database connection (async SQLAlchemy + pgvector)
+- [x] Custom exception hierarchy
+- [x] Standard response schemas (Success, Paginated, Error)
+- [x] Structured logging with structlog
+- [x] Request ID + logging middleware
+- [x] Dependency injection (DbSession, PaginationParams)
+- [x] Enhanced /ready endpoint with dependency checks
+- [x] Test suite for exceptions and schemas
+
+**Files Created:**
+- `api/database.py` - Async SQLAlchemy setup
+- `api/exceptions.py` - Custom exception classes
+- `api/schemas/responses.py` - Response envelopes
+- `api/logging.py` - Structured logging config
+- `api/middleware.py` - Request ID + logging middleware
+- `api/deps.py` - Dependency injection
+- `tests/unit/test_exceptions.py` - Exception tests
+- `tests/unit/test_schemas.py` - Schema tests
 
 ---
 
@@ -166,6 +180,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #1 | Created CLAUDE.md, IMPLEMENTATION_ROADMAP.md |
 | 2026-01-28 | #2 | Day 1 complete: repo skeleton, CI, FastAPI setup |
 | 2026-01-28 | #3 | Created PROGRESS.md, pushed to GitHub |
+| 2026-01-28 | #4 | Day 2 complete: database, exceptions, middleware, response schemas |
 
 ---
 
