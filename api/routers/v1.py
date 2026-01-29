@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from api.routers import auth, jobs, runs, sites
+from api.routers import auth, jobs, questions, runs, sites
 
 router = APIRouter()
 
@@ -20,6 +20,9 @@ router.include_router(runs.router)
 
 # Report endpoints
 router.include_router(runs.reports_router)
+
+# Question endpoints
+router.include_router(questions.router)
 
 
 @router.get("/")

@@ -7,7 +7,7 @@ Last Updated: 2026-01-28
 | Phase | Status | Progress |
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
-| Week 2: Crawl & Extract | In Progress | 6/7 days |
+| **Week 2: Crawl & Extract** | Complete | 7/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
@@ -506,7 +506,48 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 14: Site-Derived Questions (5) ⏳ PENDING
+#### Day 14: Site-Derived Questions (5) ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** TBD
+
+**Deliverables:**
+- [x] ContentAnalyzer for extracting entities and patterns
+- [x] Content type detection (pricing, blog, careers, API, integrations)
+- [x] Entity extraction (products, features, locations)
+- [x] Keyword extraction with frequency filtering
+- [x] Industry detection from headings
+- [x] DerivedQuestionGenerator for site-specific questions
+- [x] Up to 5 derived questions from content analysis
+- [x] Question generation from detected content types
+- [x] Question generation from metadata (enterprise, AI/ML)
+- [x] Question generation from significant keywords
+- [x] QuestionService combining universal + derived
+- [x] QuestionSet dataclass with totals
+- [x] API endpoints for question generation
+- [x] Test suite (52 new tests: 36 derived + 16 service)
+
+**Files Created:**
+- `worker/questions/derived.py` - Site-derived question generator
+- `api/services/question_service.py` - Question service layer
+- `api/routers/questions.py` - Question API endpoints
+- `tests/unit/test_questions_derived.py` - Derived question tests (36 tests)
+- `tests/unit/test_question_service.py` - Service tests (16 tests)
+
+**API Endpoints Added:**
+- `GET /v1/questions/universal` - List all 15 universal questions
+- `GET /v1/questions/universal/{id}` - Get specific question
+- `GET /v1/questions/stats` - Get question statistics
+- `POST /v1/questions/generate` - Generate full question set
+- `GET /v1/questions/categories` - List categories
+- `GET /v1/questions/difficulties` - List difficulty levels
+
+**Content Analysis Features:**
+- Detects API, integrations, blog, careers content
+- Extracts products, features, locations from text
+- Identifies industries from headings
+- Generates targeted questions based on findings
+
+---
 
 ---
 
@@ -561,6 +602,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #10 | Day 11 complete: Embeddings with pgvector storage |
 | 2026-01-28 | #10 | Day 12 complete: Hybrid retrieval with RRF |
 | 2026-01-28 | #11 | Day 13 complete: Universal questions (15) + generator |
+| 2026-01-28 | #11 | Day 14 complete: Site-derived questions (5) + API endpoints |
 
 ---
 

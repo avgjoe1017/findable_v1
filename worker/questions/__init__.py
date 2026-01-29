@@ -4,6 +4,7 @@
 # Use explicit imports when needed:
 # from worker.questions.universal import UNIVERSAL_QUESTIONS, get_universal_questions
 # from worker.questions.generator import QuestionGenerator
+# from worker.questions.derived import DerivedQuestionGenerator
 
 __all__ = [
     # Universal questions
@@ -16,4 +17,10 @@ __all__ = [
     "QuestionGenerator",
     "GeneratorConfig",
     "GeneratedQuestion",
+    "SiteContext",
+    # Derived questions
+    "DerivedQuestionGenerator",
+    "DerivedConfig",
+    "ContentAnalysis",
+    "derive_questions",
 ]
