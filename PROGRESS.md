@@ -1,6 +1,8 @@
 # Findable Score Analyzer - Progress Tracker
 
-Last Updated: 2026-01-28
+Last Updated: 2026-01-28 (Session #14)
+
+**Current Status:** Day 20 complete, ready for Day 21 (Observation Parsing)
 
 ## Overall Status
 
@@ -769,7 +771,7 @@ Last Updated: 2026-01-28
 
 #### Day 20: Observation Provider Layer ✅ COMPLETE
 **Date:** 2026-01-28
-**Commit:** `ee8d575`
+**Commit:** `9fba82a`
 
 **Deliverables:**
 - [x] ProviderType enum (openrouter, openai, anthropic, mock)
@@ -823,7 +825,7 @@ Last Updated: 2026-01-28
 
 #### Day 22: Competitor Benchmark ⏳ PENDING
 #### Day 23: Report Assembler v1 ⏳ PENDING
-#### Day 24: Minimal UI (Jinja2) ⏳ PENDING
+#### Day 24: Minimal UI (Jinja2) ⏳ PENDING (templates created in Day 20)
 #### Day 25: Monitoring Scheduler ⏳ PENDING
 #### Day 26: Alerts v1 ⏳ PENDING
 #### Day 27: Plan Caps + Billing Hooks ⏳ PENDING
@@ -866,6 +868,77 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #13 | Day 18 complete: Fix impact estimator Tier C with lookup tables |
 | 2026-01-28 | #14 | Day 19 complete: Fix impact estimator Tier B with synthetic patching |
 | 2026-01-28 | #14 | Day 20 complete: Observation provider layer with retry/failover |
+| 2026-01-28 | #14 | Bonus: UI templates (dashboard + score report) using frontend-design skill |
+
+---
+
+## Next Session: Day 21 - Observation Parsing
+
+### What to Build
+Day 21 turns raw AI model outputs into measurable signals. The observation provider (Day 20) returns raw text responses - now we need structured parsing.
+
+**Deliverables from spec:**
+- Extract mentions (brand/domain) - *basic version done in runner, needs enhancement*
+- Extract links/URLs - *basic version done in runner, needs enhancement*
+- Extract citation-like patterns where present
+- Persist `obs_results`
+- Observed mention rate computed
+- Per-question observed outcomes stored
+
+### Key Files to Know
+
+**Observation Layer (Day 20):**
+- `worker/observation/models.py` - `ObservationResult` has basic fields: `mentions_company`, `mentions_domain`, `mentions_url`, `cited_urls`, `confidence_expressed`
+- `worker/observation/runner.py:230-260` - `_parse_response_to_result()` does basic parsing (regex URL extraction, substring matching)
+
+**What Day 21 Should Add:**
+1. **Enhanced parsing module** (`worker/observation/parser.py`):
+   - Fuzzy company name matching (handles "Acme", "Acme Corp", "Acme Corporation")
+   - Citation pattern detection ("according to X", "X reports that", "source: X")
+   - Sentiment/tone analysis (positive mention vs neutral vs negative)
+   - Confidence extraction from hedging language
+
+2. **Persistence layer** - Store observation results to database (may need new model)
+
+3. **Comparison with simulation** - `ObservationResult` has `simulation_predicted` and `observation_actual` fields ready
+
+### Architecture Context
+
+**Scoring Pipeline Flow:**
+```
+Crawl → Extract → Chunk → Embed → Retrieve → Simulate → Score → Fix Generate → Impact Estimate
+                                                                         ↓
+                                              Observe (Day 20) → Parse (Day 21) → Compare
+```
+
+**Impact Estimation Tiers:**
+- Tier C: Precomputed lookup tables (fast, conservative) - `worker/fixes/impact.py`
+- Tier B: Synthetic patching (more accurate) - `worker/fixes/synthetic.py`
+- Tier A: Full re-simulation (most accurate, expensive) - not yet implemented
+
+**Question Categories (5):**
+- Identity (25%): Who you are, what you do
+- Offerings (30%): Products, services, pricing
+- Contact (15%): How to reach/engage
+- Trust (15%): Credibility, social proof
+- Differentiation (15%): What makes you unique
+
+### UI Templates (Bonus - Added Ahead of Schedule)
+
+Created using `/frontend-design` skill with "Signal Observatory" design system:
+- `web/templates/reports/score_report.html` - Full report page with animated score gauge, category breakdown, fix cards
+- `web/templates/sites/dashboard.html` - Sites listing with stats, table, actions
+- `web/templates/base.html` - Updated base template
+
+Day 24 (Minimal UI) can now focus on Jinja2 integration with FastAPI rather than design.
+
+### Test Count Summary
+- Day 16 (Scoring): 51 tests
+- Day 17 (Fix Generator): 70 tests
+- Day 18 (Tier C Impact): 35 tests
+- Day 19 (Tier B Synthetic): 29 tests
+- Day 20 (Observation): 44 tests
+- **Total project tests: 400+**
 
 ---
 
