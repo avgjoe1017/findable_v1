@@ -7,7 +7,7 @@ Last Updated: 2026-01-28
 | Phase | Status | Progress |
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
-| Week 2: Crawl & Extract | In Progress | 3/7 days |
+| Week 2: Crawl & Extract | In Progress | 4/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
@@ -381,7 +381,47 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 11: Embeddings v1 (pgvector) ⏳ PENDING
+#### Day 11: Embeddings v1 (pgvector) ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `f59646f`
+
+**Deliverables:**
+- [x] Embedding model registry with multiple options
+- [x] SentenceTransformerModel wrapper with prefix handling
+- [x] MockEmbeddingModel for testing (deterministic)
+- [x] Embedder class with batch processing and caching
+- [x] EmbeddingResult and EmbeddedPage dataclasses
+- [x] EmbeddingStore for pgvector storage
+- [x] SearchResult dataclass for similarity search
+- [x] SQL for creating pgvector table and indexes
+- [x] Test suite (51 tests passing)
+
+**Files Created:**
+- `worker/embeddings/__init__.py` - Package exports (lazy imports)
+- `worker/embeddings/models.py` - Embedding model definitions
+- `worker/embeddings/embedder.py` - Embedder class
+- `worker/embeddings/storage.py` - pgvector storage
+- `tests/unit/test_embeddings_models.py` - Model tests (20 tests)
+- `tests/unit/test_embeddings_embedder.py` - Embedder tests (19 tests)
+- `tests/unit/test_embeddings_storage.py` - Storage tests (12 tests)
+
+**Supported Models:**
+- `bge-small` - BAAI/bge-small-en-v1.5 (384 dims, default)
+- `bge-base` - BAAI/bge-base-en-v1.5 (768 dims)
+- `minilm` - all-MiniLM-L6-v2 (384 dims)
+- `e5-small` - intfloat/e5-small-v2 (384 dims)
+- `mock` - Mock model for testing
+
+**Features:**
+- Model prefixes for BGE/E5 (query vs document)
+- Batch embedding with configurable size
+- Embedding cache by content hash
+- Normalized embeddings
+- pgvector cosine similarity search
+- IVFFlat and HNSW index support
+
+---
+
 #### Day 12: Retrieval v1 (Hybrid) ⏳ PENDING
 #### Day 13: Universal Questions (15) ⏳ PENDING
 #### Day 14: Site-Derived Questions (5) ⏳ PENDING
@@ -436,6 +476,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #10 | Day 8 complete: Content extraction with metadata |
 | 2026-01-28 | #10 | Day 9 complete: Render delta rule for JS detection |
 | 2026-01-28 | #10 | Day 10 complete: Semantic chunker with structure preservation |
+| 2026-01-28 | #10 | Day 11 complete: Embeddings with pgvector storage |
 
 ---
 
