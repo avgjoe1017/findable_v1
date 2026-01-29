@@ -383,7 +383,7 @@ Last Updated: 2026-01-28
 
 #### Day 11: Embeddings v1 (pgvector) ✅ COMPLETE
 **Date:** 2026-01-28
-**Commit:** `f59646f`
+**Commit:** `bc9e891`
 
 **Deliverables:**
 - [x] Embedding model registry with multiple options
