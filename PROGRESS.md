@@ -7,7 +7,7 @@ Last Updated: 2026-01-28
 | Phase | Status | Progress |
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
-| Week 2: Crawl & Extract | In Progress | 1/7 days |
+| Week 2: Crawl & Extract | In Progress | 2/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
@@ -303,7 +303,43 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 9: Render Delta Rule ⏳ PENDING
+#### Day 9: Render Delta Rule ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `d9171fc`
+
+**Deliverables:**
+- [x] RenderMode enum (static, rendered, auto)
+- [x] RendererConfig with configurable thresholds
+- [x] Jaccard similarity calculation for content comparison
+- [x] RenderDelta dataclass with metrics
+- [x] PageRenderer class with Playwright integration
+- [x] RenderDeltaDetector for single-page analysis
+- [x] Site-level render mode detection (majority voting)
+- [x] Graceful handling when Playwright not installed
+- [x] Test suite (17 tests passing)
+
+**Files Created:**
+- `worker/crawler/render.py` - Render delta detection module
+- `tests/unit/test_render_delta.py` - Render delta tests (17 tests)
+
+**Detection Logic:**
+- Compares static (httpx) vs rendered (Playwright) content
+- Calculates word count delta and ratio
+- Measures content similarity via Jaccard index
+- Triggers rendering if:
+  - Word delta >= 50 AND delta ratio >= 20%
+  - OR content similarity < 70%
+- Samples multiple pages for site-wide decision
+- Uses majority voting to determine site mode
+
+**Thresholds (configurable):**
+- `min_word_delta`: 50 words
+- `min_delta_ratio`: 0.2 (20%)
+- `similarity_threshold`: 0.7 (70%)
+- `sample_count`: 3 pages
+
+---
+
 #### Day 10: Semantic Chunker v1 ⏳ PENDING
 #### Day 11: Embeddings v1 (pgvector) ⏳ PENDING
 #### Day 12: Retrieval v1 (Hybrid) ⏳ PENDING
@@ -358,6 +394,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #8 | Day 6 complete: Site, Run, Report REST endpoints |
 | 2026-01-28 | #9 | Day 7 complete: BFS crawler with robots.txt support |
 | 2026-01-28 | #10 | Day 8 complete: Content extraction with metadata |
+| 2026-01-28 | #10 | Day 9 complete: Render delta rule for JS detection |
 
 ---
 
