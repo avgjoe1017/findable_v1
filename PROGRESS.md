@@ -6,7 +6,7 @@ Last Updated: 2026-01-28
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| **Week 1: Foundation** | In Progress | 2/7 days |
+| **Week 1: Foundation** | In Progress | 3/7 days |
 | Week 2: Crawl & Extract | Not Started | 0/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
@@ -73,15 +73,36 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 3: Auth (JWT) ⏳ PENDING
-**Goal:** Users can create accounts and authenticate
+#### Day 3: Auth (JWT) ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `6f36444`
 
-**Tasks:**
-- [ ] Implement FastAPI-Users
-- [ ] Register endpoint
-- [ ] Login endpoint
-- [ ] Me endpoint
-- [ ] User model + migration
+**Deliverables:**
+- [x] User model with FastAPI-Users integration
+- [x] Plan tiers (starter, professional, agency)
+- [x] JWT authentication backend
+- [x] Register, login, logout, me endpoints
+- [x] Password reset and verification endpoints
+- [x] Plan info endpoint with tier limits
+- [x] Base model mixins (UUID, timestamps)
+- [x] Auth and user schema tests
+
+**Files Created:**
+- `api/auth.py` - FastAPI-Users configuration
+- `api/models/base.py` - Base model mixins
+- `api/models/user.py` - User model
+- `api/routers/auth.py` - Auth endpoints
+- `api/schemas/user.py` - User schemas
+- `tests/unit/test_auth.py` - Auth tests
+- `tests/unit/test_user_schemas.py` - User schema tests
+
+**Endpoints Added:**
+- `POST /v1/auth/register` - Create account
+- `POST /v1/auth/login` - Get JWT token
+- `POST /v1/auth/logout` - Logout
+- `GET /v1/auth/users/me` - Get current user
+- `PATCH /v1/auth/users/me` - Update current user
+- `GET /v1/auth/me/plan` - Get plan limits
 
 ---
 
@@ -181,6 +202,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #2 | Day 1 complete: repo skeleton, CI, FastAPI setup |
 | 2026-01-28 | #3 | Created PROGRESS.md, pushed to GitHub |
 | 2026-01-28 | #4 | Day 2 complete: database, exceptions, middleware, response schemas |
+| 2026-01-28 | #5 | Lint fixes, Day 3 complete: JWT auth with FastAPI-Users |
 
 ---
 
