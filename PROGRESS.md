@@ -424,7 +424,7 @@ Last Updated: 2026-01-28
 
 #### Day 12: Retrieval v1 (Hybrid) ✅ COMPLETE
 **Date:** 2026-01-28
-**Commit:** `00d4776`
+**Commit:** `0e3c9ee`
 
 **Deliverables:**
 - [x] BM25 lexical search implementation
