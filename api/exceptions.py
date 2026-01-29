@@ -112,7 +112,11 @@ def raise_not_found(resource: str, identifier: str | None = None) -> None:
         detail={
             "error": {
                 "code": "not_found",
-                "message": f"{resource} not found" if not identifier else f"{resource} with id '{identifier}' not found",
+                "message": (
+                    f"{resource} not found"
+                    if not identifier
+                    else f"{resource} with id '{identifier}' not found"
+                ),
             }
         },
     )

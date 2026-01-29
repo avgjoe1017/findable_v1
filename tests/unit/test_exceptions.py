@@ -1,6 +1,5 @@
 """Tests for custom exceptions and error handling."""
 
-import pytest
 from fastapi import status
 
 from api.exceptions import (

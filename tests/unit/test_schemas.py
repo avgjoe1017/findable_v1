@@ -1,12 +1,9 @@
 """Tests for Pydantic schemas."""
 
-import pytest
-
 from api.schemas import (
     ErrorDetail,
     ErrorResponse,
     MessageResponse,
-    PaginatedMeta,
     paginated_meta,
 )
 
