@@ -2,12 +2,15 @@
 
 from fastapi import APIRouter
 
-from api.routers import auth
+from api.routers import auth, jobs
 
 router = APIRouter()
 
 # Auth endpoints
 router.include_router(auth.router, prefix="/auth", tags=["Auth"])
+
+# Job endpoints
+router.include_router(jobs.router)
 
 # Future routers will be added here:
 # router.include_router(sites.router, prefix="/sites", tags=["Sites"])

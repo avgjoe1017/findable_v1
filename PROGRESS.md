@@ -6,7 +6,7 @@ Last Updated: 2026-01-28
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| **Week 1: Foundation** | In Progress | 4/7 days |
+| **Week 1: Foundation** | In Progress | 5/7 days |
 | Week 2: Crawl & Extract | Not Started | 0/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
@@ -145,14 +145,39 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 5: RQ + Redis Job Plumbing ⏳ PENDING
-**Goal:** Background jobs run reliably
+#### Day 5: RQ + Redis Job Plumbing ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `29e5633`
 
-**Tasks:**
-- [ ] Redis connection
-- [ ] RQ worker entrypoint
-- [ ] Enqueue + job status polling
-- [ ] Test job end-to-end
+**Deliverables:**
+- [x] Redis connection utilities with connection pooling
+- [x] RQ worker with multi-queue support (high/default/low)
+- [x] JobQueue service for enqueueing and managing jobs
+- [x] JobInfo dataclass with status tracking
+- [x] JobService for API-level job management
+- [x] Audit task skeleton with status updates
+- [x] Job status polling endpoints
+- [x] Queue statistics endpoint
+- [x] Test suite for job components
+
+**Files Created:**
+- `worker/redis.py` - Redis connection utilities
+- `worker/queue.py` - JobQueue service
+- `worker/tasks/audit.py` - Audit run background task
+- `api/services/job_service.py` - Job service for API
+- `api/routers/jobs.py` - Job status endpoints
+- `api/schemas/job.py` - Job schemas
+- `tests/unit/test_jobs.py` - Job tests
+
+**Endpoints Added:**
+- `GET /v1/jobs/{job_id}` - Get job status
+- `DELETE /v1/jobs/{job_id}` - Cancel job
+- `GET /v1/jobs/` - Get queue statistics
+
+**Queue Names:**
+- `findable-high` - High priority jobs
+- `findable-default` - Default priority
+- `findable-low` - Low priority jobs
 
 ---
 
@@ -231,6 +256,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #4 | Day 2 complete: database, exceptions, middleware, response schemas |
 | 2026-01-28 | #5 | Lint fixes, Day 3 complete: JWT auth with FastAPI-Users |
 | 2026-01-28 | #6 | Day 4 complete: Site, Competitor, Run, Report models + services |
+| 2026-01-28 | #7 | Day 5 complete: RQ + Redis job infrastructure |
 
 ---
 
