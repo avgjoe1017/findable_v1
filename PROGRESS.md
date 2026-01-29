@@ -508,7 +508,7 @@ Last Updated: 2026-01-28
 
 #### Day 14: Site-Derived Questions (5) ✅ COMPLETE
 **Date:** 2026-01-28
-**Commit:** TBD
+**Commit:** `5b9dbf0`
 
 **Deliverables:**
 - [x] ContentAnalyzer for extracting entities and patterns
