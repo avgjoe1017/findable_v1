@@ -1,15 +1,21 @@
 """User model for authentication."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.database import Base
+
+if TYPE_CHECKING:
+    from api.models.site import Site
 
 
 class PlanTier(str, Enum):
@@ -52,4 +58,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+
+    # Relationships
+    sites: Mapped[list[Site]] = relationship(
+        "Site", back_populates="user", cascade="all, delete-orphan"
     )

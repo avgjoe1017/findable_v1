@@ -6,7 +6,7 @@ Last Updated: 2026-01-28
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| **Week 1: Foundation** | In Progress | 3/7 days |
+| **Week 1: Foundation** | In Progress | 4/7 days |
 | Week 2: Crawl & Extract | Not Started | 0/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
@@ -106,15 +106,42 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 4: Core DB Models v1 ⏳ PENDING
-**Goal:** Data model exists for sites + runs
+#### Day 4: Core DB Models v1 ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `824676a`
 
-**Tasks:**
-- [ ] Sites model
-- [ ] Runs model
-- [ ] Competitors model
-- [ ] Alembic migrations
-- [ ] CRUD layer
+**Deliverables:**
+- [x] Site model with business model classification
+- [x] Competitor model with site relationship
+- [x] Run model with status tracking and progress
+- [x] Report model with quick access fields
+- [x] RunStatus and RunType enums
+- [x] BusinessModel enum
+- [x] SiteService with plan limit enforcement
+- [x] RunService with status updates
+- [x] Generic CRUDBase class
+- [x] Site, Run, and Report schemas
+- [x] Domain normalization validators
+- [x] Test suites for models and services
+
+**Files Created:**
+- `api/models/site.py` - Site and Competitor models
+- `api/models/run.py` - Run and Report models
+- `api/models/__init__.py` - Model exports
+- `api/services/crud.py` - Generic CRUD base class
+- `api/services/site_service.py` - Site operations
+- `api/services/run_service.py` - Run operations
+- `api/services/__init__.py` - Service exports
+- `api/schemas/site.py` - Site/Competitor schemas
+- `api/schemas/run.py` - Run/Report schemas
+- `tests/unit/test_site_schemas.py` - Site schema tests
+- `tests/unit/test_run_schemas.py` - Run schema tests
+
+**Model Relationships:**
+- User → Sites (1:N)
+- Site → Competitors (1:N, cascade delete)
+- Site → Runs (1:N, cascade delete)
+- Run → Report (1:1)
 
 ---
 
@@ -203,6 +230,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #3 | Created PROGRESS.md, pushed to GitHub |
 | 2026-01-28 | #4 | Day 2 complete: database, exceptions, middleware, response schemas |
 | 2026-01-28 | #5 | Lint fixes, Day 3 complete: JWT auth with FastAPI-Users |
+| 2026-01-28 | #6 | Day 4 complete: Site, Competitor, Run, Report models + services |
 
 ---
 

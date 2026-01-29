@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from api.config import get_settings
 from api.database import Base
+from api.models.run import Report, Run  # noqa: F401
+from api.models.site import Competitor, Site  # noqa: F401
 
 # Import all models to register them with Base.metadata
 from api.models.user import User  # noqa: F401
