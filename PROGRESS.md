@@ -7,7 +7,7 @@ Last Updated: 2026-01-28
 | Phase | Status | Progress |
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
-| Week 2: Crawl & Extract | In Progress | 5/7 days |
+| Week 2: Crawl & Extract | In Progress | 6/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
@@ -467,7 +467,45 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 13: Universal Questions (15) ⏳ PENDING
+#### Day 13: Universal Questions (15) ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** TBD
+
+**Deliverables:**
+- [x] QuestionCategory enum (identity, offerings, contact, trust, differentiation)
+- [x] QuestionDifficulty enum (easy, medium, hard)
+- [x] UniversalQuestion dataclass with weights and expected signals
+- [x] 15 universal questions across 5 categories
+- [x] Question distribution (3+4+2+3+3 by category)
+- [x] Helper functions (get_by_category, get_by_difficulty, format_question)
+- [x] Category weights calculation
+- [x] QuestionGenerator for site-specific questions
+- [x] Schema-based question templates (8 schema types)
+- [x] Heading-based question patterns (10 patterns)
+- [x] GeneratedQuestion with source tracking
+- [x] Question deduplication
+- [x] Test suite (56 tests passing)
+
+**Files Created:**
+- `worker/questions/__init__.py` - Package exports
+- `worker/questions/universal.py` - 15 universal questions
+- `worker/questions/generator.py` - Site-specific question generator
+- `tests/unit/test_questions_universal.py` - Universal question tests (29 tests)
+- `tests/unit/test_questions_generator.py` - Generator tests (27 tests)
+
+**Universal Questions by Category:**
+- IDENTITY (3): What does X do? Founders? Location?
+- OFFERINGS (4): Products? Pricing? Target customers? Problems solved?
+- CONTACT (2): How to contact? How to get started?
+- TRUST (3): Notable clients? Awards? Track record?
+- DIFFERENTIATION (3): Competitors? Why choose? Mission/values?
+
+**Schema-Based Templates:**
+- Product, LocalBusiness, Organization, SoftwareApplication
+- Service, Article, FAQPage, HowTo
+
+---
+
 #### Day 14: Site-Derived Questions (5) ⏳ PENDING
 
 ---
@@ -522,6 +560,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #10 | Day 10 complete: Semantic chunker with structure preservation |
 | 2026-01-28 | #10 | Day 11 complete: Embeddings with pgvector storage |
 | 2026-01-28 | #10 | Day 12 complete: Hybrid retrieval with RRF |
+| 2026-01-28 | #11 | Day 13 complete: Universal questions (15) + generator |
 
 ---
 
