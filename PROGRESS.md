@@ -8,7 +8,7 @@ Last Updated: 2026-01-28
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
 | **Week 2: Crawl & Extract** | Complete | 7/7 days |
-| Week 3: Scoring Engine | Not Started | 0/7 days |
+| Week 3: Scoring Engine | In Progress | 1/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
 ---
@@ -553,7 +553,45 @@ Last Updated: 2026-01-28
 
 ### Week 3: Scoring Engine
 
-#### Day 15: Simulation Runner v1 ⏳ PENDING
+#### Day 15: Simulation Runner v1 ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** TBD
+
+**Deliverables:**
+- [x] Answerability enum (fully_answerable, partially_answerable, not_answerable, contradictory)
+- [x] ConfidenceLevel enum (high, medium, low)
+- [x] RetrievedContext dataclass with chunk aggregation
+- [x] SignalMatch for tracking expected signal matches
+- [x] QuestionResult with full evaluation details
+- [x] SimulationResult with aggregate metrics
+- [x] SimulationRunner for running question evaluations
+- [x] Signal matching (exact and fuzzy)
+- [x] Configurable thresholds for answerability
+- [x] Category and difficulty score aggregation
+- [x] Coverage and confidence score calculation
+- [x] SimulationSummary for reporting
+- [x] CategoryAnalysis, SignalAnalysis, GapAnalysis
+- [x] Recommendation generator for content gaps
+- [x] Simulation comparison for monitoring
+- [x] Test suite (48 tests passing)
+
+**Files Created:**
+- `worker/simulation/__init__.py` - Package exports
+- `worker/simulation/runner.py` - SimulationRunner and core classes
+- `worker/simulation/results.py` - Result analysis and utilities
+- `tests/unit/test_simulation_runner.py` - Runner tests (24 tests)
+- `tests/unit/test_simulation_results.py` - Results tests (24 tests)
+
+**Scoring Features:**
+- Retrieves top N chunks per question
+- Matches expected signals in retrieved content
+- Fuzzy matching for partial signal detection
+- Weighted scoring (relevance + signals + confidence)
+- Category/difficulty breakdown
+- Letter grades (A-F) from scores
+- Gap analysis with recommendations
+
+---
 #### Day 16: Scoring Rubric + Show the Math ⏳ PENDING
 #### Day 17: Fix Generator v1 ⏳ PENDING
 #### Day 18: Fix Impact Estimator Tier C ⏳ PENDING
@@ -603,6 +641,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #10 | Day 12 complete: Hybrid retrieval with RRF |
 | 2026-01-28 | #11 | Day 13 complete: Universal questions (15) + generator |
 | 2026-01-28 | #11 | Day 14 complete: Site-derived questions (5) + API endpoints |
+| 2026-01-28 | #11 | Day 15 complete: Simulation runner v1 + results analysis |
 | 2026-01-28 | #12 | Codebase debug: mypy fixes, Fetcher user_agent, PROGRESS notes |
 
 ---
