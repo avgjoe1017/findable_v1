@@ -7,7 +7,7 @@ Last Updated: 2026-01-28
 | Phase | Status | Progress |
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
-| Week 2: Crawl & Extract | In Progress | 4/7 days |
+| Week 2: Crawl & Extract | In Progress | 5/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
@@ -422,7 +422,51 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 12: Retrieval v1 (Hybrid) ⏳ PENDING
+#### Day 12: Retrieval v1 (Hybrid) ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `00d4776`
+
+**Deliverables:**
+- [x] BM25 lexical search implementation
+- [x] Tokenization with configurable settings
+- [x] Inverted index for efficient term lookup
+- [x] IDF and term frequency scoring
+- [x] HybridRetriever combining vector + BM25
+- [x] Reciprocal Rank Fusion (RRF) algorithm
+- [x] Page diversity enforcement
+- [x] Configurable search weights
+- [x] Test suite (54 tests passing)
+
+**Files Created:**
+- `worker/retrieval/__init__.py` - Package exports (lazy imports)
+- `worker/retrieval/bm25.py` - BM25 lexical search
+- `worker/retrieval/retriever.py` - Hybrid retriever with RRF
+- `tests/unit/test_retrieval_bm25.py` - BM25 tests (28 tests)
+- `tests/unit/test_retrieval_retriever.py` - Retriever tests (26 tests)
+
+**BM25 Features:**
+- Configurable k1 (term saturation) and b (length normalization)
+- Minimum token length filtering
+- Lowercase normalization
+- Document add/remove/update
+- Search with limit and min_score
+
+**Hybrid Retrieval Features:**
+- Vector similarity search (embeddings)
+- BM25 lexical search
+- RRF fusion with configurable k constant
+- Weighted combination (default 50/50)
+- Page diversity: max N chunks per page
+- Results include both individual and combined scores
+
+**Default Configuration:**
+- RRF k: 60 (from original paper)
+- Vector weight: 0.5
+- BM25 weight: 0.5
+- Max per page: 2
+
+---
+
 #### Day 13: Universal Questions (15) ⏳ PENDING
 #### Day 14: Site-Derived Questions (5) ⏳ PENDING
 
@@ -477,6 +521,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #10 | Day 9 complete: Render delta rule for JS detection |
 | 2026-01-28 | #10 | Day 10 complete: Semantic chunker with structure preservation |
 | 2026-01-28 | #10 | Day 11 complete: Embeddings with pgvector storage |
+| 2026-01-28 | #10 | Day 12 complete: Hybrid retrieval with RRF |
 
 ---
 
