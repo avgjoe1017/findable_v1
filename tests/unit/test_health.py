@@ -25,6 +25,7 @@ async def test_root_endpoint(client: AsyncClient) -> None:
     data = response.json()
     assert data["name"] == "Findable Score Analyzer API"
     assert data["version"] == "0.1.0"
+    assert "env" in data
 
 
 @pytest.mark.asyncio
@@ -36,3 +37,19 @@ async def test_v1_root(client: AsyncClient) -> None:
     data = response.json()
     assert data["version"] == "1"
     assert data["status"] == "active"
+
+
+@pytest.mark.asyncio
+async def test_ready_endpoint_structure(client: AsyncClient) -> None:
+    """Test ready endpoint returns expected structure."""
+    response = await client.get("/ready")
+
+    # May be unhealthy if DB/Redis not running, but structure should be correct
+    assert response.status_code == 200
+    data = response.json()
+    assert "status" in data
+    assert "timestamp" in data
+    assert "version" in data
+    assert "checks" in data
+    assert "database" in data["checks"]
+    assert "redis" in data["checks"]

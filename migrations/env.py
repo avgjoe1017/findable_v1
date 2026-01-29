@@ -9,6 +9,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from api.config import get_settings
+from api.database import Base
 
 # Alembic Config object
 config = context.config
@@ -17,10 +18,12 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Import models for autogenerate support
-# from api.models import Base
-# target_metadata = Base.metadata
-target_metadata = None  # Will be set when models are created
+# Import all models here so they are registered with Base.metadata
+# from api.models.user import User
+# from api.models.site import Site
+# ... add more as they are created
+
+target_metadata = Base.metadata
 
 # Get database URL from settings
 settings = get_settings()

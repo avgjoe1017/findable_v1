@@ -99,3 +99,6 @@ crawl_artifacts/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code
+.claude/
