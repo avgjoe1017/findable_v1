@@ -5,6 +5,7 @@
 # from worker.fixes.reason_codes import ReasonCode
 # from worker.fixes.templates import FixTemplate, get_template
 # from worker.fixes.generator import FixGenerator, Fix, FixPlan
+# from worker.fixes.impact import TierCEstimator, estimate_plan_impact
 
 __all__ = [
     "ReasonCode",
@@ -13,4 +14,10 @@ __all__ = [
     "FixPlan",
     "FixGenerator",
     "get_template",
+    "TierCEstimator",
+    "FixImpactEstimate",
+    "FixPlanImpact",
+    "ImpactRange",
+    "estimate_fix_impact",
+    "estimate_plan_impact",
 ]

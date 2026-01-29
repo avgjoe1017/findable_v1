@@ -8,7 +8,7 @@ Last Updated: 2026-01-28
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
 | **Week 2: Crawl & Extract** | Complete | 7/7 days |
-| Week 3: Scoring Engine | In Progress | 3/7 days |
+| Week 3: Scoring Engine | In Progress | 4/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
 ---
@@ -686,7 +686,44 @@ Last Updated: 2026-01-28
 - Suggests target URLs for fixes
 
 ---
-#### Day 18: Fix Impact Estimator Tier C ⏳ PENDING
+
+#### Day 18: Fix Impact Estimator Tier C ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `998658f`
+
+**Deliverables:**
+- [x] ImpactTier enum (tier_c, tier_b, tier_a)
+- [x] ConfidenceLevel enum (high, medium, low)
+- [x] ImpactRange dataclass with min/max/expected points
+- [x] FixImpactEstimate with breakdown and explanation
+- [x] FixPlanImpact with aggregated estimates
+- [x] Precomputed lookup tables for all 19 reason codes
+- [x] Question count multipliers (diminishing returns)
+- [x] Category weight factors
+- [x] TierCEstimator class for impact calculations
+- [x] Overlap adjustment for multiple fixes
+- [x] Human-readable explanations and assumptions
+- [x] Top fix identification and sorting
+- [x] Plan-level notes and recommendations
+- [x] Test suite (35 tests passing)
+
+**Files Created:**
+- `worker/fixes/impact.py` - Tier C impact estimator
+- `tests/unit/test_fixes_impact.py` - Impact estimator tests (35 tests)
+
+**Lookup Tables:**
+- REASON_CODE_BASE_IMPACT: (min, expected, max) points per reason code
+- QUESTION_COUNT_MULTIPLIERS: 1→1.0, 2→1.5, 3→1.8, 4→2.0, 5→2.2
+- CATEGORY_WEIGHT_FACTORS: Offerings=1.2, Contact=1.1, others=1.0
+
+**Key Features:**
+- Fast, precomputed estimates without re-simulation
+- Conservative ranges with confidence levels
+- Diminishing returns for multiple fixes (80% efficiency per additional fix)
+- Max total impact cap (default 30 points) to prevent unrealistic estimates
+- Notes about technical fixes and Tier B recommendations
+
+---
 #### Day 19: Fix Impact Estimator Tier B ⏳ PENDING
 #### Day 20: Observation Provider Layer ⏳ PENDING
 #### Day 21: Observation Parsing ⏳ PENDING
@@ -737,6 +774,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #12 | Codebase debug: mypy fixes, Fetcher user_agent, PROGRESS notes |
 | 2026-01-28 | #13 | Day 16 complete: Scoring rubric + "Show the Math" transparency |
 | 2026-01-28 | #13 | Day 17 complete: Fix generator v1 with reason codes and scaffolds |
+| 2026-01-28 | #13 | Day 18 complete: Fix impact estimator Tier C with lookup tables |
 
 ---
 
