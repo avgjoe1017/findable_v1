@@ -153,12 +153,19 @@ Last Updated: 2026-01-28
 
 ---
 
+## Repository
+
+**GitHub:** https://github.com/avgjoe1017/findable_v1
+
+---
+
 ## Session Log
 
 | Date | Session | Work Completed |
 |------|---------|----------------|
 | 2026-01-28 | #1 | Created CLAUDE.md, IMPLEMENTATION_ROADMAP.md |
 | 2026-01-28 | #2 | Day 1 complete: repo skeleton, CI, FastAPI setup |
+| 2026-01-28 | #3 | Created PROGRESS.md, pushed to GitHub |
 
 ---
 
