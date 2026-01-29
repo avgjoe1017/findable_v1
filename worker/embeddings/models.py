@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Protocol
+from typing import Any, Protocol
 
 import numpy as np
 
@@ -197,11 +197,13 @@ class MockEmbeddingModel:
             embedding = embedding / np.linalg.norm(embedding)
             embeddings.append(embedding)
 
-        return np.array(embeddings)
+        # np.array() is typed as Any when numpy stubs are incomplete
+        result: np.ndarray[Any, Any] = np.array(embeddings)
+        return result
 
     def embed_query(self, query: str) -> np.ndarray:
         """Generate mock query embedding."""
-        return self.embed([query])[0]
+        return self.embed([query])[0]  # type: ignore[no-any-return]
 
 
 # Model cache
@@ -227,6 +229,7 @@ def get_model(model_name: str | None = None) -> EmbeddingModelProtocol:
         raise ValueError(f"Unknown model: {model_name}. Available: {list(MODELS.keys())}")
 
     model_info = MODELS[model_name]
+    model: EmbeddingModelProtocol
 
     if model_info.model_type == ModelType.SENTENCE_TRANSFORMER:
         model = SentenceTransformerModel(model_info)

@@ -603,12 +603,37 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #10 | Day 12 complete: Hybrid retrieval with RRF |
 | 2026-01-28 | #11 | Day 13 complete: Universal questions (15) + generator |
 | 2026-01-28 | #11 | Day 14 complete: Site-derived questions (5) + API endpoints |
+| 2026-01-28 | #12 | Codebase debug: mypy fixes, Fetcher user_agent, PROGRESS notes |
+
+---
+
+## Debug Pass (2026-01-28)
+
+**Scope:** Lint/type-check and test discovery across `api`, `worker`, `tests`.
+
+**Findings and fixes:**
+
+1. **Mypy (10 errors → 0)**  
+   - **worker/extraction/metadata.py**: `_get_meta_content` returned `tag["content"]` (Any). Fixed by branching on `isinstance(content, str)` and returning a string explicitly.  
+   - **worker/questions/generator.py**: `generate_for_site(**kwargs)` had untyped `**kwargs`; unpacking into `SiteContext` caused arg-type errors. Fixed by extracting optional fields (`title`, `description`, `keywords`, `metadata`) from kwargs and passing them explicitly with type-safe defaults.  
+   - **worker/crawler/render.py**: `__aexit__` lacked type annotations; `RenderDeltaDetector.detect_delta` called `Fetcher()` without required `user_agent`. Fixed by adding `exc_type`, `exc_val`, `exc_tb` types (`types.TracebackType`) and default `Fetcher(user_agent="FindableBot/1.0")`.  
+   - **worker/embeddings/storage.py**: `delete_site_embeddings` and `delete_page_embeddings` returned `result.rowcount` (Any). Replaced with `int(result.rowcount) if result.rowcount is not None else 0`.  
+   - **worker/embeddings/models.py**: `get_model()` assigned both `SentenceTransformerModel` and `MockEmbeddingModel` to the same variable; declared `model: EmbeddingModelProtocol`. `MockEmbeddingModel.embed_query` returns `self.embed([query])[0]` (indexing yields Any); added `# type: ignore[no-any-return]` on that return.
+
+2. **Ruff / Black**  
+   - `ruff check api worker tests` and `black --check` both pass (no changes).
+
+3. **Pytest**  
+   - Seven test modules failed at **collection** with `ModuleNotFoundError` (e.g. `bs4`, `rq`, `sqlalchemy`, `structlog`, `fastapi_users`). Cause: tests were run without project dependencies installed.  
+   - **Requirement:** Run `pip install -e ".[dev]"` (or use a venv with the project installed) before `pytest`. Quick Commands already list this; no code change.
+
+**Decision:** All fixes preserve behavior; type ignores are limited to one numpy indexing case where stubs infer Any.
 
 ---
 
 ## Blockers & Notes
 
-*None currently*
+- **Tests:** Pytest requires project dependencies. Run `pip install -e ".[dev]"` (or equivalent) before `pytest -v`. Otherwise collection will fail with missing modules (`bs4`, `rq`, `sqlalchemy`, etc.).
 
 ---
 

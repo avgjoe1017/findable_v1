@@ -7,6 +7,7 @@ by comparing static vs. rendered content.
 import asyncio
 from dataclasses import dataclass
 from enum import Enum
+from types import TracebackType
 from typing import TYPE_CHECKING
 
 try:
@@ -99,7 +100,12 @@ class PageRenderer:
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Async context manager exit."""
         await self.stop()
 
@@ -185,7 +191,7 @@ class RenderDeltaDetector:
             RenderDelta with comparison results
         """
         # Fetch static content
-        fetcher = self.fetcher or Fetcher()
+        fetcher = self.fetcher or Fetcher(user_agent="FindableBot/1.0")
         static_result = await fetcher.fetch(url)
 
         if not static_result.html:

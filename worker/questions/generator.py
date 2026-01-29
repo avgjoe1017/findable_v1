@@ -315,7 +315,7 @@ class QuestionGenerator:
         domain: str,
         schema_types: list[str] | None = None,
         headings: dict[str, list[str]] | None = None,
-        **kwargs,
+        **kwargs: object,
     ) -> list[GeneratedQuestion]:
         """
         Convenience method to generate questions from basic site info.
@@ -325,17 +325,25 @@ class QuestionGenerator:
             domain: Site domain
             schema_types: Schema.org types found
             headings: Page headings by level
-            **kwargs: Additional context fields
+            **kwargs: Additional context fields (title, description, keywords, metadata)
 
         Returns:
             List of generated questions
         """
+        # Extract optional SiteContext fields from kwargs to satisfy type checker
+        title = kwargs.get("title")
+        description = kwargs.get("description")
+        keywords = kwargs.get("keywords") or []
+        metadata = kwargs.get("metadata") or {}
         context = SiteContext(
             company_name=company_name,
             domain=domain,
+            title=title if isinstance(title, (str, type(None))) else None,
+            description=description if isinstance(description, (str, type(None))) else None,
             schema_types=schema_types or [],
             headings=headings or {},
-            **kwargs,
+            keywords=keywords if isinstance(keywords, list) else [],
+            metadata=metadata if isinstance(metadata, dict) else {},
         )
 
         return self.generate(context)

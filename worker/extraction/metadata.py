@@ -83,7 +83,8 @@ def _get_meta_content(
         return None
 
     if tag and tag.get("content"):
-        return tag["content"].strip()
+        content = tag["content"]
+        return content.strip() if isinstance(content, str) else str(content).strip()
     return None
 
 
