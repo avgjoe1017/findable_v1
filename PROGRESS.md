@@ -1,8 +1,8 @@
 # Findable Score Analyzer - Progress Tracker
 
-Last Updated: 2026-01-28 (Session #14)
+Last Updated: 2026-01-29 (Session #15)
 
-**Current Status:** Day 20 complete, ready for Day 21 (Observation Parsing)
+**Current Status:** Week 3 complete (Day 21), ready for Week 4: Day 22 (Competitor Benchmark)
 
 ## Overall Status
 
@@ -10,7 +10,7 @@ Last Updated: 2026-01-28 (Session #14)
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
 | **Week 2: Crawl & Extract** | Complete | 7/7 days |
-| Week 3: Scoring Engine | In Progress | 6/7 days |
+| **Week 3: Scoring Engine** | Complete | 7/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
 ---
@@ -817,7 +817,60 @@ Last Updated: 2026-01-28 (Session #14)
 - Aggregate mention rate calculations
 
 ---
-#### Day 21: Observation Parsing ⏳ PENDING
+
+#### Day 21: Observation Parsing ✅ COMPLETE
+**Date:** 2026-01-29
+**Commit:** `8ad26c3`
+
+**Deliverables:**
+- [x] MentionType enum (exact, partial, domain, url, branded)
+- [x] CitationType enum (direct_quote, attribution, source_link, reference, implicit)
+- [x] Sentiment enum (positive, neutral, negative, mixed)
+- [x] ConfidenceLevel enum (high, medium, low, uncertain, unknown)
+- [x] Mention dataclass with position and context
+- [x] Citation dataclass with pattern and source extraction
+- [x] ParsedObservation with full signal extraction
+- [x] ObservationParser class with:
+  - Fuzzy company name matching (variations, suffix removal)
+  - Domain and URL detection
+  - Branded term matching
+  - Citation pattern detection (7+ patterns)
+  - Sentiment analysis (positive/negative indicators)
+  - Confidence level analysis (hedging vs certainty phrases)
+  - Refusal detection
+  - Hallucination risk indicators
+- [x] OutcomeMatch enum (correct, optimistic, pessimistic, unknown)
+- [x] SourceabilityOutcome enum (cited, mentioned, omitted, competitor_cited, refused)
+- [x] QuestionComparison for sim vs obs comparison
+- [x] ComparisonSummary with insights and recommendations
+- [x] SimulationObservationComparator class
+- [x] Test suite (56 new tests, 100 total observation tests)
+
+**Files Created:**
+- `worker/observation/parser.py` - Enhanced parsing with fuzzy matching
+- `worker/observation/comparison.py` - Simulation vs observation comparison
+- `tests/unit/test_observation_parser.py` - Parser tests (35 tests)
+- `tests/unit/test_observation_comparison.py` - Comparison tests (21 tests)
+
+**Files Modified:**
+- `worker/observation/__init__.py` - Added parser and comparison exports
+
+**Parser Features:**
+- Generates name variations (removes Inc, Corp, Ltd, etc.)
+- Handles "The" prefix removal
+- Extracts all URLs, categorizes as company vs external
+- Detects citation patterns ("according to", "source:", etc.)
+- Analyzes sentiment with positive/negative word lists
+- Tracks hedging vs certainty phrases
+- Flags refusals and hallucination risks
+- Calculates content metrics (word count, sentences)
+
+**Comparison Features:**
+- Maps simulation answerability to observation outcomes
+- Calculates prediction accuracy
+- Identifies optimistic/pessimistic bias
+- Generates insights about gaps
+- Provides recommendations based on patterns
 
 ---
 
@@ -869,38 +922,37 @@ Last Updated: 2026-01-28 (Session #14)
 | 2026-01-28 | #14 | Day 19 complete: Fix impact estimator Tier B with synthetic patching |
 | 2026-01-28 | #14 | Day 20 complete: Observation provider layer with retry/failover |
 | 2026-01-28 | #14 | Bonus: UI templates (dashboard + score report) using frontend-design skill |
+| 2026-01-29 | #15 | Day 21 complete: Observation parsing with fuzzy matching and comparison
 
 ---
 
-## Next Session: Day 21 - Observation Parsing
+## Next Session: Day 22 - Competitor Benchmark
 
 ### What to Build
-Day 21 turns raw AI model outputs into measurable signals. The observation provider (Day 20) returns raw text responses - now we need structured parsing.
+Day 22 runs observations for competitors and creates win/loss comparison tables.
 
 **Deliverables from spec:**
-- Extract mentions (brand/domain) - *basic version done in runner, needs enhancement*
-- Extract links/URLs - *basic version done in runner, needs enhancement*
-- Extract citation-like patterns where present
-- Persist `obs_results`
-- Observed mention rate computed
-- Per-question observed outcomes stored
+- Run observation for competitors (same question set, same method)
+- Create win/loss table (you vs competitor per question)
+- Compute deltas (simple heuristics)
+- Benchmark section generated
 
 ### Key Files to Know
 
-**Observation Layer (Day 20):**
-- `worker/observation/models.py` - `ObservationResult` has basic fields: `mentions_company`, `mentions_domain`, `mentions_url`, `cited_urls`, `confidence_expressed`
-- `worker/observation/runner.py:230-260` - `_parse_response_to_result()` does basic parsing (regex URL extraction, substring matching)
+**Observation Layer (Days 20-21):**
+- `worker/observation/runner.py` - `ObservationRunner` to run competitor observations
+- `worker/observation/parser.py` - `ObservationParser` to parse responses
+- `worker/observation/comparison.py` - `SimulationObservationComparator` (can be extended for competitor comparison)
 
-**What Day 21 Should Add:**
-1. **Enhanced parsing module** (`worker/observation/parser.py`):
-   - Fuzzy company name matching (handles "Acme", "Acme Corp", "Acme Corporation")
-   - Citation pattern detection ("according to X", "X reports that", "source: X")
-   - Sentiment/tone analysis (positive mention vs neutral vs negative)
-   - Confidence extraction from hedging language
+**What Day 22 Should Add:**
+1. **Competitor benchmark module** (`worker/observation/benchmark.py`):
+   - Run same questions for multiple companies
+   - Track which company gets mentioned/cited per question
+   - Calculate win/loss/tie per question
+   - Aggregate competitive metrics
 
-2. **Persistence layer** - Store observation results to database (may need new model)
-
-3. **Comparison with simulation** - `ObservationResult` has `simulation_predicted` and `observation_actual` fields ready
+2. **Win/loss table** - Show head-to-head comparison
+3. **Delta analysis** - Highlight where competitor beats you
 
 ### Architecture Context
 
