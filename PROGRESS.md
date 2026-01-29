@@ -8,7 +8,7 @@ Last Updated: 2026-01-28
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
 | **Week 2: Crawl & Extract** | Complete | 7/7 days |
-| Week 3: Scoring Engine | In Progress | 1/7 days |
+| Week 3: Scoring Engine | In Progress | 2/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
 ---
@@ -592,7 +592,54 @@ Last Updated: 2026-01-28
 - Gap analysis with recommendations
 
 ---
-#### Day 16: Scoring Rubric + Show the Math ⏳ PENDING
+
+#### Day 16: Scoring Rubric + Show the Math ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `25decbf`
+
+**Deliverables:**
+- [x] ScoreLevel enum (excellent, good, fair, needs_work, poor)
+- [x] RubricCriterion for individual scoring criteria
+- [x] CategoryWeight for question category weights
+- [x] DifficultyMultiplier for difficulty adjustments
+- [x] ScoringRubric with default criteria (4) and weights (5)
+- [x] Letter grade thresholds (A+ to F)
+- [x] Grade descriptions for user feedback
+- [x] CriterionScore for detailed criterion breakdown
+- [x] QuestionScore with calculation steps
+- [x] CategoryBreakdown with per-category metrics
+- [x] ScoreBreakdown with full transparency
+- [x] ScoreCalculator for score calculations
+- [x] `show_the_math()` method for human-readable breakdown
+- [x] Scoring formula: 70% criterion + 30% category weighted
+- [x] Test suite (51 tests passing)
+
+**Files Created:**
+- `worker/scoring/__init__.py` - Package exports
+- `worker/scoring/rubric.py` - Scoring rubric definitions
+- `worker/scoring/calculator.py` - Score calculator with transparency
+- `tests/unit/test_scoring_rubric.py` - Rubric tests (25 tests)
+- `tests/unit/test_scoring_calculator.py` - Calculator tests (26 tests)
+
+**Scoring Criteria:**
+- Content Relevance (35%): How well retrieved content matches questions
+- Signal Coverage (35%): Presence of expected information signals
+- Answer Confidence (20%): Confidence in answer completeness
+- Source Quality (10%): Quality and diversity of source pages
+
+**Category Weights:**
+- Identity (25%): Who you are and what you do
+- Offerings (30%): Products, services, and capabilities
+- Contact (15%): How to reach and engage with you
+- Trust (15%): Credibility and social proof
+- Differentiation (15%): What makes you unique
+
+**Difficulty Multipliers:**
+- Easy: 1.0x
+- Medium: 1.2x
+- Hard: 1.5x
+
+---
 #### Day 17: Fix Generator v1 ⏳ PENDING
 #### Day 18: Fix Impact Estimator Tier C ⏳ PENDING
 #### Day 19: Fix Impact Estimator Tier B ⏳ PENDING
@@ -643,6 +690,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #11 | Day 14 complete: Site-derived questions (5) + API endpoints |
 | 2026-01-28 | #11 | Day 15 complete: Simulation runner v1 + results analysis |
 | 2026-01-28 | #12 | Codebase debug: mypy fixes, Fetcher user_agent, PROGRESS notes |
+| 2026-01-28 | #13 | Day 16 complete: Scoring rubric + "Show the Math" transparency |
 
 ---
 
