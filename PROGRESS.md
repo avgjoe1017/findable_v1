@@ -266,7 +266,7 @@ Last Updated: 2026-01-28
 
 #### Day 8: Extraction v1 ✅ COMPLETE
 **Date:** 2026-01-28
-**Commit:** `9c92d96`
+**Commit:** `5b29340`
 
 **Deliverables:**
 - [x] HTML cleaning and boilerplate removal
