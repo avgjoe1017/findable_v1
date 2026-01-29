@@ -11,17 +11,15 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from api.config import get_settings
 from api.database import Base
 
+# Import all models to register them with Base.metadata
+from api.models.user import User  # noqa: F401
+
 # Alembic Config object
 config = context.config
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
-# Import all models here so they are registered with Base.metadata
-# from api.models.user import User
-# from api.models.site import Site
-# ... add more as they are created
 
 target_metadata = Base.metadata
 
