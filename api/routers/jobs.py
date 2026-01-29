@@ -4,8 +4,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
-from api.auth import current_active_user
-from api.models import User
+from api.auth import CurrentUser
 from api.schemas.responses import SuccessResponse
 from api.services import job_service
 
@@ -19,7 +18,7 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 )
 async def get_job_status(
     job_id: str,
-    _user: User = current_active_user,
+    _user: CurrentUser,
 ) -> SuccessResponse[dict[str, Any]]:
     """
     Get the status of a background job.
@@ -47,7 +46,7 @@ async def get_job_status(
 )
 async def cancel_job(
     job_id: str,
-    _user: User = current_active_user,
+    _user: CurrentUser,
 ) -> SuccessResponse[dict[str, str]]:
     """
     Cancel a queued background job.
@@ -79,7 +78,7 @@ async def cancel_job(
     summary="Get queue statistics",
 )
 async def get_queue_stats(
-    _user: User = current_active_user,
+    _user: CurrentUser,
 ) -> SuccessResponse[dict[str, Any]]:
     """
     Get statistics for all job queues.
