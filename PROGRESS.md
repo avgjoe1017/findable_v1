@@ -8,7 +8,7 @@ Last Updated: 2026-01-28
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
 | **Week 2: Crawl & Extract** | Complete | 7/7 days |
-| Week 3: Scoring Engine | In Progress | 2/7 days |
+| Week 3: Scoring Engine | In Progress | 3/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
 ---
@@ -640,7 +640,52 @@ Last Updated: 2026-01-28
 - Hard: 1.5x
 
 ---
-#### Day 17: Fix Generator v1 ⏳ PENDING
+
+#### Day 17: Fix Generator v1 (Clarity Scaffolds) ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `7f37241`
+
+**Deliverables:**
+- [x] ReasonCode enum (19 reason codes across 5 categories)
+- [x] ReasonCodeInfo dataclass with severity and impact
+- [x] FixTemplate dataclass with scaffold templates
+- [x] 19 fix templates mapping to reason codes
+- [x] ExtractedContent for pulling site language
+- [x] Fix dataclass with scaffold and metadata
+- [x] FixPlan with prioritized fixes
+- [x] FixGenerator analyzing simulation results
+- [x] Problem identification (not answerable, partial, low score)
+- [x] Reason code diagnosis based on signals and content
+- [x] Scaffold generation with company name and examples
+- [x] Estimated impact calculation
+- [x] Target URL suggestions
+- [x] Test suite (70 tests passing)
+
+**Files Created:**
+- `worker/fixes/__init__.py` - Package exports
+- `worker/fixes/reason_codes.py` - 19 reason codes with metadata
+- `worker/fixes/templates.py` - Fix templates with scaffolds
+- `worker/fixes/generator.py` - FixGenerator and dataclasses
+- `tests/unit/test_fixes_reason_codes.py` - Reason code tests (22 tests)
+- `tests/unit/test_fixes_templates.py` - Template tests (24 tests)
+- `tests/unit/test_fixes_generator.py` - Generator tests (24 tests)
+
+**Reason Code Categories:**
+- Content: missing_definition, missing_pricing, missing_contact, missing_location, missing_features, missing_social_proof
+- Structure: buried_answer, fragmented_info, no_dedicated_page, poor_headings
+- Quality: not_citable, vague_language, outdated_info, inconsistent
+- Trust: trust_gap, no_authority, unverified_claims
+- Technical: render_required, blocked_by_robots
+
+**Fix Generation Features:**
+- Maps failed questions to reason codes
+- Groups fixes by reason code to avoid duplicates
+- Generates content scaffolds with [PLACEHOLDERS]
+- Extracts relevant content from site for reference
+- Prioritizes fixes by severity and impact
+- Suggests target URLs for fixes
+
+---
 #### Day 18: Fix Impact Estimator Tier C ⏳ PENDING
 #### Day 19: Fix Impact Estimator Tier B ⏳ PENDING
 #### Day 20: Observation Provider Layer ⏳ PENDING
@@ -691,6 +736,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #11 | Day 15 complete: Simulation runner v1 + results analysis |
 | 2026-01-28 | #12 | Codebase debug: mypy fixes, Fetcher user_agent, PROGRESS notes |
 | 2026-01-28 | #13 | Day 16 complete: Scoring rubric + "Show the Math" transparency |
+| 2026-01-28 | #13 | Day 17 complete: Fix generator v1 with reason codes and scaffolds |
 
 ---
 
