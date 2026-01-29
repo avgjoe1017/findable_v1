@@ -7,7 +7,7 @@ Last Updated: 2026-01-28
 | Phase | Status | Progress |
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
-| Week 2: Crawl & Extract | Not Started | 0/7 days |
+| Week 2: Crawl & Extract | In Progress | 1/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
@@ -264,7 +264,45 @@ Last Updated: 2026-01-28
 
 ### Week 2: Crawl & Extract Pipeline
 
-#### Day 8: Extraction v1 ⏳ PENDING
+#### Day 8: Extraction v1 ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `9c92d96`
+
+**Deliverables:**
+- [x] HTML cleaning and boilerplate removal
+- [x] Script, style, and comment stripping
+- [x] Boilerplate pattern detection (nav, footer, sidebar, etc.)
+- [x] Main content identification (article, main tags)
+- [x] Text density analysis for content detection
+- [x] Whitespace normalization
+- [x] Metadata extraction (title, description, keywords)
+- [x] Open Graph tag extraction
+- [x] Twitter Card extraction
+- [x] Schema.org type extraction (JSON-LD + microdata)
+- [x] Heading extraction (h1-h6)
+- [x] Link counting (internal vs external)
+- [x] ContentExtractor class for crawl integration
+- [x] Test suite (31 tests passing)
+
+**Files Created:**
+- `worker/extraction/__init__.py` - Package exports (lazy imports)
+- `worker/extraction/cleaner.py` - HTML cleaning and boilerplate removal
+- `worker/extraction/metadata.py` - Metadata extraction
+- `worker/extraction/extractor.py` - ContentExtractor class
+- `tests/unit/test_extraction_cleaner.py` - Cleaner tests (14 tests)
+- `tests/unit/test_extraction_metadata.py` - Metadata tests (17 tests)
+
+**Extraction Features:**
+- Removes script, style, noscript, iframe, etc.
+- Identifies boilerplate by tag name (nav, header, footer, aside)
+- Identifies boilerplate by class/id patterns (social, comment, widget)
+- Preserves main content containers (article, main)
+- Extracts structured metadata (OG, Twitter, Schema.org)
+- Counts words, links, and images
+- Configurable min/max content length
+
+---
+
 #### Day 9: Render Delta Rule ⏳ PENDING
 #### Day 10: Semantic Chunker v1 ⏳ PENDING
 #### Day 11: Embeddings v1 (pgvector) ⏳ PENDING
@@ -319,6 +357,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #7 | Day 5 complete: RQ + Redis job infrastructure |
 | 2026-01-28 | #8 | Day 6 complete: Site, Run, Report REST endpoints |
 | 2026-01-28 | #9 | Day 7 complete: BFS crawler with robots.txt support |
+| 2026-01-28 | #10 | Day 8 complete: Content extraction with metadata |
 
 ---
 
