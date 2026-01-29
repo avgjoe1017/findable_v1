@@ -29,6 +29,30 @@ class RunService:
             raise NotFoundError("Run", str(run_id))
         return run  # type: ignore[no-any-return]
 
+    async def get_active_run(
+        self,
+        db: AsyncSession,
+        site_id: uuid.UUID,
+    ) -> Run | None:
+        """Get any active (non-terminal) run for a site."""
+        active_statuses = [
+            "queued",
+            "crawling",
+            "extracting",
+            "chunking",
+            "embedding",
+            "simulating",
+            "observing",
+            "assembling",
+        ]
+        result = await db.execute(
+            select(Run).where(
+                Run.site_id == site_id,
+                Run.status.in_(active_statuses),
+            )
+        )
+        return result.scalar_one_or_none()  # type: ignore[no-any-return]
+
     async def list_runs(
         self,
         db: AsyncSession,

@@ -6,7 +6,7 @@ Last Updated: 2026-01-28
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| **Week 1: Foundation** | In Progress | 5/7 days |
+| **Week 1: Foundation** | In Progress | 6/7 days |
 | Week 2: Crawl & Extract | Not Started | 0/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
@@ -181,13 +181,47 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 6: Site + Competitor Endpoints ⏳ PENDING
-**Goal:** Users can create a site and set competitors
+#### Day 6: Site + Competitor Endpoints ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `7148e54`
 
-**Tasks:**
-- [ ] POST/GET/PATCH /sites
-- [ ] PUT /sites/{id}/competitors
-- [ ] Plan caps (stub)
+**Deliverables:**
+- [x] Sites router with full CRUD operations
+- [x] POST /sites - Create site with competitors
+- [x] GET /sites - List sites with pagination
+- [x] GET /sites/{id} - Get site details
+- [x] PATCH /sites/{id} - Update site settings
+- [x] DELETE /sites/{id} - Delete site and all data
+- [x] PUT /sites/{id}/competitors - Update competitor list
+- [x] Runs router for audit management
+- [x] POST /sites/{id}/runs - Start audit run
+- [x] GET /sites/{id}/runs - List runs
+- [x] GET /sites/{id}/runs/{run_id} - Get run details
+- [x] DELETE /sites/{id}/runs/{run_id} - Cancel run
+- [x] GET /reports/{id} - Get full report
+- [x] PaginatedResponse.create() helper method
+- [x] RunWithReport schema
+- [x] get_active_run service method
+- [x] Plan limit enforcement on competitors
+- [x] Test suite for endpoint schemas
+
+**Files Created:**
+- `api/routers/sites.py` - Site CRUD endpoints
+- `api/routers/runs.py` - Run management + reports endpoints
+- `tests/unit/test_site_endpoints.py` - Endpoint tests
+
+**Endpoints Added:**
+- `POST /v1/sites` - Create site
+- `GET /v1/sites` - List sites (paginated)
+- `GET /v1/sites/{id}` - Get site details
+- `PATCH /v1/sites/{id}` - Update site
+- `DELETE /v1/sites/{id}` - Delete site
+- `PUT /v1/sites/{id}/competitors` - Update competitors
+- `POST /v1/sites/{id}/runs` - Start audit
+- `GET /v1/sites/{id}/runs` - List runs (paginated)
+- `GET /v1/sites/{id}/runs/{run_id}` - Get run
+- `DELETE /v1/sites/{id}/runs/{run_id}` - Cancel run
+- `GET /v1/reports/{id}` - Get full report
 
 ---
 
@@ -257,6 +291,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #5 | Lint fixes, Day 3 complete: JWT auth with FastAPI-Users |
 | 2026-01-28 | #6 | Day 4 complete: Site, Competitor, Run, Report models + services |
 | 2026-01-28 | #7 | Day 5 complete: RQ + Redis job infrastructure |
+| 2026-01-28 | #8 | Day 6 complete: Site, Run, Report REST endpoints |
 
 ---
 

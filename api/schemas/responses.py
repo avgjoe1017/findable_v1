@@ -47,6 +47,26 @@ class PaginatedResponse(BaseModel, Generic[T]):
     data: list[T]
     meta: PaginatedMeta
 
+    @classmethod
+    def create(
+        cls,
+        data: list[T],
+        total: int,
+        page: int,
+        per_page: int,
+    ) -> "PaginatedResponse[T]":
+        """Create a paginated response with computed metadata."""
+        total_pages = (total + per_page - 1) // per_page if per_page > 0 else 0
+        meta = PaginatedMeta(
+            total=total,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages,
+            has_next=page < total_pages,
+            has_prev=page > 1,
+        )
+        return cls(data=data, meta=meta)
+
 
 class MessageResponse(BaseModel):
     """Simple message response."""

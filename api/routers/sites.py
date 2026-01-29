@@ -1,0 +1,222 @@
+"""Site management endpoints."""
+
+import uuid
+
+from fastapi import APIRouter, HTTPException, status
+
+from api.auth import CurrentUser
+from api.database import DbSession
+from api.deps import PaginationDep
+from api.exceptions import ConflictError, NotFoundError
+from api.schemas.responses import PaginatedResponse, SuccessResponse
+from api.schemas.site import (
+    CompetitorListUpdate,
+    CompetitorRead,
+    SiteCreate,
+    SiteList,
+    SiteUpdate,
+    SiteWithCompetitors,
+)
+from api.services import site_service
+
+router = APIRouter(prefix="/sites", tags=["sites"])
+
+
+@router.post(
+    "",
+    response_model=SuccessResponse[SiteWithCompetitors],
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new site",
+)
+async def create_site(
+    site_in: SiteCreate,
+    db: DbSession,
+    user: CurrentUser,
+) -> SuccessResponse[SiteWithCompetitors]:
+    """
+    Create a new site for the authenticated user.
+
+    - Validates domain uniqueness for the user
+    - Enforces plan limits for number of competitors
+    - Automatically normalizes the domain
+    """
+    try:
+        site = await site_service.create_site(db, user, site_in)
+        return SuccessResponse(data=SiteWithCompetitors.model_validate(site))
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
+        )
+
+
+@router.get(
+    "",
+    response_model=PaginatedResponse[SiteList],
+    summary="List all sites",
+)
+async def list_sites(
+    db: DbSession,
+    user: CurrentUser,
+    pagination: PaginationDep,
+) -> PaginatedResponse[SiteList]:
+    """
+    List all sites for the authenticated user.
+
+    Returns paginated results with summary information.
+    """
+    sites, total = await site_service.list_sites(
+        db,
+        user.id,
+        skip=pagination.offset,
+        limit=pagination.limit,
+    )
+
+    # Convert to list schema with competitor counts
+    site_list = []
+    for site in sites:
+        # Get latest report scores if available
+        latest_report = await site_service.get_latest_report(db, site.id)
+        latest_score = None
+        latest_mention_rate = None
+        if latest_report:
+            latest_score = latest_report.score_typical
+            latest_mention_rate = latest_report.mention_rate
+
+        site_list.append(
+            SiteList(
+                id=site.id,
+                domain=site.domain,
+                name=site.name,
+                business_model=site.business_model,
+                monitoring_enabled=site.monitoring_enabled,
+                competitor_count=len(site.competitors),
+                latest_score=latest_score,
+                latest_mention_rate=latest_mention_rate,
+                next_snapshot_at=site.next_snapshot_at,
+                created_at=site.created_at,
+            )
+        )
+
+    return PaginatedResponse.create(
+        data=site_list,
+        total=total,
+        page=pagination.page,
+        per_page=pagination.per_page,
+    )
+
+
+@router.get(
+    "/{site_id}",
+    response_model=SuccessResponse[SiteWithCompetitors],
+    summary="Get site details",
+)
+async def get_site(
+    site_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+) -> SuccessResponse[SiteWithCompetitors]:
+    """
+    Get detailed information about a specific site.
+
+    Includes all competitors and configuration.
+    """
+    try:
+        site = await site_service.get_site(db, site_id, user.id)
+        return SuccessResponse(data=SiteWithCompetitors.model_validate(site))
+    except NotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Site {site_id} not found",
+        )
+
+
+@router.patch(
+    "/{site_id}",
+    response_model=SuccessResponse[SiteWithCompetitors],
+    summary="Update a site",
+)
+async def update_site(
+    site_id: uuid.UUID,
+    site_in: SiteUpdate,
+    db: DbSession,
+    user: CurrentUser,
+) -> SuccessResponse[SiteWithCompetitors]:
+    """
+    Update site settings.
+
+    Only provided fields will be updated.
+    """
+    try:
+        site = await site_service.get_site(db, site_id, user.id)
+        updated = await site_service.update_site(db, site, site_in)
+        return SuccessResponse(data=SiteWithCompetitors.model_validate(updated))
+    except NotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Site {site_id} not found",
+        )
+
+
+@router.delete(
+    "/{site_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a site",
+)
+async def delete_site(
+    site_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+) -> None:
+    """
+    Delete a site and all associated data.
+
+    This permanently removes:
+    - The site configuration
+    - All competitors
+    - All audit runs
+    - All reports
+    """
+    try:
+        site = await site_service.get_site(db, site_id, user.id)
+        await site_service.delete_site(db, site)
+    except NotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Site {site_id} not found",
+        )
+
+
+@router.put(
+    "/{site_id}/competitors",
+    response_model=SuccessResponse[list[CompetitorRead]],
+    summary="Update competitors",
+)
+async def update_competitors(
+    site_id: uuid.UUID,
+    competitors_in: CompetitorListUpdate,
+    db: DbSession,
+    user: CurrentUser,
+) -> SuccessResponse[list[CompetitorRead]]:
+    """
+    Replace all competitors for a site.
+
+    - Removes existing competitors
+    - Adds new competitors from the list
+    - Enforces plan limits
+    """
+    try:
+        site = await site_service.get_site(db, site_id, user.id)
+        updated = await site_service.update_competitors(db, site, user, competitors_in.competitors)
+        competitors = [CompetitorRead.model_validate(c) for c in updated.competitors]
+        return SuccessResponse(data=competitors)
+    except NotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Site {site_id} not found",
+        )
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
+        )

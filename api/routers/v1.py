@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from api.routers import auth, jobs
+from api.routers import auth, jobs, runs, sites
 
 router = APIRouter()
 
@@ -12,10 +12,14 @@ router.include_router(auth.router, prefix="/auth", tags=["Auth"])
 # Job endpoints
 router.include_router(jobs.router)
 
-# Future routers will be added here:
-# router.include_router(sites.router, prefix="/sites", tags=["Sites"])
-# router.include_router(runs.router, prefix="/runs", tags=["Runs"])
-# router.include_router(reports.router, prefix="/reports", tags=["Reports"])
+# Site endpoints
+router.include_router(sites.router)
+
+# Run endpoints (nested under sites)
+router.include_router(runs.router)
+
+# Report endpoints
+router.include_router(runs.reports_router)
 
 
 @router.get("/")

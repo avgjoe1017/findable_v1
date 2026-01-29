@@ -92,6 +92,15 @@ class ReportSummary(BaseModel):
         from_attributes = True
 
 
+class RunWithReport(RunRead):
+    """Run with embedded report summary."""
+
+    report: ReportSummary | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class ReportRead(BaseModel):
     """Full report response."""
 
