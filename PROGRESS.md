@@ -8,7 +8,7 @@ Last Updated: 2026-01-28
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
 | **Week 2: Crawl & Extract** | Complete | 7/7 days |
-| Week 3: Scoring Engine | In Progress | 5/7 days |
+| Week 3: Scoring Engine | In Progress | 6/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
 ---
@@ -766,7 +766,55 @@ Last Updated: 2026-01-28
 - Both return ImpactRange with min/max/expected points
 
 ---
-#### Day 20: Observation Provider Layer ⏳ PENDING
+
+#### Day 20: Observation Provider Layer ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `ee8d575`
+
+**Deliverables:**
+- [x] ProviderType enum (openrouter, openai, anthropic, mock)
+- [x] ObservationStatus enum (pending, in_progress, completed, failed, partial)
+- [x] UsageStats dataclass with token tracking and cost estimation
+- [x] ProviderError dataclass with retryability flag
+- [x] ObservationRequest with prompt generation
+- [x] ObservationResponse with usage and latency tracking
+- [x] ObservationResult with mention/citation parsing
+- [x] ObservationRun with aggregate metrics
+- [x] Abstract ObservationProvider base class
+- [x] OpenRouterProvider (primary aggregator)
+- [x] OpenAIProvider (fallback)
+- [x] MockProvider for testing
+- [x] get_provider factory function
+- [x] RunConfig with provider settings
+- [x] ObservationRunner with retries and failover
+- [x] Progress callback support
+- [x] Concurrent request handling with semaphore
+- [x] Cost estimation for popular models
+- [x] Test suite (44 tests passing)
+
+**Files Created:**
+- `worker/observation/__init__.py` - Package exports
+- `worker/observation/models.py` - Data models
+- `worker/observation/providers.py` - Provider implementations
+- `worker/observation/runner.py` - Observation runner with retry logic
+- `tests/unit/test_observation_providers.py` - Provider tests (29 tests)
+- `tests/unit/test_observation_runner.py` - Runner tests (15 tests)
+
+**Provider Features:**
+- OpenRouter: Primary aggregator with model switching
+- OpenAI: Direct fallback provider
+- Mock: Deterministic testing with configurable responses/failures
+- Automatic failover between providers
+- Exponential backoff retries
+
+**Runner Features:**
+- Concurrent execution with rate limiting
+- Progress callbacks for UI updates
+- Total timeout protection
+- Mention and URL extraction from responses
+- Aggregate mention rate calculations
+
+---
 #### Day 21: Observation Parsing ⏳ PENDING
 
 ---
@@ -817,6 +865,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #13 | Day 17 complete: Fix generator v1 with reason codes and scaffolds |
 | 2026-01-28 | #13 | Day 18 complete: Fix impact estimator Tier C with lookup tables |
 | 2026-01-28 | #14 | Day 19 complete: Fix impact estimator Tier B with synthetic patching |
+| 2026-01-28 | #14 | Day 20 complete: Observation provider layer with retry/failover |
 
 ---
 

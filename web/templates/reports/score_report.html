@@ -1,0 +1,1013 @@
+{% extends "base.html" %}
+
+{% block title %}{{ company_name }} - Findable Score Report{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Observatory Dark Palette */
+    --slate-950: #0a0f1a;
+    --slate-900: #0f172a;
+    --slate-800: #1e293b;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-400: #94a3b8;
+    --slate-300: #cbd5e1;
+    --slate-100: #f1f5f9;
+
+    /* Signal Colors */
+    --signal-excellent: #2dd4bf;
+    --signal-good: #4ade80;
+    --signal-fair: #fbbf24;
+    --signal-poor: #f87171;
+    --signal-critical: #ef4444;
+
+    /* Accent */
+    --accent-teal: #14b8a6;
+    --accent-teal-glow: rgba(20, 184, 166, 0.15);
+    --accent-amber: #f59e0b;
+    --accent-coral: #fb7185;
+
+    /* Grade colors */
+    --grade-a: #2dd4bf;
+    --grade-b: #4ade80;
+    --grade-c: #fbbf24;
+    --grade-d: #fb923c;
+    --grade-f: #f87171;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--slate-950);
+    color: var(--slate-300);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .font-serif {
+    font-family: 'Instrument Serif', Georgia, serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Animated background gradient mesh */
+  .bg-mesh {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(20, 184, 166, 0.08), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(99, 102, 241, 0.06), transparent),
+      radial-gradient(ellipse 50% 30% at 50% 80%, rgba(251, 113, 133, 0.04), transparent),
+      var(--slate-950);
+  }
+
+  /* Subtle noise texture overlay */
+  .noise-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  /* Main container */
+  .report-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* Header */
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--slate-800);
+  }
+
+  .company-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2.5rem;
+    color: var(--slate-100);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+
+  .report-meta {
+    font-size: 0.875rem;
+    color: var(--slate-400);
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .meta-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Score Hero Section */
+  .score-hero {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 3rem;
+    margin-bottom: 3rem;
+  }
+
+  .score-display {
+    position: relative;
+    background: linear-gradient(135deg, var(--slate-900) 0%, var(--slate-800) 100%);
+    border-radius: 24px;
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--slate-700);
+    overflow: hidden;
+  }
+
+  .score-display::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, var(--accent-teal-glow), transparent 60%);
+    pointer-events: none;
+  }
+
+  .score-ring {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin-bottom: 1.5rem;
+  }
+
+  .score-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .score-ring-bg {
+    fill: none;
+    stroke: var(--slate-700);
+    stroke-width: 8;
+  }
+
+  .score-ring-progress {
+    fill: none;
+    stroke: url(#scoreGradient);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 565.48;
+    stroke-dashoffset: 565.48;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .score-ring.animated .score-ring-progress {
+    stroke-dashoffset: calc(565.48 - (565.48 * var(--score-percent) / 100));
+  }
+
+  .score-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .score-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 3.5rem;
+    font-weight: 600;
+    color: var(--slate-100);
+    line-height: 1;
+  }
+
+  .score-max {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    color: var(--slate-500);
+    margin-top: 0.25rem;
+  }
+
+  .grade-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    margin-top: 1rem;
+    border: 2px solid currentColor;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .grade-badge::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: 0.1;
+  }
+
+  .grade-a { color: var(--grade-a); }
+  .grade-b { color: var(--grade-b); }
+  .grade-c { color: var(--grade-c); }
+  .grade-d { color: var(--grade-d); }
+  .grade-f { color: var(--grade-f); }
+
+  .grade-description {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--slate-400);
+    text-align: center;
+    max-width: 200px;
+  }
+
+  /* Category Breakdown */
+  .category-breakdown {
+    background: var(--slate-900);
+    border-radius: 24px;
+    padding: 2rem;
+    border: 1px solid var(--slate-800);
+  }
+
+  .section-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.5rem;
+    color: var(--slate-100);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-title::before {
+    content: '';
+    width: 4px;
+    height: 24px;
+    background: linear-gradient(to bottom, var(--accent-teal), var(--accent-coral));
+    border-radius: 2px;
+  }
+
+  .category-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .category-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 80px;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--slate-800);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .category-row:hover {
+    background: var(--slate-700);
+    transform: translateX(4px);
+  }
+
+  .category-name {
+    font-weight: 500;
+    color: var(--slate-200);
+    text-transform: capitalize;
+  }
+
+  .category-bar-container {
+    height: 8px;
+    background: var(--slate-700);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .category-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0;
+  }
+
+  .category-bar.animated {
+    width: var(--bar-width);
+  }
+
+  .category-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: right;
+  }
+
+  /* Signal Stats Row */
+  .signal-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .stat-card {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    border-color: var(--slate-700);
+    transform: translateY(-2px);
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--stat-color);
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--slate-500);
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--slate-100);
+  }
+
+  .stat-detail {
+    font-size: 0.8125rem;
+    color: var(--slate-400);
+    margin-top: 0.5rem;
+  }
+
+  /* Fixes Section */
+  .fixes-section {
+    margin-bottom: 3rem;
+  }
+
+  .fix-card {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 16px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .fix-card:hover {
+    border-color: var(--slate-700);
+  }
+
+  .fix-header {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .fix-header:hover {
+    background: var(--slate-800);
+  }
+
+  .fix-title-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .severity-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .severity-critical {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--signal-critical);
+  }
+
+  .severity-high {
+    background: rgba(251, 146, 60, 0.15);
+    color: var(--accent-amber);
+  }
+
+  .severity-medium {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--signal-fair);
+  }
+
+  .severity-low {
+    background: rgba(45, 212, 191, 0.15);
+    color: var(--signal-excellent);
+  }
+
+  .fix-title {
+    font-weight: 600;
+    color: var(--slate-200);
+  }
+
+  .fix-impact {
+    text-align: right;
+  }
+
+  .impact-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--signal-good);
+  }
+
+  .impact-label {
+    font-size: 0.6875rem;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .fix-toggle {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--slate-800);
+    color: var(--slate-400);
+    transition: all 0.2s ease;
+  }
+
+  .fix-card.expanded .fix-toggle {
+    transform: rotate(180deg);
+    background: var(--accent-teal);
+    color: var(--slate-950);
+  }
+
+  .fix-body {
+    display: none;
+    padding: 0 1.5rem 1.5rem;
+    border-top: 1px solid var(--slate-800);
+  }
+
+  .fix-card.expanded .fix-body {
+    display: block;
+  }
+
+  .scaffold-preview {
+    background: var(--slate-950);
+    border: 1px solid var(--slate-800);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-top: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: var(--slate-300);
+    white-space: pre-wrap;
+  }
+
+  .scaffold-preview .placeholder {
+    color: var(--accent-teal);
+    background: var(--accent-teal-glow);
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+  }
+
+  .fix-meta {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+  }
+
+  .fix-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--slate-400);
+  }
+
+  .fix-meta-item strong {
+    color: var(--slate-200);
+    font-weight: 500;
+  }
+
+  /* Show the Math Section */
+  .math-section {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .math-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-top: 1.5rem;
+  }
+
+  .math-card {
+    background: var(--slate-800);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .math-card-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--slate-500);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .formula {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    color: var(--slate-200);
+    background: var(--slate-950);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 3px solid var(--accent-teal);
+  }
+
+  .breakdown-list {
+    list-style: none;
+  }
+
+  .breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--slate-700);
+    font-size: 0.875rem;
+  }
+
+  .breakdown-item:last-child {
+    border-bottom: none;
+  }
+
+  .breakdown-label {
+    color: var(--slate-400);
+  }
+
+  .breakdown-value {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--slate-200);
+  }
+
+  /* Footer */
+  .report-footer {
+    text-align: center;
+    padding: 2rem;
+    border-top: 1px solid var(--slate-800);
+    font-size: 0.8125rem;
+    color: var(--slate-500);
+  }
+
+  .report-footer a {
+    color: var(--accent-teal);
+    text-decoration: none;
+  }
+
+  .report-footer a:hover {
+    text-decoration: underline;
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-in {
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+  .delay-5 { animation-delay: 0.5s; }
+  .delay-6 { animation-delay: 0.6s; }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .score-hero {
+      grid-template-columns: 1fr;
+    }
+
+    .signal-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .math-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .report-container {
+      padding: 1rem;
+    }
+
+    .signal-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .fix-header {
+      grid-template-columns: 1fr auto;
+    }
+
+    .fix-impact {
+      display: none;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-mesh"></div>
+<div class="noise-overlay"></div>
+
+<div class="report-container">
+  <!-- Header -->
+  <header class="report-header animate-in">
+    <div>
+      <h1 class="company-title">{{ company_name | default("Acme Corporation") }}</h1>
+      <div class="report-meta">
+        <span class="meta-item">
+          <span class="meta-dot"></span>
+          Report generated {{ report_date | default("January 28, 2026") }}
+        </span>
+        <span class="meta-item">{{ domain | default("acme.com") }}</span>
+        <span class="meta-item">{{ pages_crawled | default(127) }} pages analyzed</span>
+      </div>
+    </div>
+    <a href="{{ export_url | default('#') }}" class="export-btn" style="padding: 0.75rem 1.5rem; background: var(--slate-800); border: 1px solid var(--slate-700); border-radius: 12px; color: var(--slate-300); text-decoration: none; font-size: 0.875rem; transition: all 0.2s ease;">
+      Export PDF
+    </a>
+  </header>
+
+  <!-- Score Hero -->
+  <section class="score-hero">
+    <div class="score-display animate-in delay-1">
+      <!-- SVG Gradient Definition -->
+      <svg style="position: absolute; width: 0; height: 0;">
+        <defs>
+          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color: var(--accent-teal)" />
+            <stop offset="100%" style="stop-color: var(--signal-good)" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <div class="score-ring" style="--score-percent: {{ overall_score | default(67) }}">
+        <svg viewBox="0 0 200 200">
+          <circle class="score-ring-bg" cx="100" cy="100" r="90" />
+          <circle class="score-ring-progress" cx="100" cy="100" r="90" />
+        </svg>
+        <div class="score-value">
+          <div class="score-number" data-target="{{ overall_score | default(67) }}">0</div>
+          <div class="score-max">/ 100</div>
+        </div>
+      </div>
+
+      <div class="grade-badge grade-{{ grade | default('c') | lower }}">
+        {{ grade | default("C+") }}
+      </div>
+      <p class="grade-description">{{ grade_description | default("Good foundation with room for significant improvement") }}</p>
+    </div>
+
+    <div class="category-breakdown animate-in delay-2">
+      <h2 class="section-title">Category Breakdown</h2>
+      <div class="category-grid">
+        {% set categories = categories | default([
+          {"name": "identity", "score": 78, "weight": 25},
+          {"name": "offerings", "score": 54, "weight": 30},
+          {"name": "contact", "score": 82, "weight": 15},
+          {"name": "trust", "score": 45, "weight": 15},
+          {"name": "differentiation", "score": 61, "weight": 15}
+        ]) %}
+        {% for cat in categories %}
+        <div class="category-row" style="animation-delay: {{ 0.3 + loop.index * 0.1 }}s">
+          <span class="category-name">{{ cat.name }}</span>
+          <div class="category-bar-container">
+            <div class="category-bar"
+                 style="--bar-width: {{ cat.score }}%;
+                        background: linear-gradient(90deg,
+                          {% if cat.score >= 70 %}var(--signal-good){% elif cat.score >= 50 %}var(--signal-fair){% else %}var(--signal-poor){% endif %},
+                          {% if cat.score >= 70 %}var(--accent-teal){% elif cat.score >= 50 %}var(--accent-amber){% else %}var(--accent-coral){% endif %});">
+            </div>
+          </div>
+          <span class="category-score" style="color: {% if cat.score >= 70 %}var(--signal-good){% elif cat.score >= 50 %}var(--signal-fair){% else %}var(--signal-poor){% endif %}">
+            {{ cat.score }}<span style="color: var(--slate-500); font-size: 0.75rem">%</span>
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Signal Stats -->
+  <section class="signal-stats">
+    <div class="stat-card animate-in delay-3" style="--stat-color: var(--signal-good)">
+      <div class="stat-label">Questions Answered</div>
+      <div class="stat-value">{{ questions_answered | default(12) }}<span style="color: var(--slate-500); font-size: 1rem">/20</span></div>
+      <div class="stat-detail">Fully answerable by AI</div>
+    </div>
+    <div class="stat-card animate-in delay-3" style="--stat-color: var(--signal-fair)">
+      <div class="stat-label">Partial Answers</div>
+      <div class="stat-value">{{ questions_partial | default(5) }}</div>
+      <div class="stat-detail">Missing key details</div>
+    </div>
+    <div class="stat-card animate-in delay-4" style="--stat-color: var(--signal-poor)">
+      <div class="stat-label">Unanswered</div>
+      <div class="stat-value">{{ questions_unanswered | default(3) }}</div>
+      <div class="stat-detail">Content gaps detected</div>
+    </div>
+    <div class="stat-card animate-in delay-4" style="--stat-color: var(--accent-teal)">
+      <div class="stat-label">Signal Coverage</div>
+      <div class="stat-value">{{ coverage_score | default(72) }}%</div>
+      <div class="stat-detail">Expected signals found</div>
+    </div>
+  </section>
+
+  <!-- Recommended Fixes -->
+  <section class="fixes-section animate-in delay-5">
+    <h2 class="section-title">Recommended Fixes</h2>
+
+    {% set fixes = fixes | default([
+      {
+        "severity": "critical",
+        "title": "Add Clear Company Definition",
+        "reason_code": "MISSING_DEFINITION",
+        "impact_min": 4,
+        "impact_max": 8,
+        "impact_expected": 6,
+        "effort": "low",
+        "target_url": "/about",
+        "scaffold": "[COMPANY_NAME] is a [BUSINESS_TYPE] that [PRIMARY_VALUE_PROPOSITION].\n\nFounded in [YEAR], we help [TARGET_CUSTOMERS] achieve [DESIRED_OUTCOME] through our [KEY_DIFFERENTIATOR].\n\nOur mission is to [MISSION_STATEMENT]."
+      },
+      {
+        "severity": "high",
+        "title": "Add Pricing Information",
+        "reason_code": "MISSING_PRICING",
+        "impact_min": 3,
+        "impact_max": 6,
+        "impact_expected": 4.5,
+        "effort": "medium",
+        "target_url": "/pricing",
+        "scaffold": "## Pricing Plans\n\n### [PLAN_NAME_1] - $[PRICE_1]/month\n- [FEATURE_1]\n- [FEATURE_2]\n- [FEATURE_3]\n\n### [PLAN_NAME_2] - $[PRICE_2]/month\n- Everything in [PLAN_NAME_1]\n- [PREMIUM_FEATURE_1]\n- [PREMIUM_FEATURE_2]"
+      },
+      {
+        "severity": "medium",
+        "title": "Consolidate Feature Information",
+        "reason_code": "FRAGMENTED_INFO",
+        "impact_min": 2,
+        "impact_max": 4,
+        "impact_expected": 3,
+        "effort": "medium",
+        "target_url": "/features",
+        "scaffold": "## Core Features\n\n### [FEATURE_CATEGORY_1]\n[FEATURE_DESCRIPTION with specific capabilities and benefits]\n\n### [FEATURE_CATEGORY_2]\n[FEATURE_DESCRIPTION with specific capabilities and benefits]"
+      }
+    ]) %}
+
+    {% for fix in fixes %}
+    <div class="fix-card" data-fix-id="{{ loop.index }}">
+      <div class="fix-header" onclick="toggleFix({{ loop.index }})">
+        <div class="fix-title-row">
+          <span class="severity-badge severity-{{ fix.severity }}">{{ fix.severity }}</span>
+          <span class="fix-title">{{ fix.title }}</span>
+        </div>
+        <div class="fix-impact">
+          <div class="impact-value">+{{ fix.impact_expected }} pts</div>
+          <div class="impact-label">Expected Impact</div>
+        </div>
+        <div class="fix-toggle">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 6l4 4 4-4" />
+          </svg>
+        </div>
+      </div>
+      <div class="fix-body">
+        <div class="fix-meta">
+          <span class="fix-meta-item">
+            <strong>Reason:</strong> {{ fix.reason_code | replace("_", " ") | title }}
+          </span>
+          <span class="fix-meta-item">
+            <strong>Target:</strong> {{ fix.target_url }}
+          </span>
+          <span class="fix-meta-item">
+            <strong>Effort:</strong> {{ fix.effort | title }}
+          </span>
+          <span class="fix-meta-item">
+            <strong>Impact Range:</strong> +{{ fix.impact_min }}-{{ fix.impact_max }} pts
+          </span>
+        </div>
+        <div class="scaffold-preview">{{ fix.scaffold | replace("[", "<span class='placeholder'>[") | replace("]", "]</span>") | safe }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+  <!-- Show the Math -->
+  <section class="math-section animate-in delay-6">
+    <h2 class="section-title">Show the Math</h2>
+    <p style="color: var(--slate-400); margin-bottom: 1rem; font-size: 0.9375rem;">
+      Your Findable Score is calculated using a weighted combination of criteria and category performance.
+    </p>
+
+    <div class="math-grid">
+      <div class="math-card">
+        <h3 class="math-card-title">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="8" cy="8" r="6" />
+            <path d="M8 5v6M5 8h6" />
+          </svg>
+          Scoring Formula
+        </h3>
+        <div class="formula">
+          Final Score = (Criteria × 70%) + (Category × 30%)
+        </div>
+        <ul class="breakdown-list">
+          <li class="breakdown-item">
+            <span class="breakdown-label">Content Relevance (35%)</span>
+            <span class="breakdown-value">{{ content_relevance | default(0.72) | round(2) }}</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Signal Coverage (35%)</span>
+            <span class="breakdown-value">{{ signal_coverage | default(0.68) | round(2) }}</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Answer Confidence (20%)</span>
+            <span class="breakdown-value">{{ answer_confidence | default(0.61) | round(2) }}</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Source Quality (10%)</span>
+            <span class="breakdown-value">{{ source_quality | default(0.55) | round(2) }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="math-card">
+        <h3 class="math-card-title">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="2" width="12" height="12" rx="2" />
+            <path d="M5 8h6M8 5v6" />
+          </svg>
+          Category Weights
+        </h3>
+        <div class="formula">
+          Category Score = Σ(Category × Weight)
+        </div>
+        <ul class="breakdown-list">
+          <li class="breakdown-item">
+            <span class="breakdown-label">Identity (25%)</span>
+            <span class="breakdown-value">78 × 0.25 = 19.5</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Offerings (30%)</span>
+            <span class="breakdown-value">54 × 0.30 = 16.2</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Contact (15%)</span>
+            <span class="breakdown-value">82 × 0.15 = 12.3</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Trust (15%)</span>
+            <span class="breakdown-value">45 × 0.15 = 6.75</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Differentiation (15%)</span>
+            <span class="breakdown-value">61 × 0.15 = 9.15</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="report-footer">
+    <p>Generated by <a href="/">Findable Score Analyzer</a> &mdash; Measuring AI Sourceability</p>
+    <p style="margin-top: 0.5rem; font-size: 0.75rem;">Run ID: {{ run_id | default("run_abc123") }} &bull; Version 1.0</p>
+  </footer>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Animate score ring and number on load
+  document.addEventListener('DOMContentLoaded', () => {
+    // Animate score ring
+    setTimeout(() => {
+      document.querySelectorAll('.score-ring').forEach(ring => {
+        ring.classList.add('animated');
+      });
+
+      // Animate category bars
+      document.querySelectorAll('.category-bar').forEach(bar => {
+        bar.classList.add('animated');
+      });
+    }, 300);
+
+    // Animate score number counting
+    const scoreNumber = document.querySelector('.score-number');
+    if (scoreNumber) {
+      const target = parseInt(scoreNumber.dataset.target);
+      const duration = 1500;
+      const start = performance.now();
+
+      function updateNumber(currentTime) {
+        const elapsed = currentTime - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const current = Math.round(eased * target);
+        scoreNumber.textContent = current;
+
+        if (progress < 1) {
+          requestAnimationFrame(updateNumber);
+        }
+      }
+
+      setTimeout(() => requestAnimationFrame(updateNumber), 300);
+    }
+  });
+
+  // Toggle fix expansion
+  function toggleFix(id) {
+    const card = document.querySelector(`[data-fix-id="${id}"]`);
+    if (card) {
+      card.classList.toggle('expanded');
+    }
+  }
+</script>
+{% endblock %}
