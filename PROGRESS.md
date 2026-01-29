@@ -7,7 +7,7 @@ Last Updated: 2026-01-28
 | Phase | Status | Progress |
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
-| Week 2: Crawl & Extract | In Progress | 2/7 days |
+| Week 2: Crawl & Extract | In Progress | 3/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
@@ -340,7 +340,47 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 10: Semantic Chunker v1 ⏳ PENDING
+#### Day 10: Semantic Chunker v1 ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `5a47eea`
+
+**Deliverables:**
+- [x] TextSplitter with hierarchical splitting (section → paragraph → sentence → word)
+- [x] Token estimation for chunk size control
+- [x] Sentence splitting with abbreviation handling
+- [x] List and table content detection
+- [x] SemanticChunker with chunk type detection
+- [x] ChunkType enum (text, heading, list, table, code, quote)
+- [x] Heading hierarchy extraction for context
+- [x] Content deduplication via hash
+- [x] Position tracking for chunks
+- [x] Configurable chunk sizes and overlap
+- [x] Test suite (59 tests passing)
+
+**Files Created:**
+- `worker/chunking/__init__.py` - Package exports (lazy imports)
+- `worker/chunking/splitter.py` - Low-level text splitting
+- `worker/chunking/chunker.py` - Semantic chunker with metadata
+- `tests/unit/test_chunking_splitter.py` - Splitter tests (27 tests)
+- `tests/unit/test_chunking_chunker.py` - Chunker tests (32 tests)
+
+**Chunker Features:**
+- Hierarchical splitting: sections → paragraphs → sentences → words
+- Preserves structure (lists, tables, code blocks)
+- Token-based size control (~4 chars/token heuristic)
+- Overlap between chunks for context continuity
+- Merges small chunks to meet minimum size
+- Heading context attached to each chunk
+- Position ratio for document location
+- Content hash for deduplication
+
+**Default Configuration:**
+- `max_chunk_size`: 512 tokens
+- `min_chunk_size`: 100 tokens
+- `overlap_size`: 50 tokens
+
+---
+
 #### Day 11: Embeddings v1 (pgvector) ⏳ PENDING
 #### Day 12: Retrieval v1 (Hybrid) ⏳ PENDING
 #### Day 13: Universal Questions (15) ⏳ PENDING
@@ -395,6 +435,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #9 | Day 7 complete: BFS crawler with robots.txt support |
 | 2026-01-28 | #10 | Day 8 complete: Content extraction with metadata |
 | 2026-01-28 | #10 | Day 9 complete: Render delta rule for JS detection |
+| 2026-01-28 | #10 | Day 10 complete: Semantic chunker with structure preservation |
 
 ---
 
