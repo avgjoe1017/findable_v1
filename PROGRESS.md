@@ -555,7 +555,7 @@ Last Updated: 2026-01-28
 
 #### Day 15: Simulation Runner v1 ✅ COMPLETE
 **Date:** 2026-01-28
-**Commit:** TBD
+**Commit:** `3c58241`
 
 **Deliverables:**
 - [x] Answerability enum (fully_answerable, partially_answerable, not_answerable, contradictory)
