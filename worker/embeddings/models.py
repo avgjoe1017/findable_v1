@@ -204,7 +204,7 @@ class MockEmbeddingModel:
     def embed_query(self, query: str) -> np.ndarray:
         """Generate mock query embedding."""
         embeddings = self.embed([query])
-        return embeddings[0]  # type: ignore
+        return embeddings[0]  # type: ignore[no-any-return]
 
 
 # Model cache
