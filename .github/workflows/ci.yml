@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install "ruff>=0.1.14" "black>=24.1.1" "mypy>=1.8.0"
+          pip install "ruff>=0.1.14" "black==24.1.1" "mypy>=1.8.0"
 
       - name: Run ruff
         run: ruff check .
