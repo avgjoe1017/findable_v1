@@ -1,0 +1,313 @@
+"""BFS web crawler with configurable limits."""
+
+from collections import deque
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime
+
+import structlog
+from bs4 import BeautifulSoup
+
+from worker.crawler.fetcher import Fetcher
+from worker.crawler.robots import RobotsChecker
+from worker.crawler.url import (
+    extract_domain,
+    is_internal_url,
+    normalize_url,
+)
+
+logger = structlog.get_logger(__name__)
+
+
+@dataclass
+class CrawlPage:
+    """A crawled page with metadata."""
+
+    url: str
+    final_url: str
+    title: str | None
+    html: str
+    content_type: str | None
+    status_code: int
+    depth: int
+    fetch_time_ms: int
+    fetched_at: datetime
+    links_found: int
+
+
+@dataclass
+class CrawlResult:
+    """Result of a complete crawl."""
+
+    domain: str
+    start_url: str
+    pages: list[CrawlPage]
+    urls_discovered: int
+    urls_crawled: int
+    urls_skipped: int
+    urls_failed: int
+    started_at: datetime
+    completed_at: datetime
+    duration_seconds: float
+    robots_respected: bool
+    max_depth_reached: int
+
+    @property
+    def success_rate(self) -> float:
+        """Calculate crawl success rate."""
+        if self.urls_crawled == 0:
+            return 0.0
+        return len(self.pages) / self.urls_crawled
+
+
+@dataclass
+class CrawlConfig:
+    """Configuration for a crawl."""
+
+    max_pages: int = 250
+    max_depth: int = 3
+    timeout: float = 30.0
+    user_agent: str = "FindableBot/1.0"
+    respect_robots: bool = True
+    follow_external_links: bool = False
+    concurrency: int = 5
+    min_delay: float = 0.5
+
+
+class Crawler:
+    """BFS web crawler."""
+
+    def __init__(self, config: CrawlConfig):
+        self.config = config
+        self.fetcher = Fetcher(
+            user_agent=config.user_agent,
+            timeout=config.timeout,
+            min_delay_between_requests=config.min_delay,
+        )
+        self.robots = RobotsChecker(
+            user_agent=config.user_agent,
+            respect_robots=config.respect_robots,
+        )
+
+    def _extract_links(self, html: str, base_url: str) -> list[str]:
+        """Extract and normalize links from HTML."""
+        links = []
+        try:
+            soup = BeautifulSoup(html, "html.parser")
+
+            for a_tag in soup.find_all("a", href=True):
+                href = a_tag["href"]
+
+                # Skip javascript, mailto, tel links
+                if href.startswith(("javascript:", "mailto:", "tel:", "#")):
+                    continue
+
+                # Normalize the URL
+                normalized = normalize_url(href, base_url)
+                if normalized:
+                    links.append(normalized)
+
+        except Exception as e:
+            logger.warning("link_extraction_error", error=str(e), url=base_url)
+
+        return links
+
+    def _extract_title(self, html: str) -> str | None:
+        """Extract page title from HTML."""
+        try:
+            soup = BeautifulSoup(html, "html.parser")
+            title_tag = soup.find("title")
+            if title_tag and title_tag.string:
+                return title_tag.string.strip()[:500]  # type: ignore[no-any-return]
+        except Exception:
+            pass
+        return None
+
+    async def crawl(
+        self,
+        start_url: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> CrawlResult:
+        """
+        Perform a BFS crawl starting from the given URL.
+
+        Args:
+            start_url: The URL to start crawling from
+            progress_callback: Optional callback(pages_crawled, total_discovered)
+
+        Returns:
+            CrawlResult with all crawled pages and statistics
+        """
+        started_at = datetime.now(UTC)
+
+        # Normalize start URL
+        normalized_start = normalize_url(start_url)
+        if not normalized_start:
+            raise ValueError(f"Invalid start URL: {start_url}")
+
+        base_domain = extract_domain(normalized_start)
+        if not base_domain:
+            raise ValueError(f"Could not extract domain from: {start_url}")
+
+        logger.info(
+            "crawl_started",
+            url=normalized_start,
+            domain=base_domain,
+            max_pages=self.config.max_pages,
+            max_depth=self.config.max_depth,
+        )
+
+        # Initialize crawl state
+        pages: list[CrawlPage] = []
+        queue: deque[tuple[str, int]] = deque()  # (url, depth)
+        seen: set[str] = set()
+        failed: set[str] = set()
+        skipped: set[str] = set()
+        max_depth_reached = 0
+
+        # Add start URL to queue
+        queue.append((normalized_start, 0))
+        seen.add(normalized_start)
+
+        while queue and len(pages) < self.config.max_pages:
+            url, depth = queue.popleft()
+
+            # Check depth limit
+            if depth > self.config.max_depth:
+                skipped.add(url)
+                continue
+
+            # Check robots.txt
+            if not await self.robots.is_allowed(url):
+                logger.debug("robots_disallowed", url=url)
+                skipped.add(url)
+                continue
+
+            # Get crawl delay from robots.txt
+            crawl_delay = self.robots.get_crawl_delay(url)
+
+            # Fetch the page
+            result = await self.fetcher.fetch(url, crawl_delay)
+
+            if not result.success:
+                logger.debug(
+                    "fetch_failed",
+                    url=url,
+                    status=result.status_code,
+                    error=result.error,
+                )
+                failed.add(url)
+                continue
+
+            # Skip non-HTML responses
+            if not result.is_html or not result.html:
+                skipped.add(url)
+                continue
+
+            # Extract page info
+            title = self._extract_title(result.html)
+            links = self._extract_links(result.html, result.final_url)
+
+            # Create page record
+            page = CrawlPage(
+                url=url,
+                final_url=result.final_url,
+                title=title,
+                html=result.html,
+                content_type=result.content_type,
+                status_code=result.status_code,
+                depth=depth,
+                fetch_time_ms=result.fetch_time_ms,
+                fetched_at=result.fetched_at,
+                links_found=len(links),
+            )
+            pages.append(page)
+
+            # Track max depth
+            if depth > max_depth_reached:
+                max_depth_reached = depth
+
+            # Report progress
+            if progress_callback:
+                progress_callback(len(pages), len(seen))
+
+            logger.debug(
+                "page_crawled",
+                url=url,
+                title=title[:50] if title else None,
+                depth=depth,
+                links=len(links),
+            )
+
+            # Add new links to queue
+            for link in links:
+                if link in seen:
+                    continue
+
+                # Check if internal
+                if not self.config.follow_external_links and not is_internal_url(link, base_domain):
+                    continue
+
+                # Check depth of new URL
+                link_depth = depth + 1
+                if link_depth > self.config.max_depth:
+                    continue
+
+                seen.add(link)
+                queue.append((link, link_depth))
+
+        completed_at = datetime.now(UTC)
+        duration = (completed_at - started_at).total_seconds()
+
+        logger.info(
+            "crawl_completed",
+            domain=base_domain,
+            pages_crawled=len(pages),
+            urls_discovered=len(seen),
+            urls_failed=len(failed),
+            duration_seconds=round(duration, 2),
+        )
+
+        return CrawlResult(
+            domain=base_domain,
+            start_url=normalized_start,
+            pages=pages,
+            urls_discovered=len(seen),
+            urls_crawled=len(pages) + len(failed),
+            urls_skipped=len(skipped),
+            urls_failed=len(failed),
+            started_at=started_at,
+            completed_at=completed_at,
+            duration_seconds=duration,
+            robots_respected=self.config.respect_robots,
+            max_depth_reached=max_depth_reached,
+        )
+
+
+async def crawl_site(
+    url: str,
+    max_pages: int = 250,
+    max_depth: int = 3,
+    user_agent: str = "FindableBot/1.0",
+    progress_callback: Callable[[int, int], None] | None = None,
+) -> CrawlResult:
+    """
+    Convenience function to crawl a site.
+
+    Args:
+        url: The URL to start crawling
+        max_pages: Maximum pages to crawl
+        max_depth: Maximum link depth
+        user_agent: User agent string
+        progress_callback: Optional progress callback
+
+    Returns:
+        CrawlResult with crawled pages
+    """
+    config = CrawlConfig(
+        max_pages=max_pages,
+        max_depth=max_depth,
+        user_agent=user_agent,
+    )
+    crawler = Crawler(config)
+    return await crawler.crawl(url, progress_callback)

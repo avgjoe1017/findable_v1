@@ -6,7 +6,7 @@ Last Updated: 2026-01-28
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| **Week 1: Foundation** | In Progress | 6/7 days |
+| **Week 1: Foundation** | Complete | 7/7 days |
 | Week 2: Crawl & Extract | Not Started | 0/7 days |
 | Week 3: Scoring Engine | Not Started | 0/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
@@ -225,14 +225,40 @@ Last Updated: 2026-01-28
 
 ---
 
-#### Day 7: Crawler v1 (Static) ⏳ PENDING
-**Goal:** Bounded crawl collects pages deterministically
+#### Day 7: Crawler v1 (Static) ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `688df4b`
 
-**Tasks:**
-- [ ] URL normalization
-- [ ] BFS crawl with limits
-- [ ] Robots.txt respect
-- [ ] Raw HTML storage
+**Deliverables:**
+- [x] URL normalization utilities
+- [x] Tracking parameter stripping (UTM, fbclid, etc.)
+- [x] Skip extensions (images, PDFs, etc.)
+- [x] robots.txt parser with wildcard support
+- [x] RobotsChecker with caching
+- [x] HTTP fetcher with retries and rate limiting
+- [x] BFS crawler with configurable limits
+- [x] Progress callbacks for status updates
+- [x] File-based crawl storage with manifests
+- [x] Test suites for URL and robots.txt
+
+**Files Created:**
+- `worker/crawler/__init__.py` - Package exports
+- `worker/crawler/url.py` - URL normalization
+- `worker/crawler/robots.py` - robots.txt parser
+- `worker/crawler/fetcher.py` - HTTP fetcher
+- `worker/crawler/crawler.py` - BFS crawler
+- `worker/crawler/storage.py` - Crawl storage
+- `tests/unit/test_crawler_url.py` - URL tests (21 tests)
+- `tests/unit/test_crawler_robots.py` - Robots tests (16 tests)
+
+**Crawler Features:**
+- Configurable max_pages (default 250)
+- Configurable max_depth (default 3)
+- Respects robots.txt crawl-delay
+- Per-domain rate limiting
+- Automatic link extraction
+- Internal-only link following
+- Concurrent fetching with semaphore
 
 ---
 
@@ -292,6 +318,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #6 | Day 4 complete: Site, Competitor, Run, Report models + services |
 | 2026-01-28 | #7 | Day 5 complete: RQ + Redis job infrastructure |
 | 2026-01-28 | #8 | Day 6 complete: Site, Run, Report REST endpoints |
+| 2026-01-28 | #9 | Day 7 complete: BFS crawler with robots.txt support |
 
 ---
 
