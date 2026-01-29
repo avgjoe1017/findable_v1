@@ -6,18 +6,30 @@
 # from worker.fixes.templates import FixTemplate, get_template
 # from worker.fixes.generator import FixGenerator, Fix, FixPlan
 # from worker.fixes.impact import TierCEstimator, estimate_plan_impact
+# from worker.fixes.synthetic import TierBEstimator, estimate_fix_tier_b
 
 __all__ = [
+    # Reason codes
     "ReasonCode",
+    # Templates
     "FixTemplate",
+    "get_template",
+    # Generator
     "Fix",
     "FixPlan",
     "FixGenerator",
-    "get_template",
+    # Tier C Impact
     "TierCEstimator",
     "FixImpactEstimate",
     "FixPlanImpact",
     "ImpactRange",
     "estimate_fix_impact",
     "estimate_plan_impact",
+    # Tier B Impact (Synthetic Patching)
+    "TierBEstimator",
+    "TierBEstimate",
+    "PatchedQuestionResult",
+    "SyntheticChunk",
+    "estimate_fix_tier_b",
+    "estimate_plan_tier_b",
 ]

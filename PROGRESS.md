@@ -8,7 +8,7 @@ Last Updated: 2026-01-28
 |-------|--------|----------|
 | **Week 1: Foundation** | Complete | 7/7 days |
 | **Week 2: Crawl & Extract** | Complete | 7/7 days |
-| Week 3: Scoring Engine | In Progress | 4/7 days |
+| Week 3: Scoring Engine | In Progress | 5/7 days |
 | Week 4: Observation & Report | Not Started | 0/9 days |
 
 ---
@@ -724,7 +724,48 @@ Last Updated: 2026-01-28
 - Notes about technical fixes and Tier B recommendations
 
 ---
-#### Day 19: Fix Impact Estimator Tier B ⏳ PENDING
+
+#### Day 19: Fix Impact Estimator Tier B ✅ COMPLETE
+**Date:** 2026-01-28
+**Commit:** `de0ce0d`
+
+**Deliverables:**
+- [x] SyntheticChunk dataclass for patched content
+- [x] PatchedQuestionResult with score delta tracking
+- [x] TierBEstimate with Tier C comparison
+- [x] TierBConfig for tunable parameters
+- [x] TierBEstimator class for synthetic patching
+- [x] Signal extraction from fix scaffolds
+- [x] Question re-scoring with relevance boost
+- [x] Confidence calculation from improvement metrics
+- [x] Answerability transition detection
+- [x] Plan-level Tier B estimation (top N fixes)
+- [x] Computation time tracking
+- [x] Human-readable explanations
+- [x] Convenience functions (estimate_fix_tier_b, estimate_plan_tier_b)
+- [x] Test suite (29 tests passing)
+
+**Files Created:**
+- `worker/fixes/synthetic.py` - Tier B synthetic patching estimator
+- `tests/unit/test_fixes_synthetic.py` - Tier B estimator tests (29 tests)
+
+**Files Modified:**
+- `worker/fixes/__init__.py` - Added Tier B exports
+
+**Key Features:**
+- Patches fix scaffolds into content in-memory
+- Re-scores only affected questions (no full re-crawl)
+- More accurate than Tier C (tighter bounds)
+- Compares Tier B vs Tier C estimates
+- Signal matching based on scaffold content
+- Configurable scoring weights and thresholds
+
+**Tier B vs Tier C:**
+- Tier C: Fast lookup tables, conservative estimates
+- Tier B: Synthetic patching, more accurate but higher cost
+- Both return ImpactRange with min/max/expected points
+
+---
 #### Day 20: Observation Provider Layer ⏳ PENDING
 #### Day 21: Observation Parsing ⏳ PENDING
 
@@ -775,6 +816,7 @@ Last Updated: 2026-01-28
 | 2026-01-28 | #13 | Day 16 complete: Scoring rubric + "Show the Math" transparency |
 | 2026-01-28 | #13 | Day 17 complete: Fix generator v1 with reason codes and scaffolds |
 | 2026-01-28 | #13 | Day 18 complete: Fix impact estimator Tier C with lookup tables |
+| 2026-01-28 | #14 | Day 19 complete: Fix impact estimator Tier B with synthetic patching |
 
 ---
 
