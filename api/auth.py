@@ -138,14 +138,20 @@ async def get_current_user_optional(request: Request) -> User | None:
         return None
 
 
+def _truncate_password(password: str) -> str:
+    """Truncate password to 72 bytes for bcrypt compatibility."""
+    # bcrypt has a 72-byte limit on passwords
+    return password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
+
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    return pwd_context.verify(_truncate_password(plain_password), hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password."""
-    return pwd_context.hash(password)
+    return pwd_context.hash(_truncate_password(password))
 
 
 def create_access_token(user_id: str) -> str:

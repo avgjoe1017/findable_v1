@@ -13,7 +13,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from api.auth import get_current_user_optional
-from api.database import get_db
+from api.config import get_settings
+from api.database import async_session_maker, get_db
+from api.models.user import User
 from api.services import run_service, site_service
 
 # Template configuration
@@ -26,9 +28,64 @@ router = APIRouter(tags=["web"])
 # Session cookie name for simple auth
 SESSION_COOKIE = "findable_session"
 
+# Dev user ID (consistent UUID for development)
+DEV_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
-async def get_optional_user(request: Request) -> dict | None:
-    """Get current user if authenticated, None otherwise."""
+
+async def get_or_create_dev_user() -> User:
+    """Get or create the dev user in the database."""
+    import structlog
+    from sqlalchemy import select, text
+
+    log = structlog.get_logger()
+
+    # Pre-computed bcrypt hash for "devpassword123"
+    DEV_PASSWORD_HASH = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.DQwOZwTTaZiGGi"
+
+    try:
+        async with async_session_maker() as db:
+            result = await db.execute(select(User).where(User.id == DEV_USER_ID))
+            user = result.scalar_one_or_none()
+
+            if not user:
+                log.info("Creating dev user via raw SQL", user_id=str(DEV_USER_ID))
+                # Use raw SQL to bypass any ORM/passlib issues
+                await db.execute(
+                    text("""
+                        INSERT INTO users (id, email, hashed_password, is_active, is_superuser, is_verified, plan)
+                        VALUES (:id, :email, :hashed_password, :is_active, :is_superuser, :is_verified, :plan)
+                    """),
+                    {
+                        "id": DEV_USER_ID,
+                        "email": "dev@findable.local",
+                        "hashed_password": DEV_PASSWORD_HASH,
+                        "is_active": True,
+                        "is_superuser": True,
+                        "is_verified": True,
+                        "plan": "agency",
+                    },
+                )
+                await db.commit()
+                log.info("Dev user created successfully")
+
+                # Now fetch the user
+                result = await db.execute(select(User).where(User.id == DEV_USER_ID))
+                user = result.scalar_one()
+
+            return user
+    except Exception as e:
+        log.error("Error in get_or_create_dev_user", error=str(e))
+        raise
+
+
+async def get_optional_user(request: Request) -> Any:
+    """Get current user if authenticated, or dev user in development mode."""
+    settings = get_settings()
+
+    # In development mode, always return dev user (bypass auth)
+    if settings.env == "development":
+        return await get_or_create_dev_user()
+
     try:
         user = await get_current_user_optional(request)
         return user
