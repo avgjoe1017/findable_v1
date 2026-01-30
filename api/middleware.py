@@ -148,9 +148,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         limits = PLAN_RATE_LIMITS.get(plan, PLAN_RATE_LIMITS["starter"])
 
         identifier = f"user:{user_id}" if user_id else f"ip:{client_ip}"
-        allowed, retry_after = self._check_rate_limit(
-            identifier, limits, self._user_buckets
-        )
+        allowed, retry_after = self._check_rate_limit(identifier, limits, self._user_buckets)
 
         if not allowed:
             logger.warning(

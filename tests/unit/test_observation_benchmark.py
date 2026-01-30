@@ -458,8 +458,8 @@ class TestCompetitorBenchmarker:
 
         comp_results = [
             make_observation_result("q1", "Comp", "comp.com", False, False),  # Win
-            make_observation_result("q2", "Comp", "comp.com", True, False),   # Tie
-            make_observation_result("q3", "Comp", "comp.com", True, False),   # Loss
+            make_observation_result("q2", "Comp", "comp.com", True, False),  # Tie
+            make_observation_result("q3", "Comp", "comp.com", True, False),  # Loss
         ]
         comp_obs = make_observation_run("Comp", "comp.com", comp_results)
 
@@ -523,10 +523,14 @@ class TestCompetitorBenchmarker:
         comp2_results = [make_observation_result("q1", "C2", "c2.com", False, False)]
 
         competitors = [
-            (CompetitorInfo(name="C1", domain="c1.com"),
-             make_observation_run("C1", "c1.com", comp1_results)),
-            (CompetitorInfo(name="C2", domain="c2.com"),
-             make_observation_run("C2", "c2.com", comp2_results)),
+            (
+                CompetitorInfo(name="C1", domain="c1.com"),
+                make_observation_run("C1", "c1.com", comp1_results),
+            ),
+            (
+                CompetitorInfo(name="C2", domain="c2.com"),
+                make_observation_run("C2", "c2.com", comp2_results),
+            ),
         ]
 
         result = benchmarker.benchmark(
@@ -551,10 +555,14 @@ class TestCompetitorBenchmarker:
         comp2_results = [make_observation_result("q1", "C2", "c2.com", True, False)]
 
         competitors = [
-            (CompetitorInfo(name="C1", domain="c1.com"),
-             make_observation_run("C1", "c1.com", comp1_results)),
-            (CompetitorInfo(name="C2", domain="c2.com"),
-             make_observation_run("C2", "c2.com", comp2_results)),
+            (
+                CompetitorInfo(name="C1", domain="c1.com"),
+                make_observation_run("C1", "c1.com", comp1_results),
+            ),
+            (
+                CompetitorInfo(name="C2", domain="c2.com"),
+                make_observation_run("C2", "c2.com", comp2_results),
+            ),
         ]
 
         result = benchmarker.benchmark(
@@ -576,9 +584,7 @@ class TestCompetitorBenchmarker:
         your_obs = make_observation_run("My", "my.com", your_results)
 
         # But parsed says yes
-        your_parsed = {
-            "q1": ParsedObservation(has_company_mention=True, has_url_citation=True)
-        }
+        your_parsed = {"q1": ParsedObservation(has_company_mention=True, has_url_citation=True)}
 
         comp_results = [make_observation_result("q1", "Comp", "comp.com", False, False)]
         comp_obs = make_observation_run("Comp", "comp.com", comp_results)
@@ -603,14 +609,12 @@ class TestCompetitorBenchmarker:
 
         # Create scenario with clear competitive advantage
         your_results = [
-            make_observation_result(f"q{i}", "My", "my.com", True, False)
-            for i in range(5)
+            make_observation_result(f"q{i}", "My", "my.com", True, False) for i in range(5)
         ]
         your_obs = make_observation_run("My", "my.com", your_results)
 
         comp_results = [
-            make_observation_result(f"q{i}", "Comp", "comp.com", False, False)
-            for i in range(5)
+            make_observation_result(f"q{i}", "Comp", "comp.com", False, False) for i in range(5)
         ]
         comp_obs = make_observation_run("Comp", "comp.com", comp_results)
 
@@ -631,14 +635,12 @@ class TestCompetitorBenchmarker:
 
         # Create scenario with competitive disadvantage
         your_results = [
-            make_observation_result(f"q{i}", "My", "my.com", False, False)
-            for i in range(5)
+            make_observation_result(f"q{i}", "My", "my.com", False, False) for i in range(5)
         ]
         your_obs = make_observation_run("My", "my.com", your_results)
 
         comp_results = [
-            make_observation_result(f"q{i}", "Comp", "comp.com", True, True)
-            for i in range(5)
+            make_observation_result(f"q{i}", "Comp", "comp.com", True, True) for i in range(5)
         ]
         comp_obs = make_observation_run("Comp", "comp.com", comp_results)
 

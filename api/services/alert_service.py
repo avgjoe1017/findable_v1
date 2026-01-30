@@ -25,9 +25,7 @@ class AlertService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_or_create_config(
-        self, user_id: uuid.UUID, site_id: uuid.UUID
-    ) -> AlertConfig:
+    async def get_or_create_config(self, user_id: uuid.UUID, site_id: uuid.UUID) -> AlertConfig:
         """Get or create alert configuration for a site."""
         result = await self.db.execute(
             select(AlertConfig).where(
@@ -43,7 +41,8 @@ class AlertService:
             await self.db.flush()
             await self.db.refresh(config)
 
-        return config
+        result_config: AlertConfig = config
+        return result_config
 
     async def update_config(
         self,
@@ -65,7 +64,7 @@ class AlertService:
         previous_snapshot: Snapshot | None,
     ) -> list[Alert]:
         """Check for alert conditions after a snapshot and create alerts."""
-        alerts = []
+        alerts: list[Alert] = []
 
         # Get alert config for this site
         result = await self.db.execute(
@@ -78,9 +77,7 @@ class AlertService:
 
         # Check rate limiting
         if config.last_alert_at:
-            hours_since_last = (
-                datetime.now(UTC) - config.last_alert_at
-            ).total_seconds() / 3600
+            hours_since_last = (datetime.now(UTC) - config.last_alert_at).total_seconds() / 3600
             if hours_since_last < config.min_hours_between_alerts:
                 logger.debug(
                     "alert_rate_limited",
@@ -92,9 +89,7 @@ class AlertService:
         # Get user for the site
         from api.models import Site
 
-        site_result = await self.db.execute(
-            select(Site).where(Site.id == snapshot.site_id)
-        )
+        site_result = await self.db.execute(select(Site).where(Site.id == snapshot.site_id))
         site = site_result.scalar_one_or_none()
         if not site:
             return alerts
@@ -227,9 +222,7 @@ class AlertService:
     ) -> Alert | None:
         """Create an alert for a failed snapshot."""
         # Get config
-        result = await self.db.execute(
-            select(AlertConfig).where(AlertConfig.site_id == site_id)
-        )
+        result = await self.db.execute(select(AlertConfig).where(AlertConfig.site_id == site_id))
         config = result.scalar_one_or_none()
 
         if not config or not config.enabled or not config.alert_on_snapshot_failed:
@@ -310,9 +303,7 @@ class AlertService:
             query = query.where(Alert.status == status)
 
         # Get total count
-        count_query = select(func.count()).select_from(
-            query.subquery()
-        )
+        count_query = select(func.count()).select_from(query.subquery())
         count_result = await self.db.execute(count_query)
         total = count_result.scalar_one()
 
@@ -383,9 +374,7 @@ class AlertService:
         week_start = today_start - timedelta(days=7)
 
         # Total alerts
-        total_result = await self.db.execute(
-            select(func.count()).where(Alert.user_id == user_id)
-        )
+        total_result = await self.db.execute(select(func.count()).where(Alert.user_id == user_id))
         total = total_result.scalar_one()
 
         # Unread count

@@ -102,15 +102,15 @@ class ScoringRubric:
 
     name: str = "Findable Score Rubric v1"
     version: str = "1.0"
-    description: str = "Evaluates how well AI systems can find and cite information about your business"
+    description: str = (
+        "Evaluates how well AI systems can find and cite information about your business"
+    )
 
     # Main scoring criteria
     criteria: list[RubricCriterion] = field(default_factory=list)
 
     # Category weights
-    category_weights: dict[QuestionCategory, CategoryWeight] = field(
-        default_factory=dict
-    )
+    category_weights: dict[QuestionCategory, CategoryWeight] = field(default_factory=dict)
 
     # Difficulty multipliers
     difficulty_multipliers: dict[QuestionDifficulty, DifficultyMultiplier] = field(
@@ -288,9 +288,7 @@ class ScoringRubric:
             "version": self.version,
             "description": self.description,
             "criteria": [c.to_dict() for c in self.criteria],
-            "category_weights": {
-                k.value: v.to_dict() for k, v in self.category_weights.items()
-            },
+            "category_weights": {k.value: v.to_dict() for k, v in self.category_weights.items()},
             "difficulty_multipliers": {
                 k.value: v.to_dict() for k, v in self.difficulty_multipliers.items()
             },

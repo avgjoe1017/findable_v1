@@ -218,9 +218,7 @@ class FixGenerator:
         total_impact = min(1.0, sum(f.estimated_impact for f in fixes))
 
         categories = list({cat for f in fixes for cat in f.affected_categories})
-        questions_addressed = len({
-            qid for f in fixes for qid in f.affected_question_ids
-        })
+        questions_addressed = len({qid for f in fixes for qid in f.affected_question_ids})
 
         return FixPlan(
             id=uuid4(),
@@ -293,9 +291,7 @@ class FixGenerator:
 
         # Check signal coverage
         signal_coverage = (
-            question.signals_found / question.signals_total
-            if question.signals_total > 0
-            else 0
+            question.signals_found / question.signals_total if question.signals_total > 0 else 0
         )
         if signal_coverage < 0.3:
             # Most signals missing - content gap

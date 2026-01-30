@@ -79,9 +79,9 @@ def calculate_next_run(
         elif days_ahead == 0 and now.hour >= hour:  # Today but already passed
             days_ahead = 7
 
-        next_run = now.replace(
-            hour=hour, minute=0, second=0, microsecond=0
-        ) + timedelta(days=days_ahead)
+        next_run = now.replace(hour=hour, minute=0, second=0, microsecond=0) + timedelta(
+            days=days_ahead
+        )
 
     else:  # MONTHLY
         # First occurrence of day_of_week in next month
@@ -216,14 +216,16 @@ class MonitoringScheduler:
             if site_id and job_site_id != str(site_id):
                 continue
 
-            jobs.append({
-                "job_id": job.id,
-                "site_id": job_site_id,
-                "run_at": meta.get("run_at"),
-                "scheduled_at": meta.get("scheduled_at"),
-                "frequency": meta.get("frequency"),
-                "func_name": job.func_name if hasattr(job, "func_name") else None,
-            })
+            jobs.append(
+                {
+                    "job_id": job.id,
+                    "site_id": job_site_id,
+                    "run_at": meta.get("run_at"),
+                    "scheduled_at": meta.get("scheduled_at"),
+                    "frequency": meta.get("frequency"),
+                    "func_name": job.func_name if hasattr(job, "func_name") else None,
+                }
+            )
 
         return jobs
 

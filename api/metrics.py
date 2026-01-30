@@ -102,12 +102,14 @@ JOB_PROCESSING_TIME = Histogram(
 
 def get_metrics() -> bytes:
     """Generate Prometheus metrics output."""
-    return generate_latest()
+    metrics: bytes = generate_latest()
+    return metrics
 
 
 def get_metrics_content_type() -> str:
     """Get the content type for Prometheus metrics."""
-    return CONTENT_TYPE_LATEST
+    content_type: str = CONTENT_TYPE_LATEST
+    return content_type
 
 
 class MetricsMiddleware(BaseHTTPMiddleware):

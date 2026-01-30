@@ -15,6 +15,7 @@ class TestStartScript:
     def test_script_importable(self):
         """Verify start script can be imported."""
         from scripts.start import main, run_migrations, start_api
+
         assert callable(main)
         assert callable(run_migrations)
         assert callable(start_api)
@@ -299,6 +300,7 @@ class TestSecurityConfiguration:
 
         # Make sure no real-looking secrets
         import re
+
         # Real Stripe keys start with sk_live_ or pk_live_
-        assert not re.search(r'sk_live_[A-Za-z0-9]+', content)
-        assert not re.search(r'pk_live_[A-Za-z0-9]+', content)
+        assert not re.search(r"sk_live_[A-Za-z0-9]+", content)
+        assert not re.search(r"pk_live_[A-Za-z0-9]+", content)

@@ -22,12 +22,12 @@ from api.models import (
     UsageType,
     User,
 )
-from api.models.user import PlanTier
 from api.schemas.billing import (
     PLAN_LIMITS,
     FeatureCheckResponse,
     LimitCheckResponse,
     PlanLimitsResponse,
+    PlanTier,
     UsageResponse,
 )
 
@@ -44,10 +44,9 @@ class BillingService:
 
     async def get_user_subscription(self, user_id: uuid.UUID) -> Subscription | None:
         """Get user's subscription."""
-        result = await self.db.execute(
-            select(Subscription).where(Subscription.user_id == user_id)
-        )
-        return result.scalar_one_or_none()
+        result = await self.db.execute(select(Subscription).where(Subscription.user_id == user_id))
+        subscription: Subscription | None = result.scalar_one_or_none()
+        return subscription
 
     async def get_or_create_subscription(self, user_id: uuid.UUID) -> Subscription:
         """Get or create a subscription for a user."""
@@ -91,7 +90,7 @@ class BillingService:
     async def get_plan_limits(self, plan: PlanTier) -> PlanLimitsResponse:
         """Get limits for a specific plan."""
         limits = PLAN_LIMITS[plan]
-        return PlanLimitsResponse(**limits)
+        return PlanLimitsResponse(**limits)  # type: ignore[arg-type]
 
     # Usage tracking methods
 
@@ -109,9 +108,7 @@ class BillingService:
         subscription = await self.get_or_create_subscription(user_id)
 
         period_start = subscription.current_period_start or datetime.now(UTC)
-        period_end = subscription.current_period_end or (
-            datetime.now(UTC) + timedelta(days=30)
-        )
+        period_end = subscription.current_period_end or (datetime.now(UTC) + timedelta(days=30))
 
         usage = UsageRecord(
             user_id=user_id,
@@ -142,14 +139,10 @@ class BillingService:
         limits = PLAN_LIMITS[plan]
 
         period_start = subscription.current_period_start or datetime.now(UTC)
-        period_end = subscription.current_period_end or (
-            datetime.now(UTC) + timedelta(days=30)
-        )
+        period_end = subscription.current_period_end or (datetime.now(UTC) + timedelta(days=30))
 
         # Count sites (current total, not period-based)
-        sites_result = await self.db.execute(
-            select(func.count()).where(Site.user_id == user_id)
-        )
+        sites_result = await self.db.execute(select(func.count()).where(Site.user_id == user_id))
         sites_count = sites_result.scalar_one()
 
         # Count runs in current period
@@ -208,11 +201,7 @@ class BillingService:
         usage = await self.get_current_usage(user_id)
 
         allowed = usage.runs_count < usage.runs_limit
-        message = (
-            None
-            if allowed
-            else f"Monthly run limit reached ({usage.runs_limit} runs)"
-        )
+        message = None if allowed else f"Monthly run limit reached ({usage.runs_limit} runs)"
 
         return LimitCheckResponse(
             allowed=allowed,
@@ -250,9 +239,7 @@ class BillingService:
         limit = limits["competitors_per_site"]
 
         allowed = current_count < limit
-        message = (
-            None if allowed else f"Competitor limit reached ({limit} competitors)"
-        )
+        message = None if allowed else f"Competitor limit reached ({limit} competitors)"
 
         return LimitCheckResponse(
             allowed=allowed,
@@ -287,9 +274,7 @@ class BillingService:
 
     # Feature access methods
 
-    async def check_feature_access(
-        self, user_id: uuid.UUID, feature: str
-    ) -> FeatureCheckResponse:
+    async def check_feature_access(self, user_id: uuid.UUID, feature: str) -> FeatureCheckResponse:
         """Check if user has access to a feature."""
         plan = await self.get_user_plan(user_id)
         limits = PLAN_LIMITS[plan]
@@ -307,7 +292,7 @@ class BillingService:
             )
 
         feature_key, required_plan = feature_map[feature]
-        allowed = limits.get(feature_key, False)
+        allowed: bool = bool(limits.get(feature_key, False))
 
         return FeatureCheckResponse(
             allowed=allowed,
@@ -399,7 +384,8 @@ class BillingService:
             await self.db.flush()
             await self.db.refresh(summary)
 
-        return summary
+        result_summary: UsageSummary = summary
+        return result_summary
 
     async def update_usage_summary(self, user_id: uuid.UUID) -> UsageSummary:
         """Update usage summary with current counts."""
@@ -407,13 +393,9 @@ class BillingService:
         usage = await self.get_current_usage(user_id)
 
         period_start = subscription.current_period_start or datetime.now(UTC)
-        period_end = subscription.current_period_end or (
-            datetime.now(UTC) + timedelta(days=30)
-        )
+        period_end = subscription.current_period_end or (datetime.now(UTC) + timedelta(days=30))
 
-        summary = await self.get_or_create_usage_summary(
-            user_id, period_start, period_end
-        )
+        summary = await self.get_or_create_usage_summary(user_id, period_start, period_end)
 
         summary.sites_count = usage.sites_count
         summary.runs_count = usage.runs_count
@@ -426,9 +408,7 @@ class BillingService:
 
     # Plan change methods
 
-    async def change_plan(
-        self, user_id: uuid.UUID, new_plan: PlanTier
-    ) -> tuple[bool, str]:
+    async def change_plan(self, user_id: uuid.UUID, new_plan: PlanTier) -> tuple[bool, str]:
         """
         Change user's plan. Returns (success, message).
 

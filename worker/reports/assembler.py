@@ -118,9 +118,7 @@ class ReportAssembler:
         # Build optional sections
         observation_section = None
         if observation and self.config.include_observation:
-            observation_section = self._build_observation_section(
-                observation, comparison
-            )
+            observation_section = self._build_observation_section(observation, comparison)
 
         benchmark_section = None
         if benchmark and self.config.include_benchmark:
@@ -152,8 +150,8 @@ class ReportAssembler:
         now: datetime,
     ) -> ReportMetadata:
         """Build report metadata."""
-        limitations = []
-        notes = []
+        limitations: list[str] = []
+        notes: list[str] = []
 
         # Add limitations based on config
         if not self.config.include_observation:
@@ -189,19 +187,14 @@ class ReportAssembler:
     ) -> ScoreSection:
         """Build score section from ScoreBreakdown."""
         # Extract category scores
-        category_scores = {
-            cat: cb.raw_score
-            for cat, cb in breakdown.category_breakdowns.items()
-        }
+        category_scores = {cat: cb.raw_score for cat, cb in breakdown.category_breakdowns.items()}
 
         return ScoreSection(
             total_score=breakdown.total_score,
             grade=breakdown.grade,
             grade_description=breakdown.grade_description,
             category_scores=category_scores,
-            category_breakdown={
-                k: v.to_dict() for k, v in breakdown.category_breakdowns.items()
-            },
+            category_breakdown={k: v.to_dict() for k, v in breakdown.category_breakdowns.items()},
             criterion_scores=[cs.to_dict() for cs in breakdown.criterion_scores],
             total_questions=breakdown.total_questions,
             questions_answered=breakdown.questions_answered,
@@ -272,24 +265,22 @@ class ReportAssembler:
     ) -> ObservationSection:
         """Build observation section from ObservationRun."""
         # Count questions with mentions/citations
-        questions_with_mention = sum(
-            1 for r in observation.results if r.mentions_company
-        )
-        questions_with_citation = sum(
-            1 for r in observation.results if r.mentions_url
-        )
+        questions_with_mention = sum(1 for r in observation.results if r.mentions_company)
+        questions_with_citation = sum(1 for r in observation.results if r.mentions_url)
 
         # Build simplified question results
         question_results = []
         for result in observation.results:
-            question_results.append({
-                "question_id": result.question_id,
-                "question_text": result.question_text[:100],
-                "mentions_company": result.mentions_company,
-                "mentions_url": result.mentions_url,
-                "cited_urls": result.cited_urls[:3],  # Limit URLs
-                "confidence_expressed": result.confidence_expressed,
-            })
+            question_results.append(
+                {
+                    "question_id": result.question_id,
+                    "question_text": result.question_text[:100],
+                    "mentions_company": result.mentions_company,
+                    "mentions_url": result.mentions_url,
+                    "cited_urls": result.cited_urls[:3],  # Limit URLs
+                    "confidence_expressed": result.confidence_expressed,
+                }
+            )
 
         # Get comparison data if available
         prediction_accuracy = comparison.prediction_accuracy if comparison else 0.0
@@ -327,8 +318,11 @@ class ReportAssembler:
         for h2h in benchmark.head_to_heads:
             # Find the competitor result
             comp_result = next(
-                (c for c in benchmark.competitor_results
-                 if c.competitor.name == h2h.competitor_name),
+                (
+                    c
+                    for c in benchmark.competitor_results
+                    if c.competitor.name == h2h.competitor_name
+                ),
                 None,
             )
             if comp_result:
@@ -386,10 +380,7 @@ class ReportAssembler:
         refresh_reasons = []
         should_refresh = False
 
-        if (
-            self.config.refresh_on_high_divergence
-            and level == DivergenceLevel.HIGH
-        ):
+        if self.config.refresh_on_high_divergence and level == DivergenceLevel.HIGH:
             should_refresh = True
             refresh_reasons.append(
                 f"High divergence ({delta:.0%}) between simulation and observation."

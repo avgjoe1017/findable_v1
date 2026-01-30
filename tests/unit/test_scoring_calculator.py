@@ -96,12 +96,14 @@ def make_simulation_result(
 
     results = []
     for i in range(question_count):
-        results.append(make_question_result(
-            question_id=f"q{i+1}",
-            category=categories[i % len(categories)],
-            difficulty=difficulties[i % len(difficulties)],
-            score=avg_score + (i - question_count // 2) * 0.05,
-        ))
+        results.append(
+            make_question_result(
+                question_id=f"q{i+1}",
+                category=categories[i % len(categories)],
+                difficulty=difficulties[i % len(difficulties)],
+                score=avg_score + (i - question_count // 2) * 0.05,
+            )
+        )
 
     now = datetime.utcnow()
     return SimulationResult(
@@ -379,7 +381,21 @@ class TestScoreCalculator:
 
         assert isinstance(result, ScoreBreakdown)
         assert 0 <= result.total_score <= 100
-        assert result.grade in ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"]
+        assert result.grade in [
+            "A+",
+            "A",
+            "A-",
+            "B+",
+            "B",
+            "B-",
+            "C+",
+            "C",
+            "C-",
+            "D+",
+            "D",
+            "D-",
+            "F",
+        ]
 
     def test_calculate_counts_questions(self) -> None:
         """Counts answered, partial, unanswered questions."""

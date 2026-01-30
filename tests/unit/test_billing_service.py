@@ -88,65 +88,41 @@ class TestCheckFeatureAccess:
 
     @pytest.mark.asyncio
     async def test_api_access_denied_starter(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.STARTER
-        ):
-            result = await service.check_feature_access(
-                uuid.uuid4(), "api_access"
-            )
+        with patch.object(service, "get_user_plan", return_value=PlanTier.STARTER):
+            result = await service.check_feature_access(uuid.uuid4(), "api_access")
             assert result.allowed is False
             assert result.required_plan == "professional"
 
     @pytest.mark.asyncio
     async def test_api_access_allowed_professional(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.PROFESSIONAL
-        ):
-            result = await service.check_feature_access(
-                uuid.uuid4(), "api_access"
-            )
+        with patch.object(service, "get_user_plan", return_value=PlanTier.PROFESSIONAL):
+            result = await service.check_feature_access(uuid.uuid4(), "api_access")
             assert result.allowed is True
             assert result.required_plan is None
 
     @pytest.mark.asyncio
     async def test_webhook_alerts_denied_starter(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.STARTER
-        ):
-            result = await service.check_feature_access(
-                uuid.uuid4(), "webhook_alerts"
-            )
+        with patch.object(service, "get_user_plan", return_value=PlanTier.STARTER):
+            result = await service.check_feature_access(uuid.uuid4(), "webhook_alerts")
             assert result.allowed is False
 
     @pytest.mark.asyncio
     async def test_priority_support_denied_professional(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.PROFESSIONAL
-        ):
-            result = await service.check_feature_access(
-                uuid.uuid4(), "priority_support"
-            )
+        with patch.object(service, "get_user_plan", return_value=PlanTier.PROFESSIONAL):
+            result = await service.check_feature_access(uuid.uuid4(), "priority_support")
             assert result.allowed is False
             assert result.required_plan == "agency"
 
     @pytest.mark.asyncio
     async def test_priority_support_allowed_agency(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.AGENCY
-        ):
-            result = await service.check_feature_access(
-                uuid.uuid4(), "priority_support"
-            )
+        with patch.object(service, "get_user_plan", return_value=PlanTier.AGENCY):
+            result = await service.check_feature_access(uuid.uuid4(), "priority_support")
             assert result.allowed is True
 
     @pytest.mark.asyncio
     async def test_unknown_feature_allowed(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.STARTER
-        ):
-            result = await service.check_feature_access(
-                uuid.uuid4(), "unknown_feature"
-            )
+        with patch.object(service, "get_user_plan", return_value=PlanTier.STARTER):
+            result = await service.check_feature_access(uuid.uuid4(), "unknown_feature")
             assert result.allowed is True
 
 
@@ -163,42 +139,32 @@ class TestCheckMonitoringInterval:
 
     @pytest.mark.asyncio
     async def test_starter_weekly_allowed(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.STARTER
-        ):
+        with patch.object(service, "get_user_plan", return_value=PlanTier.STARTER):
             result = await service.check_monitoring_interval(uuid.uuid4(), 168)
             assert result.allowed is True
 
     @pytest.mark.asyncio
     async def test_starter_daily_denied(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.STARTER
-        ):
+        with patch.object(service, "get_user_plan", return_value=PlanTier.STARTER):
             result = await service.check_monitoring_interval(uuid.uuid4(), 24)
             assert result.allowed is False
             assert "168 hours" in result.message
 
     @pytest.mark.asyncio
     async def test_professional_daily_allowed(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.PROFESSIONAL
-        ):
+        with patch.object(service, "get_user_plan", return_value=PlanTier.PROFESSIONAL):
             result = await service.check_monitoring_interval(uuid.uuid4(), 24)
             assert result.allowed is True
 
     @pytest.mark.asyncio
     async def test_professional_hourly_denied(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.PROFESSIONAL
-        ):
+        with patch.object(service, "get_user_plan", return_value=PlanTier.PROFESSIONAL):
             result = await service.check_monitoring_interval(uuid.uuid4(), 6)
             assert result.allowed is False
 
     @pytest.mark.asyncio
     async def test_agency_frequent_allowed(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.AGENCY
-        ):
+        with patch.object(service, "get_user_plan", return_value=PlanTier.AGENCY):
             result = await service.check_monitoring_interval(uuid.uuid4(), 6)
             assert result.allowed is True
 
@@ -216,36 +182,28 @@ class TestCheckCompetitorsLimit:
 
     @pytest.mark.asyncio
     async def test_starter_under_limit(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.STARTER
-        ):
+        with patch.object(service, "get_user_plan", return_value=PlanTier.STARTER):
             result = await service.check_competitors_limit(uuid.uuid4(), 2)
             assert result.allowed is True
             assert result.remaining == 1  # 3 - 2
 
     @pytest.mark.asyncio
     async def test_starter_at_limit(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.STARTER
-        ):
+        with patch.object(service, "get_user_plan", return_value=PlanTier.STARTER):
             result = await service.check_competitors_limit(uuid.uuid4(), 3)
             assert result.allowed is False
             assert result.remaining == 0
 
     @pytest.mark.asyncio
     async def test_professional_higher_limit(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.PROFESSIONAL
-        ):
+        with patch.object(service, "get_user_plan", return_value=PlanTier.PROFESSIONAL):
             result = await service.check_competitors_limit(uuid.uuid4(), 5)
             assert result.allowed is True
             assert result.remaining == 5  # 10 - 5
 
     @pytest.mark.asyncio
     async def test_agency_highest_limit(self, service):
-        with patch.object(
-            service, "get_user_plan", return_value=PlanTier.AGENCY
-        ):
+        with patch.object(service, "get_user_plan", return_value=PlanTier.AGENCY):
             result = await service.check_competitors_limit(uuid.uuid4(), 20)
             assert result.allowed is True
             assert result.remaining == 5  # 25 - 20

@@ -148,12 +148,8 @@ class SimulationObservationComparator:
         summary.total_questions = len(simulation.question_results)
 
         # Build lookup maps
-        sim_map: dict[str, QuestionResult] = {
-            r.question_id: r for r in simulation.question_results
-        }
-        obs_map: dict[str, ObservationResult] = {
-            r.question_id: r for r in observation.results
-        }
+        sim_map: dict[str, QuestionResult] = {r.question_id: r for r in simulation.question_results}
+        obs_map: dict[str, ObservationResult] = {r.question_id: r for r in observation.results}
 
         # Compare each question
         for q_id, sim_result in sim_map.items():
@@ -175,14 +171,14 @@ class SimulationObservationComparator:
 
         # Calculate rates
         if summary.total_questions > 0:
-            summary.prediction_accuracy = (
-                summary.correct_predictions / summary.total_questions
-            )
+            summary.prediction_accuracy = summary.correct_predictions / summary.total_questions
 
             # Simulation prediction rate (based on answerability)
             answerable = sum(
-                1 for r in simulation.question_results
-                if r.answerability in (
+                1
+                for r in simulation.question_results
+                if r.answerability
+                in (
                     Answerability.FULLY_ANSWERABLE,
                     Answerability.PARTIALLY_ANSWERABLE,
                 )
@@ -192,9 +188,7 @@ class SimulationObservationComparator:
         # Observation rates
         summary.mention_rate_obs = observation.company_mention_rate
         summary.citation_rate_obs = observation.citation_rate
-        summary.mention_rate_delta = (
-            summary.mention_rate_obs - summary.mention_rate_sim
-        )
+        summary.mention_rate_delta = summary.mention_rate_obs - summary.mention_rate_sim
 
         # Generate insights
         summary.insights = self._generate_insights(summary)
@@ -245,8 +239,8 @@ class SimulationObservationComparator:
             comparison.sourceability_outcome = SourceabilityOutcome.OMITTED
 
         # Compare prediction to outcome
-        comparison.outcome_match, comparison.prediction_accurate = (
-            self._evaluate_prediction(sim_result, comparison)
+        comparison.outcome_match, comparison.prediction_accurate = self._evaluate_prediction(
+            sim_result, comparison
         )
 
         # Generate explanation
@@ -264,9 +258,9 @@ class SimulationObservationComparator:
             Answerability.FULLY_ANSWERABLE,
             Answerability.PARTIALLY_ANSWERABLE,
         )
-        obs_positive = (
-            comparison.sourceability_outcome
-            in (SourceabilityOutcome.CITED, SourceabilityOutcome.MENTIONED)
+        obs_positive = comparison.sourceability_outcome in (
+            SourceabilityOutcome.CITED,
+            SourceabilityOutcome.MENTIONED,
         )
 
         if comparison.sourceability_outcome == SourceabilityOutcome.REFUSED:

@@ -101,15 +101,9 @@ class Subscription(Base):
     current_period_end: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    cancel_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    canceled_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    trial_end: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    cancel_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    canceled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    trial_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Extra data
     extra_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
@@ -169,12 +163,8 @@ class UsageRecord(Base):
     extra_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # Period tracking (for aggregation)
-    period_start: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    period_end: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     # Timestamp
     created_at: Mapped[datetime] = mapped_column(
@@ -205,9 +195,7 @@ class BillingEvent(Base):
 
     # Event details
     event_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    stripe_event_id: Mapped[str | None] = mapped_column(
-        String(255), nullable=True, unique=True
-    )
+    stripe_event_id: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
 
     # Event data
     data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
@@ -244,12 +232,8 @@ class UsageSummary(Base):
     )
 
     # Period
-    period_start: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    period_end: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     # Counts
     sites_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

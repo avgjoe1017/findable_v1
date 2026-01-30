@@ -94,9 +94,9 @@ async def get_plans(
 ) -> PlanComparisonResponse:
     """Get comparison of all available plans."""
     return PlanComparisonResponse(
-        starter=PlanLimitsResponse(**PLAN_LIMITS[PlanTier.STARTER]),
-        professional=PlanLimitsResponse(**PLAN_LIMITS[PlanTier.PROFESSIONAL]),
-        agency=PlanLimitsResponse(**PLAN_LIMITS[PlanTier.AGENCY]),
+        starter=PlanLimitsResponse(**PLAN_LIMITS[PlanTier.STARTER]),  # type: ignore[arg-type]
+        professional=PlanLimitsResponse(**PLAN_LIMITS[PlanTier.PROFESSIONAL]),  # type: ignore[arg-type]
+        agency=PlanLimitsResponse(**PLAN_LIMITS[PlanTier.AGENCY]),  # type: ignore[arg-type]
         current_plan=current_user.plan,
     )
 
@@ -106,7 +106,7 @@ async def get_plan_limits(
     plan: PlanTier,
 ) -> PlanLimitsResponse:
     """Get limits for a specific plan."""
-    return PlanLimitsResponse(**PLAN_LIMITS[plan])
+    return PlanLimitsResponse(**PLAN_LIMITS[plan])  # type: ignore[arg-type]
 
 
 # Limit check endpoints
@@ -168,9 +168,7 @@ async def get_billing_history(
     if per_page < 1 or per_page > 100:
         per_page = 20
 
-    events, total = await billing_service.get_billing_history(
-        current_user.id, page, per_page
-    )
+    events, total = await billing_service.get_billing_history(current_user.id, page, per_page)
 
     return BillingHistoryResponse(
         events=[
@@ -283,9 +281,7 @@ async def change_plan(
             detail="Direct plan changes not allowed. Use checkout flow.",
         )
 
-    success, message = await billing_service.change_plan(
-        current_user.id, request.new_plan
-    )
+    success, message = await billing_service.change_plan(current_user.id, request.new_plan)
 
     if not success:
         raise HTTPException(
@@ -330,9 +326,7 @@ async def stripe_webhook(
 
     # Verify signature
     try:
-        _verify_stripe_signature(
-            body, stripe_signature, settings.stripe_webhook_secret
-        )
+        _verify_stripe_signature(body, stripe_signature, settings.stripe_webhook_secret)
     except ValueError as e:
         logger.warning("stripe_webhook_invalid_signature", error=str(e))
         raise HTTPException(
@@ -392,9 +386,7 @@ async def stripe_webhook(
     return {"received": True}
 
 
-def _verify_stripe_signature(
-    payload: bytes, signature: str, secret: str
-) -> None:
+def _verify_stripe_signature(payload: bytes, signature: str, secret: str) -> None:
     """Verify Stripe webhook signature."""
     # Parse signature header
     parts = dict(item.split("=") for item in signature.split(","))

@@ -311,23 +311,16 @@ class TierCEstimator:
         # Diminishing returns for many questions
         return min(2.5, 2.2 + (count - 5) * 0.05)
 
-    def _get_category_multiplier(
-        self, categories: list[QuestionCategory]
-    ) -> float:
+    def _get_category_multiplier(self, categories: list[QuestionCategory]) -> float:
         """Get multiplier based on affected categories."""
         if not categories:
             return 1.0
 
         # Use highest category weight
-        weights = [
-            CATEGORY_WEIGHT_FACTORS.get(cat, 1.0)
-            for cat in categories
-        ]
+        weights = [CATEGORY_WEIGHT_FACTORS.get(cat, 1.0) for cat in categories]
         return max(weights)
 
-    def _determine_confidence(
-        self, severity: str, question_count: int
-    ) -> ConfidenceLevel:
+    def _determine_confidence(self, severity: str, question_count: int) -> ConfidenceLevel:
         """Determine confidence level for estimate."""
         # High confidence for critical issues with few questions
         if severity == "critical" and question_count <= 2:
@@ -357,9 +350,7 @@ class TierCEstimator:
             f"question(s) in the {cat_str} category/categories."
         )
 
-    def _build_assumptions(
-        self, reason_code: ReasonCode, question_count: int
-    ) -> list[str]:
+    def _build_assumptions(self, reason_code: ReasonCode, question_count: int) -> list[str]:
         """Build list of assumptions for this estimate."""
         assumptions = [
             "Based on Tier C precomputed lookup tables",
@@ -368,21 +359,15 @@ class TierCEstimator:
         ]
 
         if question_count > 3:
-            assumptions.append(
-                "Multiple questions may have overlapping improvements"
-            )
+            assumptions.append("Multiple questions may have overlapping improvements")
 
         reason_info = get_reason_info(reason_code)
         if reason_info.category == "technical":
-            assumptions.append(
-                "Technical fixes may have broader impact than estimated"
-            )
+            assumptions.append("Technical fixes may have broader impact than estimated")
 
         return assumptions
 
-    def _calculate_totals(
-        self, estimates: list[FixImpactEstimate]
-    ) -> tuple[float, float, float]:
+    def _calculate_totals(self, estimates: list[FixImpactEstimate]) -> tuple[float, float, float]:
         """Calculate total impact with overlap adjustment."""
         if not estimates:
             return 0.0, 0.0, 0.0
@@ -404,22 +389,14 @@ class TierCEstimator:
 
         return total_min, total_expected, total_max
 
-    def _determine_overall_confidence(
-        self, estimates: list[FixImpactEstimate]
-    ) -> ConfidenceLevel:
+    def _determine_overall_confidence(self, estimates: list[FixImpactEstimate]) -> ConfidenceLevel:
         """Determine overall confidence for the plan."""
         if not estimates:
             return ConfidenceLevel.LOW
 
         # Count confidence levels
-        high_count = sum(
-            1 for e in estimates
-            if e.impact_range.confidence == ConfidenceLevel.HIGH
-        )
-        low_count = sum(
-            1 for e in estimates
-            if e.impact_range.confidence == ConfidenceLevel.LOW
-        )
+        high_count = sum(1 for e in estimates if e.impact_range.confidence == ConfidenceLevel.HIGH)
+        low_count = sum(1 for e in estimates if e.impact_range.confidence == ConfidenceLevel.LOW)
 
         if high_count > len(estimates) / 2:
             return ConfidenceLevel.HIGH
@@ -435,27 +412,19 @@ class TierCEstimator:
         notes = []
 
         if total_expected >= 15:
-            notes.append(
-                "Significant improvement potential - prioritize these fixes"
-            )
+            notes.append("Significant improvement potential - prioritize these fixes")
         elif total_expected >= 8:
-            notes.append(
-                "Good improvement potential with the recommended fixes"
-            )
+            notes.append("Good improvement potential with the recommended fixes")
         else:
-            notes.append(
-                "Moderate improvement expected - consider additional optimizations"
-            )
+            notes.append("Moderate improvement expected - consider additional optimizations")
 
         # Check for technical fixes
         tech_fixes = [
-            e for e in estimates
-            if get_reason_info(e.reason_code).category == "technical"
+            e for e in estimates if get_reason_info(e.reason_code).category == "technical"
         ]
         if tech_fixes:
             notes.append(
-                "Technical fixes should be addressed first as they may block "
-                "other improvements"
+                "Technical fixes should be addressed first as they may block " "other improvements"
             )
 
         # Note about Tier C limitations

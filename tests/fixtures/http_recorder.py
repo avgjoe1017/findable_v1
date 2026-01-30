@@ -116,9 +116,7 @@ class HTTPCassette:
         self.interactions.append(interaction)
         self._index[interaction.request_hash] = len(self.interactions) - 1
 
-    def find(
-        self, method: str, url: str, body: str | None = None
-    ) -> HTTPInteraction | None:
+    def find(self, method: str, url: str, body: str | None = None) -> HTTPInteraction | None:
         """Find a matching interaction."""
         req_hash = request_hash(method, url, body)
         idx = self._index.get(req_hash)
@@ -126,15 +124,12 @@ class HTTPCassette:
             return self.interactions[idx]
         return None
 
-    def find_by_url_pattern(
-        self, method: str, url_pattern: str
-    ) -> HTTPInteraction | None:
+    def find_by_url_pattern(self, method: str, url_pattern: str) -> HTTPInteraction | None:
         """Find an interaction by URL regex pattern."""
         pattern = re.compile(url_pattern)
         for interaction in self.interactions:
-            if (
-                interaction.request_method.upper() == method.upper()
-                and pattern.match(interaction.request_url)
+            if interaction.request_method.upper() == method.upper() and pattern.match(
+                interaction.request_url
             ):
                 return interaction
         return None
@@ -157,9 +152,7 @@ class HTTPCassette:
 
         return cls(
             name=data.get("name", path.stem),
-            interactions=[
-                HTTPInteraction.from_dict(i) for i in data.get("interactions", [])
-            ],
+            interactions=[HTTPInteraction.from_dict(i) for i in data.get("interactions", [])],
         )
 
 

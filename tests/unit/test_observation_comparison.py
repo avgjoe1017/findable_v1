@@ -288,15 +288,11 @@ class TestSimulationObservationComparator:
         comparator = SimulationObservationComparator()
 
         sim_results = [
-            make_question_result(f"q{i}", Answerability.PARTIALLY_ANSWERABLE)
-            for i in range(3)
+            make_question_result(f"q{i}", Answerability.PARTIALLY_ANSWERABLE) for i in range(3)
         ]
         simulation = make_simulation_result(sim_results)
 
-        obs_results = [
-            make_observation_result(f"q{i}", mentions_company=True)
-            for i in range(3)
-        ]
+        obs_results = [make_observation_result(f"q{i}", mentions_company=True) for i in range(3)]
         observation = make_observation_run(obs_results)
 
         summary = comparator.compare(simulation, observation)
@@ -380,16 +376,12 @@ class TestSimulationObservationComparator:
         comparator = SimulationObservationComparator()
 
         sim_results = [
-            make_question_result(f"q{i}", Answerability.FULLY_ANSWERABLE)
-            for i in range(5)
+            make_question_result(f"q{i}", Answerability.FULLY_ANSWERABLE) for i in range(5)
         ]
         simulation = make_simulation_result(sim_results)
 
         # All wrong (optimistic)
-        obs_results = [
-            make_observation_result(f"q{i}", mentions_company=False)
-            for i in range(5)
-        ]
+        obs_results = [make_observation_result(f"q{i}", mentions_company=False) for i in range(5)]
         observation = make_observation_run(obs_results)
 
         summary = comparator.compare(simulation, observation)
@@ -432,9 +424,7 @@ class TestSimulationObservationComparator:
         sim_result = make_question_result("q1")
         simulation = make_simulation_result([sim_result])
 
-        obs_result = make_observation_result(
-            "q1", mentions_company=True, mentions_url=False
-        )
+        obs_result = make_observation_result("q1", mentions_company=True, mentions_url=False)
         observation = make_observation_run([obs_result])
 
         summary = comparator.compare(simulation, observation)
@@ -448,9 +438,7 @@ class TestSimulationObservationComparator:
         sim_result = make_question_result("q1")
         simulation = make_simulation_result([sim_result])
 
-        obs_result = make_observation_result(
-            "q1", mentions_company=False, mentions_domain=False
-        )
+        obs_result = make_observation_result("q1", mentions_company=False, mentions_domain=False)
         observation = make_observation_run([obs_result])
 
         summary = comparator.compare(simulation, observation)
@@ -495,9 +483,7 @@ class TestConvenienceFunction:
         """Accepts parsed results."""
         simulation = make_simulation_result()
         observation = make_observation_run()
-        parsed = {
-            "q1": ParsedObservation(has_company_mention=True)
-        }
+        parsed = {"q1": ParsedObservation(has_company_mention=True)}
 
         summary = compare_simulation_observation(simulation, observation, parsed)
 

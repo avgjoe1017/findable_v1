@@ -221,7 +221,10 @@ class TestTemplateScaffolds:
         """Social proof scaffold has testimonial structure."""
         template = get_template(ReasonCode.MISSING_SOCIAL_PROOF)
 
-        assert "[CUSTOMER_NAME]" in template.scaffold_template or "[TESTIMONIAL" in template.scaffold_template
+        assert (
+            "[CUSTOMER_NAME]" in template.scaffold_template
+            or "[TESTIMONIAL" in template.scaffold_template
+        )
 
     def test_robots_scaffold_has_code_example(self) -> None:
         """Robots.txt scaffold has code example."""

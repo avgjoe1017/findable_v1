@@ -1,6 +1,5 @@
 """Extended tests for health check endpoints."""
 
-
 import pytest
 from pydantic import ValidationError
 

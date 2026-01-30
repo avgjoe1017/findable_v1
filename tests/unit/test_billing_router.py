@@ -167,10 +167,7 @@ class TestUsageResponseFormat:
 
         assert response.sites_remaining == response.sites_limit - response.sites_count
         assert response.runs_remaining == response.runs_limit - response.runs_count
-        assert (
-            response.snapshots_remaining
-            == response.snapshots_limit - response.snapshots_count
-        )
+        assert response.snapshots_remaining == response.snapshots_limit - response.snapshots_count
 
 
 class TestWebhookEventTypes:

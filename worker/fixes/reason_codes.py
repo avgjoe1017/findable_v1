@@ -228,17 +228,9 @@ def get_reason_info(code: ReasonCode) -> ReasonCodeInfo:
 
 def get_codes_by_category(category: str) -> list[ReasonCode]:
     """Get all reason codes in a category."""
-    return [
-        info.code
-        for info in REASON_CODE_INFO.values()
-        if info.category == category
-    ]
+    return [info.code for info in REASON_CODE_INFO.values() if info.category == category]
 
 
 def get_codes_by_severity(severity: str) -> list[ReasonCode]:
     """Get all reason codes with a severity level."""
-    return [
-        info.code
-        for info in REASON_CODE_INFO.values()
-        if info.severity == severity
-    ]
+    return [info.code for info in REASON_CODE_INFO.values() if info.severity == severity]

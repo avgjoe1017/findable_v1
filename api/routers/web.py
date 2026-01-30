@@ -51,10 +51,12 @@ async def get_or_create_dev_user() -> User:
                 log.info("Creating dev user via raw SQL", user_id=str(DEV_USER_ID))
                 # Use raw SQL to bypass any ORM/passlib issues
                 await db.execute(
-                    text("""
+                    text(
+                        """
                         INSERT INTO users (id, email, hashed_password, is_active, is_superuser, is_verified, plan)
                         VALUES (:id, :email, :hashed_password, :is_active, :is_superuser, :is_verified, :plan)
-                    """),
+                    """
+                    ),
                     {
                         "id": DEV_USER_ID,
                         "email": "dev@findable.local",
@@ -72,13 +74,14 @@ async def get_or_create_dev_user() -> User:
                 result = await db.execute(select(User).where(User.id == DEV_USER_ID))
                 user = result.scalar_one()
 
-            return user
+            result_user: User = user
+            return result_user
     except Exception as e:
         log.error("Error in get_or_create_dev_user", error=str(e))
         raise
 
 
-async def get_optional_user(request: Request) -> Any:
+async def get_optional_user(request: Request) -> User:
     """Get current user if authenticated, or dev user in development mode."""
     settings = get_settings()
 
@@ -88,9 +91,13 @@ async def get_optional_user(request: Request) -> Any:
 
     try:
         user = await get_current_user_optional(request)
-        return user
+        if user:
+            return user
+        # If no user, return dev user as fallback
+        return await get_or_create_dev_user()
     except Exception:
-        return None
+        # On error, return dev user as fallback
+        return await get_or_create_dev_user()
 
 
 def get_grade_class(grade: str) -> str:
@@ -136,7 +143,7 @@ templates.env.filters["format_trend"] = format_trend
 @router.get("/", response_class=HTMLResponse, name="dashboard")
 async def dashboard(
     request: Request,
-    db=Depends(get_db),
+    db: Any = Depends(get_db),
 ) -> HTMLResponse:
     """Render the main dashboard showing all sites."""
     user = await get_optional_user(request)
@@ -149,9 +156,7 @@ async def dashboard(
 
     if user:
         # Get real data for authenticated users
-        site_list, total = await site_service.list_sites(
-            db, user.id, skip=0, limit=50
-        )
+        site_list, total = await site_service.list_sites(db, user.id, skip=0, limit=50)
         total_sites = total
 
         # Build sites data with latest scores
@@ -164,16 +169,18 @@ async def dashboard(
             if score:
                 scores.append(score)
 
-            sites.append({
-                "id": str(site.id),
-                "name": site.name,
-                "domain": site.domain,
-                "score": score or 0,
-                "grade": grade or "—",
-                "trend": "+0",  # TODO: Calculate from previous run
-                "last_run": _format_last_run(latest_report),
-                "status": "completed" if latest_report else "pending",
-            })
+            sites.append(
+                {
+                    "id": str(site.id),
+                    "name": site.name,
+                    "domain": site.domain,
+                    "score": score or 0,
+                    "grade": grade or "—",
+                    "trend": "+0",  # TODO: Calculate from previous run
+                    "last_run": _format_last_run(latest_report),
+                    "status": "completed" if latest_report else "pending",
+                }
+            )
 
         avg_score = int(sum(scores) / len(scores)) if scores else 0
         # TODO: Calculate open fixes from reports
@@ -214,8 +221,8 @@ async def new_site(request: Request) -> HTMLResponse:
 @router.post("/sites/new", response_model=None, name="create_site")
 async def create_site_form(
     request: Request,
-    db=Depends(get_db),
-):
+    db: Any = Depends(get_db),
+) -> HTMLResponse | RedirectResponse:
     """Handle site creation form submission."""
     user = await get_optional_user(request)
     if not user:
@@ -229,11 +236,11 @@ async def create_site_form(
     competitors_raw = str(form.get("competitors", "")).strip()
 
     # Parse competitors (one per line)
-    competitors = []
+    competitors_list: list[dict[str, str]] = []
     for line in competitors_raw.split("\n"):
         comp = line.strip()
         if comp:
-            competitors.append({"domain": comp})
+            competitors_list.append({"domain": comp})
 
     errors = []
     if not domain:
@@ -265,7 +272,10 @@ async def create_site_form(
         )
 
     try:
-        from api.schemas.site import SiteCreate
+        from api.schemas.site import CompetitorCreate, SiteCreate
+
+        # Convert dict competitors to CompetitorCreate objects
+        competitors = [CompetitorCreate(domain=c["domain"], name=None) for c in competitors_list]
 
         site_in = SiteCreate(
             domain=domain,
@@ -303,8 +313,8 @@ async def create_site_form(
 async def site_detail(
     request: Request,
     site_id: uuid.UUID,
-    db=Depends(get_db),
-):
+    db: Any = Depends(get_db),
+) -> HTMLResponse | RedirectResponse:
     """Render the site detail page with run progress."""
     user = await get_optional_user(request)
     if not user:
@@ -327,17 +337,19 @@ async def site_detail(
     # Format runs for template
     run_list = []
     for run in runs:
-        run_list.append({
-            "id": str(run.id),
-            "status": run.status,
-            "started_at": run.started_at.isoformat() if run.started_at else None,
-            "completed_at": run.completed_at.isoformat() if run.completed_at else None,
-            "include_observation": run.include_observation,
-            "include_benchmark": run.include_benchmark,
-            "error_message": run.error_message,
-            "has_report": run.report_id is not None,
-            "report_id": str(run.report_id) if run.report_id else None,
-        })
+        run_list.append(
+            {
+                "id": str(run.id),
+                "status": run.status,
+                "started_at": run.started_at.isoformat() if run.started_at else None,
+                "completed_at": run.completed_at.isoformat() if run.completed_at else None,
+                "include_observation": run.include_observation,
+                "include_benchmark": run.include_benchmark,
+                "error_message": run.error_message,
+                "has_report": run.report_id is not None,
+                "report_id": str(run.report_id) if run.report_id else None,
+            }
+        )
 
     return templates.TemplateResponse(
         request=request,
@@ -349,18 +361,19 @@ async def site_detail(
                 "domain": site.domain,
                 "business_model": site.business_model,
                 "monitoring_enabled": site.monitoring_enabled,
-                "competitors": [
-                    {"name": c.name, "domain": c.domain}
-                    for c in site.competitors
-                ],
+                "competitors": [{"name": c.name, "domain": c.domain} for c in site.competitors],
             },
             "runs": run_list,
             "total_runs": total_runs,
-            "active_run": {
-                "id": str(active_run.id),
-                "status": active_run.status,
-                "progress": active_run.progress or 0,
-            } if active_run else None,
+            "active_run": (
+                {
+                    "id": str(active_run.id),
+                    "status": active_run.status,
+                    "progress": active_run.progress or 0,
+                }
+                if active_run
+                else None
+            ),
             "latest_score": latest_report.score_typical if latest_report else None,
             "latest_grade": _score_to_grade(latest_report.score_typical) if latest_report else None,
             "latest_report_id": str(latest_report.id) if latest_report else None,
@@ -372,8 +385,8 @@ async def site_detail(
 async def start_run(
     request: Request,
     site_id: uuid.UUID,
-    db=Depends(get_db),
-):
+    db: Any = Depends(get_db),
+) -> RedirectResponse:
     """Start a new audit run for a site."""
     user = await get_optional_user(request)
     if not user:
@@ -399,12 +412,14 @@ async def start_run(
     include_benchmark = form.get("include_benchmark") == "on"
 
     try:
-        from api.schemas.run import RunCreate
+        from api.schemas.run import RunConfig, RunCreate
         from api.services import job_service
 
         run_in = RunCreate(
-            include_observation=include_observation,
-            include_benchmark=include_benchmark,
+            config=RunConfig(
+                include_observation=include_observation,
+                include_benchmark=include_benchmark,
+            )
         )
         run = await run_service.create_run(db, site, run_in)
 
@@ -425,8 +440,8 @@ async def start_run(
 async def view_report(
     request: Request,
     report_id: uuid.UUID,
-    db=Depends(get_db),
-):
+    db: Any = Depends(get_db),
+) -> HTMLResponse | RedirectResponse:
     """Render the full score report."""
     user = await get_optional_user(request)
     if not user:
@@ -450,27 +465,31 @@ async def view_report(
     categories = []
     for cat_name, cat_score in score.get("category_scores", {}).items():
         weight = _get_category_weight(cat_name)
-        categories.append({
-            "name": cat_name,
-            "score": int(cat_score),
-            "weight": int(weight * 100),
-        })
+        categories.append(
+            {
+                "name": cat_name,
+                "score": int(cat_score),
+                "weight": int(weight * 100),
+            }
+        )
 
     # Build fixes data for template
     fix_list = []
     for fix in fixes.get("fixes", []):
         impact = fix.get("estimated_impact", {})
-        fix_list.append({
-            "severity": _priority_to_severity(fix.get("priority", 3)),
-            "title": fix.get("title", ""),
-            "reason_code": fix.get("reason_code", ""),
-            "impact_min": impact.get("min", 0),
-            "impact_max": impact.get("max", 0),
-            "impact_expected": impact.get("expected", 0),
-            "effort": fix.get("effort_level", "medium"),
-            "target_url": fix.get("target_url", ""),
-            "scaffold": fix.get("scaffold", ""),
-        })
+        fix_list.append(
+            {
+                "severity": _priority_to_severity(fix.get("priority", 3)),
+                "title": fix.get("title", ""),
+                "reason_code": fix.get("reason_code", ""),
+                "impact_min": impact.get("min", 0),
+                "impact_max": impact.get("max", 0),
+                "impact_expected": impact.get("expected", 0),
+                "effort": fix.get("effort_level", "medium"),
+                "target_url": fix.get("target_url", ""),
+                "scaffold": fix.get("scaffold", ""),
+            }
+        )
 
     return templates.TemplateResponse(
         request=request,
@@ -503,7 +522,7 @@ async def view_report(
 async def run_status_fragment(
     request: Request,
     run_id: uuid.UUID,
-    db=Depends(get_db),
+    db: Any = Depends(get_db),
 ) -> HTMLResponse:
     """Return HTML fragment for run status (used by HTMX polling)."""
     user = await get_optional_user(request)
@@ -658,8 +677,8 @@ async def login_page(
 @router.post("/login", response_model=None, name="login_submit")
 async def login_submit(
     request: Request,
-    db=Depends(get_db),
-):
+    db: Any = Depends(get_db),
+) -> HTMLResponse | RedirectResponse:
     """Handle login form submission."""
     form = await request.form()
     email = str(form.get("email", "")).strip().lower()
@@ -750,8 +769,8 @@ async def register_page(
 @router.post("/register", response_model=None, name="register_submit")
 async def register_submit(
     request: Request,
-    db=Depends(get_db),
-):
+    db: Any = Depends(get_db),
+) -> HTMLResponse | RedirectResponse:
     """Handle registration form submission."""
     form = await request.form()
     email = str(form.get("email", "")).strip().lower()
@@ -832,7 +851,7 @@ async def register_submit(
 
 
 @router.get("/logout", response_model=None, name="logout")
-async def logout():
+async def logout() -> RedirectResponse:
     """Log out the current user."""
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie(key=SESSION_COOKIE)

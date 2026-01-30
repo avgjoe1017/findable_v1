@@ -225,29 +225,60 @@ class ObservationParser:
 
     # Positive sentiment indicators
     POSITIVE_INDICATORS = [
-        "excellent", "great", "outstanding", "impressive", "innovative",
-        "leading", "best", "top", "premier", "trusted", "reliable",
-        "recommended", "praised", "acclaimed", "award-winning", "renowned",
-        "successful", "effective", "efficient", "quality", "superior",
+        "excellent",
+        "great",
+        "outstanding",
+        "impressive",
+        "innovative",
+        "leading",
+        "best",
+        "top",
+        "premier",
+        "trusted",
+        "reliable",
+        "recommended",
+        "praised",
+        "acclaimed",
+        "award-winning",
+        "renowned",
+        "successful",
+        "effective",
+        "efficient",
+        "quality",
+        "superior",
     ]
 
     # Negative sentiment indicators
     NEGATIVE_INDICATORS = [
-        "poor", "bad", "disappointing", "problematic", "issues",
-        "complaints", "criticized", "concerns", "lacking", "limited",
-        "struggling", "failed", "controversial", "negative", "unreliable",
-        "questionable", "inferior", "subpar", "inadequate", "deficient",
+        "poor",
+        "bad",
+        "disappointing",
+        "problematic",
+        "issues",
+        "complaints",
+        "criticized",
+        "concerns",
+        "lacking",
+        "limited",
+        "struggling",
+        "failed",
+        "controversial",
+        "negative",
+        "unreliable",
+        "questionable",
+        "inferior",
+        "subpar",
+        "inadequate",
+        "deficient",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize parser with compiled patterns."""
         self._compiled_citations = [
-            (re.compile(pattern, re.IGNORECASE), ctype)
-            for pattern, ctype in self.CITATION_PATTERNS
+            (re.compile(pattern, re.IGNORECASE), ctype) for pattern, ctype in self.CITATION_PATTERNS
         ]
         self._compiled_refusals = [
-            re.compile(pattern, re.IGNORECASE)
-            for pattern in self.REFUSAL_PATTERNS
+            re.compile(pattern, re.IGNORECASE) for pattern in self.REFUSAL_PATTERNS
         ]
 
     def parse(
@@ -275,27 +306,22 @@ class ObservationParser:
         # Basic metrics
         result.response_length = len(content)
         result.word_count = len(content.split())
-        result.sentence_count = len(re.findall(r'[.!?]+', content))
+        result.sentence_count = len(re.findall(r"[.!?]+", content))
 
         # Extract mentions
-        result.mentions = self._extract_mentions(
-            content, company_name, domain, branded_terms or []
-        )
+        result.mentions = self._extract_mentions(content, company_name, domain, branded_terms or [])
         result.mention_count = len(result.mentions)
         result.has_company_mention = any(
-            m.mention_type in (MentionType.EXACT, MentionType.PARTIAL)
-            for m in result.mentions
+            m.mention_type in (MentionType.EXACT, MentionType.PARTIAL) for m in result.mentions
         )
         result.has_domain_mention = any(
             m.mention_type == MentionType.DOMAIN for m in result.mentions
         )
-        result.has_url_citation = any(
-            m.mention_type == MentionType.URL for m in result.mentions
-        )
+        result.has_url_citation = any(m.mention_type == MentionType.URL for m in result.mentions)
 
         # Extract URLs
-        result.all_urls, result.company_urls, result.external_urls = (
-            self._extract_urls(content, domain)
+        result.all_urls, result.company_urls, result.external_urls = self._extract_urls(
+            content, domain
         )
 
         # Extract citations
@@ -306,8 +332,8 @@ class ObservationParser:
         )
 
         # Analyze sentiment
-        result.overall_sentiment, result.sentiment_score = (
-            self._analyze_sentiment(content_lower, company_name.lower())
+        result.overall_sentiment, result.sentiment_score = self._analyze_sentiment(
+            content_lower, company_name.lower()
         )
 
         # Analyze confidence
@@ -327,9 +353,7 @@ class ObservationParser:
         )
 
         # Check hallucination risk
-        result.is_hallucination_risk = self._check_hallucination_risk(
-            content, result
-        )
+        result.is_hallucination_risk = self._check_hallucination_risk(content, result)
 
         return result
 
@@ -364,13 +388,15 @@ class ObservationParser:
                     match_type = MentionType.PARTIAL
                     confidence = len(variation) / len(company_name)
 
-                mentions.append(Mention(
-                    text=content[match.start():match.end()],
-                    mention_type=match_type,
-                    position=match.start(),
-                    context=context,
-                    confidence=confidence,
-                ))
+                mentions.append(
+                    Mention(
+                        text=content[match.start() : match.end()],
+                        mention_type=match_type,
+                        position=match.start(),
+                        context=context,
+                        confidence=confidence,
+                    )
+                )
 
         # Check for domain mentions (without http)
         domain_lower = domain.lower()
@@ -378,27 +404,31 @@ class ObservationParser:
             start = max(0, match.start() - 50)
             end = min(len(content), match.end() + 50)
 
-            mentions.append(Mention(
-                text=content[match.start():match.end()],
-                mention_type=MentionType.DOMAIN,
-                position=match.start(),
-                context=content[start:end],
-                confidence=1.0,
-            ))
+            mentions.append(
+                Mention(
+                    text=content[match.start() : match.end()],
+                    mention_type=MentionType.DOMAIN,
+                    position=match.start(),
+                    context=content[start:end],
+                    confidence=1.0,
+                )
+            )
 
         # Check for URL mentions
-        url_pattern = rf'https?://(?:www\.)?{re.escape(domain_lower)}[^\s]*'
+        url_pattern = rf"https?://(?:www\.)?{re.escape(domain_lower)}[^\s]*"
         for match in re.finditer(url_pattern, content_lower):
             start = max(0, match.start() - 30)
             end = min(len(content), match.end() + 30)
 
-            mentions.append(Mention(
-                text=content[match.start():match.end()],
-                mention_type=MentionType.URL,
-                position=match.start(),
-                context=content[start:end],
-                confidence=1.0,
-            ))
+            mentions.append(
+                Mention(
+                    text=content[match.start() : match.end()],
+                    mention_type=MentionType.URL,
+                    position=match.start(),
+                    context=content[start:end],
+                    confidence=1.0,
+                )
+            )
 
         # Check branded terms
         for term in branded_terms:
@@ -407,13 +437,15 @@ class ObservationParser:
                 start = max(0, match.start() - 50)
                 end = min(len(content), match.end() + 50)
 
-                mentions.append(Mention(
-                    text=content[match.start():match.end()],
-                    mention_type=MentionType.BRANDED,
-                    position=match.start(),
-                    context=content[start:end],
-                    confidence=0.9,
-                ))
+                mentions.append(
+                    Mention(
+                        text=content[match.start() : match.end()],
+                        mention_type=MentionType.BRANDED,
+                        position=match.start(),
+                        context=content[start:end],
+                        confidence=0.9,
+                    )
+                )
 
         # Remove duplicates by position
         seen_positions: set[int] = set()
@@ -431,10 +463,24 @@ class ObservationParser:
 
         # Common suffixes to try removing/adding
         suffixes = [
-            " Inc", " Inc.", " LLC", " Ltd", " Ltd.", " Co", " Co.",
-            " Corp", " Corp.", " Corporation", " Company",
-            " Technologies", " Tech", " Software", " Solutions",
-            " Services", " Group", " Holdings",
+            " Inc",
+            " Inc.",
+            " LLC",
+            " Ltd",
+            " Ltd.",
+            " Co",
+            " Co.",
+            " Corp",
+            " Corp.",
+            " Corporation",
+            " Company",
+            " Technologies",
+            " Tech",
+            " Software",
+            " Solutions",
+            " Services",
+            " Group",
+            " Holdings",
         ]
 
         name_lower = company_name.lower()
@@ -442,7 +488,7 @@ class ObservationParser:
         # Try removing suffixes
         for suffix in suffixes:
             if name_lower.endswith(suffix.lower()):
-                base = company_name[:-len(suffix)].strip()
+                base = company_name[: -len(suffix)].strip()
                 if base and base not in variations:
                     variations.append(base)
 
@@ -455,7 +501,11 @@ class ObservationParser:
         # Add first word if multi-word (skip "The")
         words = company_name.split()
         start_idx = 1 if words and words[0].lower() == "the" else 0
-        if len(words) > start_idx + 1 and len(words[start_idx]) >= 3 and words[start_idx] not in variations:
+        if (
+            len(words) > start_idx + 1
+            and len(words[start_idx]) >= 3
+            and words[start_idx] not in variations
+        ):
             variations.append(words[start_idx])
 
         return variations
@@ -496,30 +546,34 @@ class ObservationParser:
 
                 # Check if URL is in the citation
                 url = None
-                url_match = re.search(r'https?://[^\s]+', source_text)
+                url_match = re.search(r"https?://[^\s]+", source_text)
                 if url_match:
                     url = url_match.group(0)
 
-                citations.append(Citation(
-                    pattern=match.group(0),
-                    citation_type=citation_type,
-                    source_text=source_text.strip(),
-                    url=url,
-                    position=match.start(),
-                ))
+                citations.append(
+                    Citation(
+                        pattern=match.group(0),
+                        citation_type=citation_type,
+                        source_text=source_text.strip(),
+                        url=url,
+                        position=match.start(),
+                    )
+                )
 
         # Check for implicit mentions of company as source
         company_lower = company_name.lower()
         if company_lower in content.lower() and not citations:
             # Find first mention position
             pos = content.lower().find(company_lower)
-            citations.append(Citation(
-                pattern=f"mentions {company_name}",
-                citation_type=CitationType.IMPLICIT,
-                source_text=company_name,
-                url=None,
-                position=pos,
-            ))
+            citations.append(
+                Citation(
+                    pattern=f"mentions {company_name}",
+                    citation_type=CitationType.IMPLICIT,
+                    source_text=company_name,
+                    url=None,
+                    position=pos,
+                )
+            )
 
         return sorted(citations, key=lambda c: c.position)
 
@@ -530,14 +584,8 @@ class ObservationParser:
     ) -> tuple[Sentiment, float]:
         """Analyze sentiment of content regarding the company."""
         # Count positive and negative indicators
-        positive_count = sum(
-            1 for word in self.POSITIVE_INDICATORS
-            if word in content_lower
-        )
-        negative_count = sum(
-            1 for word in self.NEGATIVE_INDICATORS
-            if word in content_lower
-        )
+        positive_count = sum(1 for word in self.POSITIVE_INDICATORS if word in content_lower)
+        negative_count = sum(1 for word in self.NEGATIVE_INDICATORS if word in content_lower)
 
         # Calculate sentiment score (-1 to 1)
         total = positive_count + negative_count
@@ -563,14 +611,8 @@ class ObservationParser:
         content_lower: str,
     ) -> tuple[ConfidenceLevel, list[str], list[str]]:
         """Analyze confidence level expressed in the response."""
-        found_hedging = [
-            phrase for phrase in self.HEDGING_PHRASES
-            if phrase in content_lower
-        ]
-        found_certainty = [
-            phrase for phrase in self.CERTAINTY_PHRASES
-            if phrase in content_lower
-        ]
+        found_hedging = [phrase for phrase in self.HEDGING_PHRASES if phrase in content_lower]
+        found_certainty = [phrase for phrase in self.CERTAINTY_PHRASES if phrase in content_lower]
 
         # Determine confidence level
         hedging_count = len(found_hedging)
@@ -591,10 +633,7 @@ class ObservationParser:
 
     def _check_refusal(self, content_lower: str) -> bool:
         """Check if the response is a refusal to answer."""
-        return any(
-            pattern.search(content_lower)
-            for pattern in self._compiled_refusals
-        )
+        return any(pattern.search(content_lower) for pattern in self._compiled_refusals)
 
     def _check_hallucination_risk(
         self,
@@ -612,17 +651,14 @@ class ObservationParser:
 
         # Very specific claims without sources
         specific_patterns = [
-            r'\$[\d,]+',  # Dollar amounts
-            r'\d{4}',  # Years
-            r'\d+%',  # Percentages
-            r'founded in \d{4}',
-            r'headquartered in [A-Z][a-z]+',
+            r"\$[\d,]+",  # Dollar amounts
+            r"\d{4}",  # Years
+            r"\d+%",  # Percentages
+            r"founded in \d{4}",
+            r"headquartered in [A-Z][a-z]+",
         ]
 
-        specific_claims = sum(
-            1 for pattern in specific_patterns
-            if re.search(pattern, content)
-        )
+        specific_claims = sum(1 for pattern in specific_patterns if re.search(pattern, content))
 
         return specific_claims >= 3 and not parsed.has_explicit_citation
 

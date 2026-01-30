@@ -372,10 +372,13 @@ class TestRecordLLMContextManager:
     """Tests for record_llm context manager."""
 
     def test_creates_new_cassette(self):
-        with tempfile.TemporaryDirectory() as tmpdir, record_llm(
-            "new_test",
-            cassette_dir=Path(tmpdir),
-        ) as recorder:
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            record_llm(
+                "new_test",
+                cassette_dir=Path(tmpdir),
+            ) as recorder,
+        ):
             assert recorder.cassette.name == "new_test"
 
     def test_loads_existing_cassette(self):
@@ -410,11 +413,15 @@ class TestRecordLLMContextManager:
             assert saved_path.exists()
 
     def test_strict_mode(self):
-        with tempfile.TemporaryDirectory() as tmpdir, record_llm(
-            "strict_test",
-            cassette_dir=Path(tmpdir),
-            strict=True,
-        ) as recorder, pytest.raises(KeyError):
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            record_llm(
+                "strict_test",
+                cassette_dir=Path(tmpdir),
+                strict=True,
+            ) as recorder,
+            pytest.raises(KeyError),
+        ):
             recorder.get_response("Unknown")
 
     def test_fuzzy_mode(self):

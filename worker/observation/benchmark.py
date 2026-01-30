@@ -251,13 +251,9 @@ class CompetitorBenchmarker:
         # Process competitor observations
         for competitor_info, obs_run in competitor_observations:
             comp_parsed = (
-                competitor_parsed.get(competitor_info.name, {})
-                if competitor_parsed
-                else {}
+                competitor_parsed.get(competitor_info.name, {}) if competitor_parsed else {}
             )
-            comp_result = self._process_competitor(
-                competitor_info, obs_run, comp_parsed
-            )
+            comp_result = self._process_competitor(competitor_info, obs_run, comp_parsed)
             result.competitor_results.append(comp_result)
 
         result.total_competitors = len(result.competitor_results)
@@ -320,12 +316,8 @@ class CompetitorBenchmarker:
 
         # Calculate rates
         if comp_result.total_questions > 0:
-            comp_result.mention_rate = (
-                comp_result.questions_mentioned / comp_result.total_questions
-            )
-            comp_result.citation_rate = (
-                comp_result.questions_cited / comp_result.total_questions
-            )
+            comp_result.mention_rate = comp_result.questions_mentioned / comp_result.total_questions
+            comp_result.citation_rate = comp_result.questions_cited / comp_result.total_questions
 
         return comp_result
 
@@ -490,27 +482,18 @@ class CompetitorBenchmarker:
         if result.competitor_results:
             total_mention = sum(c.mention_rate for c in result.competitor_results)
             total_citation = sum(c.citation_rate for c in result.competitor_results)
-            result.avg_competitor_mention_rate = (
-                total_mention / len(result.competitor_results)
-            )
-            result.avg_competitor_citation_rate = (
-                total_citation / len(result.competitor_results)
-            )
+            result.avg_competitor_mention_rate = total_mention / len(result.competitor_results)
+            result.avg_competitor_citation_rate = total_citation / len(result.competitor_results)
 
         # Update head-to-head advantages
         for h2h in result.head_to_heads:
             comp_result = next(
-                (c for c in result.competitor_results
-                 if c.competitor.name == h2h.competitor_name),
+                (c for c in result.competitor_results if c.competitor.name == h2h.competitor_name),
                 None,
             )
             if comp_result:
-                h2h.mention_advantage = (
-                    result.your_mention_rate - comp_result.mention_rate
-                )
-                h2h.citation_advantage = (
-                    result.your_citation_rate - comp_result.citation_rate
-                )
+                h2h.mention_advantage = result.your_mention_rate - comp_result.mention_rate
+                h2h.citation_advantage = result.your_citation_rate - comp_result.citation_rate
 
         # Overall wins/losses
         for benchmark in result.question_benchmarks:
@@ -637,8 +620,7 @@ class CompetitorBenchmarker:
         # Based on overall position
         if result.overall_win_rate < 0.5:
             recommendations.append(
-                "Competitive content audit: review what topics competitors "
-                "cover that you don't."
+                "Competitive content audit: review what topics competitors " "cover that you don't."
             )
 
         return recommendations

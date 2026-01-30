@@ -173,11 +173,7 @@ class TestSentryConfiguration:
         # These headers should always be filtered
         sensitive_headers = ["authorization", "cookie", "x-api-key"]
 
-        event = {
-            "request": {
-                "headers": dict.fromkeys(sensitive_headers, "secret")
-            }
-        }
+        event = {"request": {"headers": dict.fromkeys(sensitive_headers, "secret")}}
 
         result = _before_send(event, {})
 

@@ -170,12 +170,8 @@ class MonitoringSchedule(Base):
     include_benchmark: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     # Scheduling state
-    next_run_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    last_run_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_run_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Scheduler job ID (for cancellation)

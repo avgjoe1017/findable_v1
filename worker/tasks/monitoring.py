@@ -85,9 +85,7 @@ async def run_snapshot(
         async with async_session_maker() as db:
             # Load site with user
             result = await db.execute(
-                select(Site)
-                .options(selectinload(Site.user))
-                .where(Site.id == site_id)
+                select(Site).options(selectinload(Site.user)).where(Site.id == site_id)
             )
             site = result.scalar_one_or_none()
 
@@ -137,9 +135,7 @@ async def run_snapshot(
         # Create snapshot record
         async with async_session_maker() as db:
             # Get the report
-            report_result = await db.execute(
-                select(Report).where(Report.id == report_id)
-            )
+            report_result = await db.execute(select(Report).where(Report.id == report_id))
             report = report_result.scalar_one()
 
             # Calculate deltas from previous snapshot
@@ -151,13 +147,8 @@ async def run_snapshot(
                 if report.score_typical is not None:
                     score_delta = report.score_typical - prev_snapshot.score_typical
 
-                if (
-                    report.mention_rate is not None
-                    and prev_snapshot.mention_rate is not None
-                ):
-                    mention_rate_delta = (
-                        report.mention_rate - prev_snapshot.mention_rate
-                    )
+                if report.mention_rate is not None and prev_snapshot.mention_rate is not None:
+                    mention_rate_delta = report.mention_rate - prev_snapshot.mention_rate
 
                 # Build changes summary
                 changes = {
@@ -201,9 +192,7 @@ async def run_snapshot(
 
             # Update monitoring schedule
             schedule_result = await db.execute(
-                select(MonitoringSchedule).where(
-                    MonitoringSchedule.site_id == site_id
-                )
+                select(MonitoringSchedule).where(MonitoringSchedule.site_id == site_id)
             )
             schedule = schedule_result.scalar_one_or_none()
 
@@ -213,9 +202,7 @@ async def run_snapshot(
 
                 # Calculate and set next run
                 site_result = await db.execute(
-                    select(Site)
-                    .options(selectinload(Site.user))
-                    .where(Site.id == site_id)
+                    select(Site).options(selectinload(Site.user)).where(Site.id == site_id)
                 )
                 site = site_result.scalar_one()
                 frequency = get_frequency_for_plan(site.user.plan)
@@ -227,9 +214,7 @@ async def run_snapshot(
                 )
 
             # Update site's next_snapshot_at
-            site_result = await db.execute(
-                select(Site).where(Site.id == site_id)
-            )
+            site_result = await db.execute(select(Site).where(Site.id == site_id))
             site = site_result.scalar_one()
             if schedule:
                 site.next_snapshot_at = schedule.next_run_at
@@ -240,16 +225,12 @@ async def run_snapshot(
         # Schedule next snapshot
         async with async_session_maker() as db:
             site_result = await db.execute(
-                select(Site)
-                .options(selectinload(Site.user))
-                .where(Site.id == site_id)
+                select(Site).options(selectinload(Site.user)).where(Site.id == site_id)
             )
             site = site_result.scalar_one()
 
             schedule_result = await db.execute(
-                select(MonitoringSchedule).where(
-                    MonitoringSchedule.site_id == site_id
-                )
+                select(MonitoringSchedule).where(MonitoringSchedule.site_id == site_id)
             )
             schedule = schedule_result.scalar_one_or_none()
 
@@ -321,9 +302,7 @@ async def run_snapshot(
         try:
             async with async_session_maker() as db:
                 schedule_result = await db.execute(
-                    select(MonitoringSchedule).where(
-                        MonitoringSchedule.site_id == site_id
-                    )
+                    select(MonitoringSchedule).where(MonitoringSchedule.site_id == site_id)
                 )
                 schedule = schedule_result.scalar_one_or_none()
 
@@ -372,9 +351,7 @@ async def enable_monitoring(
     async with async_session_maker() as db:
         # Load site with user
         result = await db.execute(
-            select(Site)
-            .options(selectinload(Site.user))
-            .where(Site.id == site_id)
+            select(Site).options(selectinload(Site.user)).where(Site.id == site_id)
         )
         site = result.scalar_one_or_none()
 

@@ -254,11 +254,12 @@ def normalize_ids(content: str) -> str:
     """Replace numeric IDs with placeholder."""
     # Match "id": 12345 or "user_id": 12345
     pattern = r'("[\w_]*id"\s*:\s*)\d+'
-    return re.sub(pattern, r'\1<ID>', content, flags=re.IGNORECASE)
+    return re.sub(pattern, r"\1<ID>", content, flags=re.IGNORECASE)
 
 
 def normalize_floats(content: str, precision: int = 2) -> str:
     """Normalize floating point precision."""
+
     def replace_float(match: re.Match) -> str:
         value = float(match.group())
         return f"{value:.{precision}f}"

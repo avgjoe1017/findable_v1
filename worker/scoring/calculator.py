@@ -173,9 +173,7 @@ class ScoreBreakdown:
             "grade": self.grade,
             "grade_description": self.grade_description,
             "criterion_scores": [c.to_dict() for c in self.criterion_scores],
-            "category_breakdowns": {
-                k: v.to_dict() for k, v in self.category_breakdowns.items()
-            },
+            "category_breakdowns": {k: v.to_dict() for k, v in self.category_breakdowns.items()},
             "question_scores": [q.to_dict() for q in self.question_scores],
             "total_questions": self.total_questions,
             "questions_answered": self.questions_answered,
@@ -211,12 +209,14 @@ class ScoreBreakdown:
         for i, step in enumerate(self.calculation_summary, 1):
             lines.append(f"{i}. {step}")
 
-        lines.extend([
-            "",
-            "-" * 60,
-            "CRITERION BREAKDOWN",
-            "-" * 60,
-        ])
+        lines.extend(
+            [
+                "",
+                "-" * 60,
+                "CRITERION BREAKDOWN",
+                "-" * 60,
+            ]
+        )
 
         for cs in self.criterion_scores:
             lines.append(
@@ -225,12 +225,14 @@ class ScoreBreakdown:
             )
             lines.append(f"    → {cs.explanation}")
 
-        lines.extend([
-            "",
-            "-" * 60,
-            "CATEGORY BREAKDOWN",
-            "-" * 60,
-        ])
+        lines.extend(
+            [
+                "",
+                "-" * 60,
+                "CATEGORY BREAKDOWN",
+                "-" * 60,
+            ]
+        )
 
         for cat_name, cat in self.category_breakdowns.items():
             lines.append(
@@ -243,16 +245,18 @@ class ScoreBreakdown:
                 f"{cat.questions_unanswered} unanswered"
             )
 
-        lines.extend([
-            "",
-            "-" * 60,
-            "COVERAGE",
-            "-" * 60,
-            f"  Questions Answered: {self.questions_answered}/{self.total_questions}",
-            f"  Coverage: {self.coverage_percentage:.1f}%",
-            "",
-            "=" * 60,
-        ])
+        lines.extend(
+            [
+                "",
+                "-" * 60,
+                "COVERAGE",
+                "-" * 60,
+                f"  Questions Answered: {self.questions_answered}/{self.total_questions}",
+                f"  Coverage: {self.coverage_percentage:.1f}%",
+                "",
+                "=" * 60,
+            ]
+        )
 
         return "\n".join(lines)
 
@@ -304,19 +308,25 @@ class ScoreCalculator:
 
         # Count questions
         answered = sum(
-            1 for r in simulation.question_results
+            1
+            for r in simulation.question_results
             if r.answerability == Answerability.FULLY_ANSWERABLE
         )
         partial = sum(
-            1 for r in simulation.question_results
+            1
+            for r in simulation.question_results
             if r.answerability == Answerability.PARTIALLY_ANSWERABLE
         )
         unanswered = sum(
-            1 for r in simulation.question_results
+            1
+            for r in simulation.question_results
             if r.answerability == Answerability.NOT_ANSWERABLE
         )
-        coverage = ((answered + partial * 0.5) / len(simulation.question_results) * 100
-                    if simulation.question_results else 0)
+        coverage = (
+            (answered + partial * 0.5) / len(simulation.question_results) * 100
+            if simulation.question_results
+            else 0
+        )
 
         return ScoreBreakdown(
             total_score=total_score,
@@ -349,11 +359,7 @@ class ScoreCalculator:
             confidence = self._confidence_to_score(result.confidence)
 
             # Calculate base score
-            base = (
-                0.4 * relevance +
-                0.4 * signal +
-                0.2 * confidence
-            )
+            base = 0.4 * relevance + 0.4 * signal + 0.2 * confidence
 
             # Get multipliers
             diff_mult = self.rubric.get_difficulty_multiplier(result.difficulty)
@@ -377,22 +383,24 @@ class ScoreCalculator:
             matched = [m.signal for m in result.signal_matches if m.found]
             missing = [m.signal for m in result.signal_matches if not m.found]
 
-            question_scores.append(QuestionScore(
-                question_id=result.question_id,
-                question_text=result.question_text,
-                category=result.category,
-                difficulty=result.difficulty,
-                relevance_score=relevance,
-                signal_score=signal,
-                confidence_score=confidence,
-                base_score=base,
-                difficulty_multiplier=diff_mult,
-                category_weight=cat_weight,
-                final_score=final,
-                calculation_steps=steps,
-                signals_matched=matched,
-                signals_missing=missing,
-            ))
+            question_scores.append(
+                QuestionScore(
+                    question_id=result.question_id,
+                    question_text=result.question_text,
+                    category=result.category,
+                    difficulty=result.difficulty,
+                    relevance_score=relevance,
+                    signal_score=signal,
+                    confidence_score=confidence,
+                    base_score=base,
+                    difficulty_multiplier=diff_mult,
+                    category_weight=cat_weight,
+                    final_score=final,
+                    calculation_steps=steps,
+                    signals_matched=matched,
+                    signals_missing=missing,
+                )
+            )
 
         return question_scores
 
@@ -417,16 +425,13 @@ class ScoreCalculator:
 
             # Count by answerability
             answered = sum(
-                1 for r in cat_results
-                if r.answerability == Answerability.FULLY_ANSWERABLE
+                1 for r in cat_results if r.answerability == Answerability.FULLY_ANSWERABLE
             )
             partial = sum(
-                1 for r in cat_results
-                if r.answerability == Answerability.PARTIALLY_ANSWERABLE
+                1 for r in cat_results if r.answerability == Answerability.PARTIALLY_ANSWERABLE
             )
             unanswered = sum(
-                1 for r in cat_results
-                if r.answerability == Answerability.NOT_ANSWERABLE
+                1 for r in cat_results if r.answerability == Answerability.NOT_ANSWERABLE
             )
 
             # Calculate scores
@@ -441,9 +446,7 @@ class ScoreCalculator:
             )
 
             # Generate recommendations
-            recommendations = self._generate_category_recommendations(
-                category, cat_results
-            )
+            recommendations = self._generate_category_recommendations(category, cat_results)
 
             breakdowns[category.value] = CategoryBreakdown(
                 category=category,
@@ -472,7 +475,9 @@ class ScoreCalculator:
         for criterion in self.rubric.criteria:
             if criterion.id == "content_relevance":
                 raw = self._calculate_relevance_score(simulation)
-                explanation = f"Average content relevance across {len(simulation.question_results)} questions"
+                explanation = (
+                    f"Average content relevance across {len(simulation.question_results)} questions"
+                )
             elif criterion.id == "signal_coverage":
                 raw = self._calculate_signal_score(simulation)
                 explanation = "Expected signals found in retrieved content"
@@ -490,15 +495,17 @@ class ScoreCalculator:
             points = raw * criterion.max_points
             level = criterion.get_level(raw)
 
-            scores.append(CriterionScore(
-                criterion=criterion,
-                raw_score=raw,
-                weighted_score=weighted,
-                points_earned=points,
-                max_points=criterion.max_points,
-                level=level,
-                explanation=explanation,
-            ))
+            scores.append(
+                CriterionScore(
+                    criterion=criterion,
+                    raw_score=raw,
+                    weighted_score=weighted,
+                    points_earned=points,
+                    max_points=criterion.max_points,
+                    level=level,
+                    explanation=explanation,
+                )
+            )
 
         return scores
 
@@ -513,9 +520,7 @@ class ScoreCalculator:
 
         # Method 2: Weighted category average
         if category_breakdowns:
-            category_total = sum(
-                cb.weighted_score for cb in category_breakdowns.values()
-            )
+            category_total = sum(cb.weighted_score for cb in category_breakdowns.values())
         else:
             category_total = 0
 
@@ -526,9 +531,9 @@ class ScoreCalculator:
         """Calculate average relevance score."""
         if not simulation.question_results:
             return 0.0
-        return sum(
-            r.context.avg_relevance_score for r in simulation.question_results
-        ) / len(simulation.question_results)
+        return sum(r.context.avg_relevance_score for r in simulation.question_results) / len(
+            simulation.question_results
+        )
 
     def _calculate_signal_score(self, simulation: SimulationResult) -> float:
         """Calculate overall signal coverage."""
@@ -544,8 +549,7 @@ class ScoreCalculator:
         if not simulation.question_results:
             return 0.0
         return sum(
-            self._confidence_to_score(r.confidence)
-            for r in simulation.question_results
+            self._confidence_to_score(r.confidence) for r in simulation.question_results
         ) / len(simulation.question_results)
 
     def _calculate_source_quality(self, simulation: SimulationResult) -> float:
@@ -648,10 +652,7 @@ class ScoreCalculator:
         """Generate recommendations for a category."""
         recommendations: list[str] = []
 
-        unanswered = [
-            r for r in results
-            if r.answerability == Answerability.NOT_ANSWERABLE
-        ]
+        unanswered = [r for r in results if r.answerability == Answerability.NOT_ANSWERABLE]
 
         if unanswered:
             if category == QuestionCategory.IDENTITY:
@@ -663,9 +664,7 @@ class ScoreCalculator:
                     "Create detailed product/service pages with features and benefits"
                 )
             elif category == QuestionCategory.CONTACT:
-                recommendations.append(
-                    "Make contact information more prominent and accessible"
-                )
+                recommendations.append("Make contact information more prominent and accessible")
             elif category == QuestionCategory.TRUST:
                 recommendations.append(
                     "Add customer testimonials, case studies, and certifications"

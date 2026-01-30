@@ -43,8 +43,11 @@ class TestRubricCriterion:
     def test_get_level_excellent(self) -> None:
         """Gets excellent level for high score."""
         criterion = RubricCriterion(
-            id="test", name="Test", description="Test",
-            weight=0.25, max_points=25,
+            id="test",
+            name="Test",
+            description="Test",
+            weight=0.25,
+            max_points=25,
         )
 
         assert criterion.get_level(0.95) == ScoreLevel.EXCELLENT
@@ -53,8 +56,11 @@ class TestRubricCriterion:
     def test_get_level_good(self) -> None:
         """Gets good level for good score."""
         criterion = RubricCriterion(
-            id="test", name="Test", description="Test",
-            weight=0.25, max_points=25,
+            id="test",
+            name="Test",
+            description="Test",
+            weight=0.25,
+            max_points=25,
         )
 
         assert criterion.get_level(0.85) == ScoreLevel.GOOD
@@ -63,8 +69,11 @@ class TestRubricCriterion:
     def test_get_level_fair(self) -> None:
         """Gets fair level for fair score."""
         criterion = RubricCriterion(
-            id="test", name="Test", description="Test",
-            weight=0.25, max_points=25,
+            id="test",
+            name="Test",
+            description="Test",
+            weight=0.25,
+            max_points=25,
         )
 
         assert criterion.get_level(0.75) == ScoreLevel.FAIR
@@ -73,8 +82,11 @@ class TestRubricCriterion:
     def test_get_level_poor(self) -> None:
         """Gets poor level for low score."""
         criterion = RubricCriterion(
-            id="test", name="Test", description="Test",
-            weight=0.25, max_points=25,
+            id="test",
+            name="Test",
+            description="Test",
+            weight=0.25,
+            max_points=25,
         )
 
         assert criterion.get_level(0.50) == ScoreLevel.POOR
@@ -83,8 +95,11 @@ class TestRubricCriterion:
     def test_to_dict(self) -> None:
         """Converts to dict."""
         criterion = RubricCriterion(
-            id="test", name="Test", description="Test",
-            weight=0.25, max_points=25,
+            id="test",
+            name="Test",
+            description="Test",
+            weight=0.25,
+            max_points=25,
         )
 
         d = criterion.to_dict()

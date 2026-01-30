@@ -111,9 +111,7 @@ class LLMCassette:
 
         return None
 
-    def find_similar(
-        self, prompt: str, threshold: float = 0.8
-    ) -> LLMResponse | None:
+    def find_similar(self, prompt: str, threshold: float = 0.8) -> LLMResponse | None:
         """Find a response with a similar prompt (fuzzy matching).
 
         Uses simple word overlap for similarity.

@@ -120,10 +120,8 @@ async def get_current_user_optional(request: Request) -> User | None:
             user_id = payload.get("sub")
             if user_id:
                 async with async_session_maker() as db:
-                    result = await db.execute(
-                        select(User).where(User.id == uuid.UUID(user_id))
-                    )
-                    user = result.scalar_one_or_none()
+                    result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
+                    user: User | None = result.scalar_one_or_none()
                     if user and user.is_active:
                         return user
         except Exception:
@@ -132,8 +130,8 @@ async def get_current_user_optional(request: Request) -> User | None:
     # Fall back to Bearer token
     try:
         user_dependency = current_user_optional
-        user = await user_dependency(request)
-        return user
+        bearer_user: User | None = await user_dependency(request)
+        return bearer_user
     except Exception:
         return None
 
@@ -146,12 +144,14 @@ def _truncate_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a hash."""
-    return pwd_context.verify(_truncate_password(plain_password), hashed_password)
+    result: bool = pwd_context.verify(_truncate_password(plain_password), hashed_password)
+    return result
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password."""
-    return pwd_context.hash(_truncate_password(password))
+    hashed: str = pwd_context.hash(_truncate_password(password))
+    return hashed
 
 
 def create_access_token(user_id: str) -> str:
@@ -163,4 +163,5 @@ def create_access_token(user_id: str) -> str:
         "exp": expire,
         "aud": "fastapi-users:auth",
     }
-    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    token: str = jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    return token

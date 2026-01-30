@@ -1,6 +1,5 @@
 """Tests for observation parser."""
 
-
 from worker.observation.parser import (
     Citation,
     CitationType,
@@ -159,9 +158,7 @@ class TestObservationParser:
         parser = ObservationParser()
         content = "The AcmeWidget product is highly rated by users."
 
-        result = parser.parse(
-            content, "Acme Corp", "acme.com", branded_terms=["AcmeWidget"]
-        )
+        result = parser.parse(content, "Acme Corp", "acme.com", branded_terms=["AcmeWidget"])
 
         assert any(m.mention_type == MentionType.BRANDED for m in result.mentions)
 
@@ -197,10 +194,7 @@ class TestObservationParser:
         result = parser.parse(content, "Acme Corporation", "acme.com")
 
         assert result.has_explicit_citation is True
-        assert any(
-            c.citation_type == CitationType.DIRECT_QUOTE
-            for c in result.citations
-        )
+        assert any(c.citation_type == CitationType.DIRECT_QUOTE for c in result.citations)
 
     def test_parse_citation_pattern_states(self) -> None:
         """Detects 'X states that' citation pattern."""
@@ -218,10 +212,7 @@ class TestObservationParser:
 
         result = parser.parse(content, "Acme", "acme.com")
 
-        assert any(
-            c.citation_type == CitationType.SOURCE_LINK
-            for c in result.citations
-        )
+        assert any(c.citation_type == CitationType.SOURCE_LINK for c in result.citations)
 
     def test_parse_positive_sentiment(self) -> None:
         """Detects positive sentiment."""
@@ -236,7 +227,9 @@ class TestObservationParser:
     def test_parse_negative_sentiment(self) -> None:
         """Detects negative sentiment."""
         parser = ObservationParser()
-        content = "Acme has poor customer service and disappointing product quality with many issues."
+        content = (
+            "Acme has poor customer service and disappointing product quality with many issues."
+        )
 
         result = parser.parse(content, "Acme", "acme.com")
 
@@ -358,9 +351,7 @@ class TestConvenienceFunction:
         """Accepts branded terms."""
         content = "The AcmeProduct is widely used."
 
-        result = parse_observation(
-            content, "Acme", "acme.com", branded_terms=["AcmeProduct"]
-        )
+        result = parse_observation(content, "Acme", "acme.com", branded_terms=["AcmeProduct"])
 
         assert result.mention_count >= 1
 

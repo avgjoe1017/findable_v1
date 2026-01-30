@@ -223,9 +223,7 @@ class TestAlertAcknowledgeRequest:
 
     def test_valid_request(self) -> None:
         """Test valid acknowledge request."""
-        request = AlertAcknowledgeRequest(
-            alert_ids=[uuid.uuid4(), uuid.uuid4()]
-        )
+        request = AlertAcknowledgeRequest(alert_ids=[uuid.uuid4(), uuid.uuid4()])
 
         assert len(request.alert_ids) == 2
 
@@ -242,9 +240,7 @@ class TestAlertDismissRequest:
 
     def test_valid_request(self) -> None:
         """Test valid dismiss request."""
-        request = AlertDismissRequest(
-            alert_ids=[uuid.uuid4()]
-        )
+        request = AlertDismissRequest(alert_ids=[uuid.uuid4()])
 
         assert len(request.alert_ids) == 1
 
@@ -274,9 +270,7 @@ class TestWebhookTestRequest:
 
     def test_valid_url(self) -> None:
         """Test valid webhook URL."""
-        request = WebhookTestRequest(
-            webhook_url="https://example.com/webhook"
-        )
+        request = WebhookTestRequest(webhook_url="https://example.com/webhook")
 
         assert request.webhook_url == "https://example.com/webhook"
 

@@ -514,18 +514,34 @@ class TestFullReport:
         report = self.make_minimal_report()
 
         fix1 = FixItem(
-            id="fix-1", reason_code="a", title="High priority",
-            description="", scaffold="", priority=1,
-            estimated_impact_min=5, estimated_impact_max=15,
-            estimated_impact_expected=10, effort_level="low",
-            target_url=None, affected_questions=[], affected_categories=[],
+            id="fix-1",
+            reason_code="a",
+            title="High priority",
+            description="",
+            scaffold="",
+            priority=1,
+            estimated_impact_min=5,
+            estimated_impact_max=15,
+            estimated_impact_expected=10,
+            effort_level="low",
+            target_url=None,
+            affected_questions=[],
+            affected_categories=[],
         )
         fix2 = FixItem(
-            id="fix-2", reason_code="b", title="Low priority",
-            description="", scaffold="", priority=3,
-            estimated_impact_min=1, estimated_impact_max=5,
-            estimated_impact_expected=3, effort_level="low",
-            target_url=None, affected_questions=[], affected_categories=[],
+            id="fix-2",
+            reason_code="b",
+            title="Low priority",
+            description="",
+            scaffold="",
+            priority=3,
+            estimated_impact_min=1,
+            estimated_impact_max=5,
+            estimated_impact_expected=3,
+            effort_level="low",
+            target_url=None,
+            affected_questions=[],
+            affected_categories=[],
         )
 
         report.fixes.fixes = [fix2, fix1]  # Out of order

@@ -80,10 +80,9 @@ class ObservationProvider(ABC):
         # Default pricing if model not found
         input_price, output_price = pricing.get(model, (1.0, 3.0))
 
-        cost = (
-            (usage.prompt_tokens / 1_000_000) * input_price +
-            (usage.completion_tokens / 1_000_000) * output_price
-        )
+        cost = (usage.prompt_tokens / 1_000_000) * input_price + (
+            usage.completion_tokens / 1_000_000
+        ) * output_price
         return cost
 
 
@@ -112,9 +111,7 @@ class OpenRouterProvider(ObservationProvider):
 
         payload = {
             "model": request.model,
-            "messages": [
-                {"role": "user", "content": request.to_prompt()}
-            ],
+            "messages": [{"role": "user", "content": request.to_prompt()}],
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
         }
@@ -201,7 +198,7 @@ class OpenRouterProvider(ObservationProvider):
                 ),
             )
 
-    async def observe_batch(
+    async def observe_batch(  # type: ignore[override]
         self,
         requests: list[ObservationRequest],
     ) -> AsyncIterator[ObservationResponse]:
@@ -259,9 +256,7 @@ class OpenAIProvider(ObservationProvider):
 
         payload = {
             "model": model,
-            "messages": [
-                {"role": "user", "content": request.to_prompt()}
-            ],
+            "messages": [{"role": "user", "content": request.to_prompt()}],
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
         }
@@ -348,7 +343,7 @@ class OpenAIProvider(ObservationProvider):
                 ),
             )
 
-    async def observe_batch(
+    async def observe_batch(  # type: ignore[override]
         self,
         requests: list[ObservationRequest],
     ) -> AsyncIterator[ObservationResponse]:
@@ -457,7 +452,7 @@ You can find more information about them at https://{domain}/ where they provide
 
 I would recommend visiting {domain} directly for the most accurate and up-to-date information about {company}."""
 
-    async def observe_batch(
+    async def observe_batch(  # type: ignore[override]
         self,
         requests: list[ObservationRequest],
     ) -> AsyncIterator[ObservationResponse]:
@@ -489,4 +484,5 @@ def get_provider(
     if provider_class is None:
         raise ValueError(f"Unknown provider type: {provider_type}")
 
-    return provider_class(config)
+    result: ObservationProvider = provider_class(config)
+    return result

@@ -95,18 +95,12 @@ class AlertConfig(Base):
     alert_on_snapshot_complete: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Thresholds
-    score_drop_threshold: Mapped[int] = mapped_column(
-        Integer, default=5, nullable=False
-    )  # Points
-    score_improvement_threshold: Mapped[int] = mapped_column(
-        Integer, default=10, nullable=False
-    )
+    score_drop_threshold: Mapped[int] = mapped_column(Integer, default=5, nullable=False)  # Points
+    score_improvement_threshold: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
     score_critical_threshold: Mapped[int] = mapped_column(
         Integer, default=40, nullable=False
     )  # Score below this
-    mention_rate_threshold: Mapped[float] = mapped_column(
-        default=0.1, nullable=False
-    )  # 10% change
+    mention_rate_threshold: Mapped[float] = mapped_column(default=0.1, nullable=False)  # 10% change
 
     # Notification channels
     email_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -115,12 +109,8 @@ class AlertConfig(Base):
     in_app_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
     # Rate limiting
-    min_hours_between_alerts: Mapped[int] = mapped_column(
-        Integer, default=24, nullable=False
-    )
-    last_alert_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    min_hours_between_alerts: Mapped[int] = mapped_column(Integer, default=24, nullable=False)
+    last_alert_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
@@ -197,12 +187,8 @@ class Alert(Base):
     # {"email": "SMTP error", "webhook": null}
 
     # User interaction
-    acknowledged_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    dismissed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    dismissed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
@@ -211,9 +197,7 @@ class Alert(Base):
         nullable=False,
         index=True,
     )
-    sent_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     user: Mapped[User] = relationship("User")

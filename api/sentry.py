@@ -172,7 +172,8 @@ def capture_exception(exception: Exception) -> str | None:
     try:
         import sentry_sdk
 
-        return sentry_sdk.capture_exception(exception)
+        event_id: str | None = sentry_sdk.capture_exception(exception)
+        return event_id
     except Exception:
         return None
 
@@ -188,7 +189,8 @@ def capture_message(message: str, level: str = "info") -> str | None:
     try:
         import sentry_sdk
 
-        return sentry_sdk.capture_message(message, level=level)
+        event_id: str | None = sentry_sdk.capture_message(message, level=level)
+        return event_id
     except Exception:
         return None
 
@@ -216,7 +218,7 @@ def add_breadcrumb(
         pass
 
 
-async def sentry_request_middleware(request: Request, call_next):
+async def sentry_request_middleware(request: Request, call_next):  # type: ignore[no-untyped-def]
     """Middleware to add request context to Sentry."""
     if not _sentry_initialized:
         return await call_next(request)

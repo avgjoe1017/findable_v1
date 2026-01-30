@@ -43,9 +43,7 @@ class ReadyResponse(BaseModel):
     timestamp: str = Field(..., description="ISO 8601 timestamp")
     version: str = Field(..., description="API version")
     uptime_seconds: int = Field(..., description="Server uptime in seconds")
-    checks: dict[str, DependencyCheck] = Field(
-        ..., description="Individual dependency checks"
-    )
+    checks: dict[str, DependencyCheck] = Field(..., description="Individual dependency checks")
 
 
 class ApiInfoResponse(BaseModel):
@@ -97,11 +95,13 @@ async def readiness_check() -> ReadyResponse:
         checks["database"] = DependencyCheck(
             status="healthy",
             latency_ms=round(latency_ms, 2),
+            error=None,
         )
     except Exception as e:
         logger.warning("Database health check failed", error=str(e))
         checks["database"] = DependencyCheck(
             status="unhealthy",
+            latency_ms=None,
             error=str(e),
         )
         overall_status = "unhealthy"
@@ -116,11 +116,13 @@ async def readiness_check() -> ReadyResponse:
         checks["redis"] = DependencyCheck(
             status="healthy",
             latency_ms=round(latency_ms, 2),
+            error=None,
         )
     except Exception as e:
         logger.warning("Redis health check failed", error=str(e))
         checks["redis"] = DependencyCheck(
             status="unhealthy",
+            latency_ms=None,
             error=str(e),
         )
         overall_status = "unhealthy"

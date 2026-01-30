@@ -298,8 +298,10 @@ class SimulationRunner:
         results = self.retriever.search(
             query=question.question,
             limit=self.config.chunks_per_question,
-            min_score=self.config.min_relevance_score,
         )
+        # Filter by min_score if configured
+        if self.config.min_relevance_score > 0:
+            results = [r for r in results if r.score >= self.config.min_relevance_score]
         retrieval_time = (time.perf_counter() - retrieval_start) * 1000
 
         # Build context from results

@@ -190,7 +190,7 @@ class ObservationRunner:
                             retryable=False,
                         )
                     )
-                else:
+                elif isinstance(result, ObservationResult):
                     obs_run.add_result(result)
 
             # Determine final status
@@ -270,7 +270,7 @@ class ObservationRunner:
             domain=request.domain,
         )
 
-    def _parse_response_to_result(
+    def _parse_response_to_result(  # type: ignore[no-untyped-def]
         self,
         request: ObservationRequest,
         response,
@@ -286,6 +286,7 @@ class ObservationRunner:
 
         # Extract URLs
         import re
+
         url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
         urls = re.findall(url_pattern, response.content)
         cited_urls = [u for u in urls if domain_lower in u.lower()]

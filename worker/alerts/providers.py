@@ -154,9 +154,7 @@ class WebhookProvider(NotificationProvider):
                     },
                 )
 
-                elapsed_ms = int(
-                    (datetime.now(UTC) - start_time).total_seconds() * 1000
-                )
+                elapsed_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
                 if response.is_success:
                     logger.info(
@@ -261,8 +259,8 @@ async def send_alert_notifications(
 
     # Webhook
     if webhook_enabled and webhook_url:
-        provider = WebhookProvider()
-        results["webhook"] = await provider.send(
+        webhook_provider = WebhookProvider()
+        results["webhook"] = await webhook_provider.send(
             recipient=webhook_url,
             title=title,
             message=message,
@@ -271,8 +269,8 @@ async def send_alert_notifications(
 
     # In-app
     if in_app_enabled:
-        provider = InAppProvider()
-        results["in_app"] = await provider.send(
+        in_app_provider = InAppProvider()
+        results["in_app"] = await in_app_provider.send(
             recipient=str(alert_id),
             title=title,
             message=message,

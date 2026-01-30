@@ -173,6 +173,7 @@ class TierBEstimator:
             TierBEstimate with detailed results
         """
         import time
+
         start_time = time.perf_counter()
 
         # Get affected questions from simulation
@@ -298,8 +299,7 @@ class TierBEstimator:
             overall_confidence = ConfidenceLevel.LOW
         else:
             high_count = sum(
-                1 for e in estimates
-                if e.impact_range.confidence == ConfidenceLevel.HIGH
+                1 for e in estimates if e.impact_range.confidence == ConfidenceLevel.HIGH
             )
             if high_count > len(estimates) / 2:
                 overall_confidence = ConfidenceLevel.HIGH
@@ -366,31 +366,58 @@ class TierBEstimator:
         # Common signals by reason code
         signal_patterns = {
             ReasonCode.MISSING_DEFINITION: [
-                "company description", "business type", "value proposition",
-                "what we do", "who we are",
+                "company description",
+                "business type",
+                "value proposition",
+                "what we do",
+                "who we are",
             ],
             ReasonCode.MISSING_PRICING: [
-                "pricing", "price", "cost", "plan", "subscription",
-                "free trial", "per month", "per year",
+                "pricing",
+                "price",
+                "cost",
+                "plan",
+                "subscription",
+                "free trial",
+                "per month",
+                "per year",
             ],
             ReasonCode.MISSING_CONTACT: [
-                "email", "phone", "contact", "address", "hours",
+                "email",
+                "phone",
+                "contact",
+                "address",
+                "hours",
                 "get in touch",
             ],
             ReasonCode.MISSING_LOCATION: [
-                "location", "address", "headquarters", "service area",
-                "serving", "located",
+                "location",
+                "address",
+                "headquarters",
+                "service area",
+                "serving",
+                "located",
             ],
             ReasonCode.MISSING_FEATURES: [
-                "feature", "capability", "functionality", "includes",
+                "feature",
+                "capability",
+                "functionality",
+                "includes",
                 "supports",
             ],
             ReasonCode.MISSING_SOCIAL_PROOF: [
-                "testimonial", "review", "case study", "customer",
-                "client", "results",
+                "testimonial",
+                "review",
+                "case study",
+                "customer",
+                "client",
+                "results",
             ],
             ReasonCode.TRUST_GAP: [
-                "certified", "award", "recognition", "featured in",
+                "certified",
+                "award",
+                "recognition",
+                "featured in",
                 "trusted by",
             ],
         }
@@ -432,8 +459,7 @@ class TierBEstimator:
             for signal in chunk.signals_added:
                 # Check if this signal was missing
                 was_missing = not any(
-                    m.found and m.signal.lower() == signal.lower()
-                    for m in question.signal_matches
+                    m.found and m.signal.lower() == signal.lower() for m in question.signal_matches
                 )
                 if was_missing:
                     new_signals.append(signal)
@@ -451,9 +477,9 @@ class TierBEstimator:
 
         # Calculate patched score
         patched_score = (
-            self.config.relevance_weight * patched_relevance +
-            self.config.signal_weight * signal_ratio +
-            self.config.confidence_weight * patched_confidence
+            self.config.relevance_weight * patched_relevance
+            + self.config.signal_weight * signal_ratio
+            + self.config.confidence_weight * patched_confidence
         )
 
         # Determine patched answerability

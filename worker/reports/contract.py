@@ -58,9 +58,7 @@ class ReportMetadata:
             "company_name": self.company_name,
             "domain": self.domain,
             "created_at": self.created_at.isoformat(),
-            "run_started_at": (
-                self.run_started_at.isoformat() if self.run_started_at else None
-            ),
+            "run_started_at": (self.run_started_at.isoformat() if self.run_started_at else None),
             "run_completed_at": (
                 self.run_completed_at.isoformat() if self.run_completed_at else None
             ),
@@ -109,9 +107,7 @@ class ScoreSection:
             "total_score": round(self.total_score, 2),
             "grade": self.grade,
             "grade_description": self.grade_description,
-            "category_scores": {
-                k: round(v, 2) for k, v in self.category_scores.items()
-            },
+            "category_scores": {k: round(v, 2) for k, v in self.category_scores.items()},
             "category_breakdown": self.category_breakdown,
             "criterion_scores": self.criterion_scores,
             "total_questions": self.total_questions,
@@ -406,9 +402,7 @@ class FullReport:
             "score_conservative": int(self.score.total_score * 0.85),  # Conservative band
             "score_typical": int(self.score.total_score),
             "score_generous": int(min(100, self.score.total_score * 1.1)),
-            "mention_rate": (
-                self.observation.company_mention_rate if self.observation else None
-            ),
+            "mention_rate": (self.observation.company_mention_rate if self.observation else None),
         }
 
     def get_top_fixes(self, n: int = 5) -> list[FixItem]:
@@ -425,15 +419,9 @@ class FullReport:
             "score": round(self.score.total_score, 1),
             "grade": self.score.grade,
             "mention_rate": (
-                round(self.observation.company_mention_rate, 2)
-                if self.observation
-                else None
+                round(self.observation.company_mention_rate, 2) if self.observation else None
             ),
             "total_fixes": self.fixes.total_fixes,
             "critical_fixes": self.fixes.critical_fixes,
-            "win_rate": (
-                round(self.benchmark.overall_win_rate, 2)
-                if self.benchmark
-                else None
-            ),
+            "win_rate": (round(self.benchmark.overall_win_rate, 2) if self.benchmark else None),
         }

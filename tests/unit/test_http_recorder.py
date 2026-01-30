@@ -274,10 +274,13 @@ class TestRecordHttpContextManager:
     """Tests for record_http context manager."""
 
     def test_creates_new_cassette(self):
-        with tempfile.TemporaryDirectory() as tmpdir, record_http(
-            "new_test",
-            cassette_dir=Path(tmpdir),
-        ) as recorder:
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            record_http(
+                "new_test",
+                cassette_dir=Path(tmpdir),
+            ) as recorder,
+        ):
             assert recorder.cassette.name == "new_test"
 
     def test_loads_existing_cassette(self):
