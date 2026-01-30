@@ -23,6 +23,7 @@ dependencies = [
     "fastapi-users[sqlalchemy]>=13.0.0",
     "pyjwt>=2.8.0",
     "bcrypt>=4.1.2",
+    "passlib[bcrypt]>=1.7.4",
 
     # Validation & Settings
     "pydantic>=2.5.3",
@@ -55,6 +56,10 @@ dependencies = [
     "structlog>=24.1.0",
     "tenacity>=8.2.3",
     "orjson>=3.9.12",
+    
+    # Monitoring
+    "prometheus-client>=0.19.0",
+    "sentry-sdk>=1.40.0",
 
     # Templates
     "jinja2>=3.1.3",
