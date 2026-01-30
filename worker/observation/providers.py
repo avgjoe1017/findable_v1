@@ -223,7 +223,8 @@ class OpenRouterProvider(ObservationProvider):
                     f"{self.config.base_url}/models",
                     headers={"Authorization": f"Bearer {self.config.api_key}"},
                 )
-                return response.status_code == 200
+                is_healthy: bool = response.status_code == 200
+                return is_healthy
         except Exception:
             return False
 
@@ -368,7 +369,8 @@ class OpenAIProvider(ObservationProvider):
                     f"{self.config.base_url}/models",
                     headers={"Authorization": f"Bearer {self.config.api_key}"},
                 )
-                return response.status_code == 200
+                is_healthy: bool = response.status_code == 200
+                return is_healthy
         except Exception:
             return False
 

@@ -202,7 +202,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         forwarded = request.headers.get("X-Forwarded-For")
         if forwarded:
             # First IP is the original client
-            return forwarded.split(",")[0].strip()
+            ip: str = forwarded.split(",")[0].strip()
+            return ip
         # Fall back to direct connection
         return request.client.host if request.client else "unknown"
 
