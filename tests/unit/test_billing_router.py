@@ -2,15 +2,10 @@
 
 import hashlib
 import hmac
-import json
 import time
-import uuid
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 from api.models.user import PlanTier
 from api.routers.billing import _verify_stripe_signature, router

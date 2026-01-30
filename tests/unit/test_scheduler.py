@@ -1,8 +1,6 @@
 """Tests for the monitoring scheduler."""
 
-from datetime import UTC, datetime, timedelta
-
-import pytest
+from datetime import UTC, datetime
 
 from worker.scheduler import (
     DEFAULT_DAY_OF_WEEK,

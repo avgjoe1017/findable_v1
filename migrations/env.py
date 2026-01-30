@@ -12,10 +12,6 @@ from api.config import get_settings
 from api.database import Base
 
 # Import all models to register them with Base.metadata
-from api.models.user import User  # noqa: F401
-from api.models.site import Competitor, Site  # noqa: F401
-from api.models.run import Report, Run  # noqa: F401
-from api.models.snapshot import MonitoringSchedule, Snapshot  # noqa: F401
 from api.models.alert import Alert, AlertConfig  # noqa: F401
 from api.models.billing import (  # noqa: F401
     BillingEvent,
@@ -23,6 +19,10 @@ from api.models.billing import (  # noqa: F401
     UsageRecord,
     UsageSummary,
 )
+from api.models.run import Report, Run  # noqa: F401
+from api.models.site import Competitor, Site  # noqa: F401
+from api.models.snapshot import MonitoringSchedule, Snapshot  # noqa: F401
+from api.models.user import User  # noqa: F401
 
 # Alembic Config object
 config = context.config

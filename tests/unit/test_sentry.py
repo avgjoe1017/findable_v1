@@ -1,8 +1,6 @@
 """Tests for Sentry integration module."""
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from api.sentry import (
     _before_send,
@@ -177,7 +175,7 @@ class TestSentryConfiguration:
 
         event = {
             "request": {
-                "headers": {header: "secret" for header in sensitive_headers}
+                "headers": dict.fromkeys(sensitive_headers, "secret")
             }
         }
 

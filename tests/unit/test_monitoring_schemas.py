@@ -10,10 +10,10 @@ from api.schemas.monitoring import (
     MonitoringEnableRequest,
     MonitoringScheduleResponse,
     MonitoringStatusResponse,
-    ScoreTrendPoint,
-    ScoreTrendResponse,
     ScheduledJobResponse,
     SchedulerStatsResponse,
+    ScoreTrendPoint,
+    ScoreTrendResponse,
     SnapshotListResponse,
     SnapshotResponse,
 )

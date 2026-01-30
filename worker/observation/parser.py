@@ -455,9 +455,8 @@ class ObservationParser:
         # Add first word if multi-word (skip "The")
         words = company_name.split()
         start_idx = 1 if words and words[0].lower() == "the" else 0
-        if len(words) > start_idx + 1 and len(words[start_idx]) >= 3:
-            if words[start_idx] not in variations:
-                variations.append(words[start_idx])
+        if len(words) > start_idx + 1 and len(words[start_idx]) >= 3 and words[start_idx] not in variations:
+            variations.append(words[start_idx])
 
         return variations
 

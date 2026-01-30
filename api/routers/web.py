@@ -832,7 +832,7 @@ async def register_submit(
 
 
 @router.get("/logout", response_model=None, name="logout")
-async def logout(request: Request):
+async def logout():
     """Log out the current user."""
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie(key=SESSION_COOKIE)

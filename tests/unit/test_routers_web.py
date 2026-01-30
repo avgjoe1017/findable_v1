@@ -145,7 +145,7 @@ class TestFormatLastRun:
 
     def test_format_last_run_with_report(self) -> None:
         """Returns human-readable time for report."""
-        from datetime import datetime, timedelta, UTC
+        from datetime import UTC, datetime, timedelta
 
         from api.routers.web import _format_last_run
 

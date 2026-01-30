@@ -1,14 +1,12 @@
 """Tests for billing service."""
 
 import uuid
-from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from api.models import (
     BillingEventType,
-    Subscription,
     SubscriptionStatus,
     UsageType,
 )
