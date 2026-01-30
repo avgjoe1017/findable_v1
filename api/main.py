@@ -7,11 +7,12 @@ import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import ORJSONResponse, PlainTextResponse
 
 from api.config import get_settings
 from api.exceptions import FindableError
 from api.logging import setup_logging
+from api.sentry import capture_exception, init_sentry
 
 # Initialize logging
 setup_logging()
@@ -22,11 +23,16 @@ logger = structlog.get_logger()
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan handler for startup/shutdown events."""
     settings = get_settings()
+
+    # Initialize Sentry
+    sentry_enabled = init_sentry()
+
     logger.info(
         "Starting Findable API",
         env=settings.env,
         debug=settings.debug,
         version="0.1.0",
+        sentry_enabled=sentry_enabled,
     )
 
     # Startup tasks
@@ -55,7 +61,9 @@ def create_app() -> FastAPI:
     )
 
     # Middleware (order matters - first added = last executed)
-    # CORS must be last (first to process)
+    # Outermost middleware (last added) runs first
+
+    # CORS must be outermost (first to process)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -63,6 +71,21 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Security headers
+    from api.middleware import SecurityHeadersMiddleware
+
+    app.add_middleware(SecurityHeadersMiddleware)
+
+    # Metrics collection
+    from api.metrics import MetricsMiddleware
+
+    app.add_middleware(MetricsMiddleware)
+
+    # Rate limiting (disabled in test mode)
+    from api.middleware import RateLimitMiddleware
+
+    app.add_middleware(RateLimitMiddleware, enabled=not settings.is_test)
 
     # Request logging and tracing
     from api.middleware import LoggingMiddleware, RequestIDMiddleware
@@ -74,10 +97,25 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
 
     # Register routers
-    from api.routers import health, v1
+    from api.routers import health, v1, web
 
-    app.include_router(health.router)
+    # Web routes (HTML pages) - registered first for UI priority
+    app.include_router(web.router)
+
+    # API routes
+    app.include_router(health.router, prefix="/api")
     app.include_router(v1.router, prefix="/v1")
+
+    # Prometheus metrics endpoint
+    from api.metrics import get_metrics, get_metrics_content_type
+
+    @app.get("/metrics", include_in_schema=False)
+    async def metrics() -> PlainTextResponse:
+        """Prometheus metrics endpoint."""
+        return PlainTextResponse(
+            content=get_metrics(),
+            media_type=get_metrics_content_type(),
+        )
 
     return app
 
@@ -142,6 +180,12 @@ def register_exception_handlers(app: FastAPI) -> None:
             path=request.url.path,
             method=request.method,
         )
+
+        # Capture exception in Sentry
+        event_id = capture_exception(exc)
+        if event_id:
+            logger.debug("Exception sent to Sentry", event_id=event_id)
+
         return ORJSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={

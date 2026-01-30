@@ -1,8 +1,8 @@
 # Findable Score Analyzer - Progress Tracker
 
-Last Updated: 2026-01-29 (Session #15)
+Last Updated: 2026-01-29 (Session #22)
 
-**Current Status:** Week 3 complete (Day 21), ready for Week 4: Day 22 (Competitor Benchmark)
+**Current Status:** Day 30 complete - ALL 30 DAYS COMPLETE! 🎉
 
 ## Overall Status
 
@@ -11,7 +11,7 @@ Last Updated: 2026-01-29 (Session #15)
 | **Week 1: Foundation** | Complete | 7/7 days |
 | **Week 2: Crawl & Extract** | Complete | 7/7 days |
 | **Week 3: Scoring Engine** | Complete | 7/7 days |
-| Week 4: Observation & Report | Not Started | 0/9 days |
+| **Week 4: Observation & Report** | Complete | 9/9 days |
 
 ---
 
@@ -876,15 +876,674 @@ Last Updated: 2026-01-29 (Session #15)
 
 ### Week 4: Observation & Report
 
-#### Day 22: Competitor Benchmark ⏳ PENDING
-#### Day 23: Report Assembler v1 ⏳ PENDING
-#### Day 24: Minimal UI (Jinja2) ⏳ PENDING (templates created in Day 20)
-#### Day 25: Monitoring Scheduler ⏳ PENDING
-#### Day 26: Alerts v1 ⏳ PENDING
-#### Day 27: Plan Caps + Billing Hooks ⏳ PENDING
-#### Day 28: Hardening + Observability ⏳ PENDING
-#### Day 29: Determinism + Replay Tests ⏳ PENDING
-#### Day 30: Deployment (Railway) ⏳ PENDING
+#### Day 22: Competitor Benchmark ✅ COMPLETE
+**Date:** 2026-01-29
+**Commit:** TBD
+
+**Deliverables:**
+- [x] BenchmarkOutcome enum (win, loss, tie, mutual_win, mutual_loss)
+- [x] MentionLevel enum (cited, mentioned, omitted)
+- [x] CompetitorInfo dataclass for competitor details
+- [x] QuestionBenchmark for per-question win/loss tracking
+- [x] CompetitorResult with observation aggregates
+- [x] HeadToHead comparison with win rate and advantages
+- [x] BenchmarkResult with complete competitive analysis
+- [x] CompetitorBenchmarker class with:
+  - Run benchmark across multiple competitors
+  - Win/loss/tie determination per question
+  - Citation advantage detection (citation beats mention)
+  - Head-to-head summary calculations
+  - Unique wins/losses identification
+  - Mention/citation rate comparison
+  - Insight generation
+  - Recommendation generation
+- [x] run_benchmark convenience function
+- [x] Test suite (32 tests passing)
+
+**Files Created:**
+- `worker/observation/benchmark.py` - Competitor benchmark module
+- `tests/unit/test_observation_benchmark.py` - Benchmark tests (32 tests)
+
+**Files Modified:**
+- `worker/observation/__init__.py` - Added benchmark exports
+
+**Benchmark Features:**
+- Compares your company against N competitors on same questions
+- Determines outcome per question: WIN/LOSS/TIE/MUTUAL_WIN/MUTUAL_LOSS
+- Citation trumps mention (you cited, competitor only mentioned = WIN)
+- Tracks head-to-head stats per competitor
+- Calculates win rate, mention advantage, citation advantage
+- Identifies unique wins (you win vs ALL competitors)
+- Identifies unique losses (you lose vs ALL competitors)
+- Generates competitive insights and recommendations
+
+**Win/Loss Logic:**
+- WIN: You mentioned/cited, competitor not
+- LOSS: Competitor mentioned/cited, you not
+- MUTUAL_WIN: Both mentioned/cited (tie breaker: citation wins)
+- MUTUAL_LOSS: Neither mentioned
+- TIE: Same mention level
+
+---
+
+#### Day 23: Report Assembler v1 ✅ COMPLETE
+**Date:** 2026-01-29
+**Commit:** TBD
+
+**Deliverables:**
+- [x] ReportVersion enum with versioning support
+- [x] ReportMetadata dataclass with site/run context
+- [x] ScoreSection with full breakdown and "show the math"
+- [x] FixItem and FixSection with impact estimates
+- [x] ObservationSection with mention/citation rates
+- [x] CompetitorSummary and BenchmarkSection
+- [x] DivergenceLevel enum and DivergenceSection
+- [x] FullReport combining all sections
+- [x] ReportAssembler class with:
+  - Metadata assembly with run timing
+  - Score section from ScoreBreakdown
+  - Fix section with impact estimates
+  - Observation section with comparison data
+  - Benchmark section with competitor summaries
+  - Divergence detection with refresh triggers
+- [x] ReportAssemblerConfig for customization
+- [x] assemble_report convenience function
+- [x] Quick access fields for database denormalization
+- [x] Report summary for list views
+- [x] Test suite (45 tests passing)
+
+**Files Created:**
+- `worker/reports/__init__.py` - Package exports
+- `worker/reports/contract.py` - Report JSON contract and data structures
+- `worker/reports/assembler.py` - Report assembler
+- `tests/unit/test_reports_contract.py` - Contract tests (24 tests)
+- `tests/unit/test_reports_assembler.py` - Assembler tests (21 tests)
+
+**Report Contract Features:**
+- Version 1.0 schema for forward compatibility
+- Metadata with run timing and limitations
+- Score section with criterion and category breakdown
+- Fix section with prioritized recommendations
+- Observation section with prediction accuracy
+- Benchmark section with win/loss tables
+- Divergence section with refresh triggers
+
+**Divergence Detection:**
+- NONE: < 10% difference
+- LOW: 10-20% difference
+- MEDIUM: 20-35% difference
+- HIGH: > 35% difference (triggers refresh recommendation)
+
+---
+
+#### Day 24: Minimal UI (Jinja2) ✅ COMPLETE
+**Date:** 2026-01-29
+**Commit:** TBD
+
+**Deliverables:**
+- [x] Web routes router (`api/routers/web.py`) with Jinja2 templates
+- [x] Dashboard route at `/` showing all sites
+- [x] Site creation form at `/sites/new` with business model options
+- [x] Site detail page at `/sites/{id}` with run progress
+- [x] Report viewer at `/reports/{id}` rendering score report
+- [x] Run status fragment for HTMX polling at `/runs/{id}/status`
+- [x] Template filters (grade_class, score_class, format_trend)
+- [x] Helper functions for score-to-grade, priority-to-severity, date formatting
+- [x] Optional auth support (works for both authenticated and unauthenticated users)
+- [x] HTMX integration for live run progress updates
+- [x] Health routes moved to `/api/` prefix (dashboard takes priority at `/`)
+- [x] Test suite (16 tests passing)
+
+**Files Created:**
+- `api/routers/web.py` - Web routes with Jinja2 templates
+- `web/templates/sites/new.html` - Site creation form (Signal Observatory design)
+- `web/templates/sites/detail.html` - Site detail with run progress
+- `web/templates/partials/run_status.html` - HTMX polling fragment
+- `tests/unit/test_routers_web.py` - Web routes tests (16 tests)
+
+**Files Modified:**
+- `api/main.py` - Added web router, moved health to `/api` prefix
+- `api/auth.py` - Added `get_current_user_optional` for optional auth
+- `tests/unit/test_health.py` - Updated paths for `/api` prefix
+
+**Previously Created Templates (Day 20):**
+- `web/templates/base.html` - Base layout with Tailwind, HTMX, Alpine.js
+- `web/templates/sites/dashboard.html` - Sites listing with Signal Observatory design
+- `web/templates/reports/score_report.html` - Full report page with animations
+
+**Frontend-Design Enhancements (Session #17):**
+
+Enhanced all Day 24 templates using the `frontend-design` skill to match the premium Signal Observatory design established in `score_report.html`:
+
+1. **`new.html` (Site Creation Form):**
+   - Added noise texture overlay for depth
+   - Page header with gradient accent bar (teal → coral)
+   - Form section icons with teal glow background
+   - Enhanced input focus states with glow shadows
+   - Gradient mesh background with triple radial gradients
+   - Info box with left accent stripe
+   - Primary button with gradient background and hover lift
+
+2. **`detail.html` (Site Detail Page):**
+   - SVG gradient definition for score ring
+   - Section title accent bars (teal → coral gradient)
+   - Sidebar cards with hover reveal top gradient
+   - Progress bar shimmer animation during active runs
+   - Enhanced competitor item hover with translateX
+   - Checkbox labels with hover background state
+   - Improved empty state with gradient background icons
+
+3. **`run_status.html` (HTMX Polling Fragment):**
+   - Complete/failed state color-coded borders
+   - Glowing box shadows matching status (green/red)
+   - Shimmer animation on progress bar
+   - Self-contained CSS with variable fallbacks
+   - Enhanced typography and spacing
+   - Current step display in progress text
+
+**Design System Features Applied:**
+- Noise texture overlay (SVG feTurbulence filter, 2.5% opacity)
+- Gradient mesh backgrounds (3 overlapping radial gradients)
+- Section title accent bars (4px gradient stripe)
+- Card hover states with top gradient reveal
+- Button gradients with shadow and hover lift
+- Input focus glow (3px ring + 24px outer glow)
+- Progress bar shimmer animation
+- Sophisticated cubic-bezier transitions (0.4, 0, 0.2, 1)
+- HTMX polling for live run status updates
+- Form validation with error display
+- Responsive design for mobile
+
+**Route Summary:**
+- `GET /` - Dashboard (sites list)
+- `GET /sites/new` - Site creation form
+- `POST /sites/new` - Create site handler
+- `GET /sites/{id}` - Site detail with runs
+- `POST /sites/{id}/runs` - Start new audit run
+- `GET /reports/{id}` - Full score report
+- `GET /runs/{id}/status` - Run status fragment (HTMX)
+- `GET /api/health` - Health check (moved from `/health`)
+- `GET /api/ready` - Readiness check (moved from `/ready`)
+- `GET /api/` - API info (moved from `/`)
+
+---
+
+#### Day 25: Monitoring Scheduler ✅ COMPLETE
+**Date:** 2026-01-29
+**Commit:** TBD
+
+**Deliverables:**
+- [x] Snapshot model for score history tracking
+- [x] MonitoringSchedule model for schedule configuration
+- [x] SnapshotTrigger enum (scheduled_weekly, scheduled_monthly, manual, on_demand)
+- [x] ScheduleFrequency enum (weekly, monthly)
+- [x] Plan-tier frequency mapping (Starter=monthly, Professional/Agency=weekly)
+- [x] MonitoringScheduler class with rq-scheduler integration
+- [x] calculate_next_run function for weekly/monthly schedules
+- [x] Schedule snapshot job with configurable day/hour
+- [x] Cancel scheduled snapshot job
+- [x] Reschedule site after plan change
+- [x] run_snapshot background task
+- [x] enable_monitoring and disable_monitoring tasks
+- [x] Snapshot delta calculation from previous snapshot
+- [x] Category scores and benchmark data snapshots
+- [x] Monitoring API schemas (enable, status, snapshots, trend)
+- [x] Monitoring endpoints (enable, disable, status, trigger)
+- [x] Snapshots endpoints (list, get, trend)
+- [x] Scheduler admin endpoint (stats)
+- [x] Test suite (38 new tests: scheduler + schemas)
+
+**Files Created:**
+- `api/models/snapshot.py` - Snapshot and MonitoringSchedule models
+- `worker/scheduler.py` - Monitoring scheduler with rq-scheduler
+- `worker/tasks/monitoring.py` - Monitoring background tasks
+- `api/schemas/monitoring.py` - Monitoring API schemas
+- `api/routers/monitoring.py` - Monitoring and snapshots endpoints
+- `tests/unit/test_scheduler.py` - Scheduler tests (16 tests)
+- `tests/unit/test_monitoring_schemas.py` - Schema tests (22 tests)
+
+**Files Modified:**
+- `api/models/__init__.py` - Added Snapshot, SnapshotTrigger, MonitoringSchedule exports
+- `api/routers/v1.py` - Added monitoring and snapshots routers
+- `tests/unit/test_models.py` - Added SnapshotTrigger enum test
+
+**Monitoring Endpoints Added:**
+- `POST /v1/sites/{id}/monitoring` - Enable monitoring
+- `DELETE /v1/sites/{id}/monitoring` - Disable monitoring
+- `GET /v1/sites/{id}/monitoring` - Get monitoring status
+- `POST /v1/sites/{id}/monitoring/snapshot` - Trigger manual snapshot
+- `GET /v1/sites/{id}/snapshots` - List snapshots (paginated)
+- `GET /v1/sites/{id}/snapshots/{snapshot_id}` - Get snapshot details
+- `GET /v1/sites/{id}/snapshots/trend` - Get score trend data
+- `GET /v1/admin/scheduler/stats` - Get scheduler statistics
+
+**Scheduler Features:**
+- Uses rq-scheduler for scheduled job execution
+- Plan-aware frequency (Starter=monthly, Professional/Agency=weekly)
+- Configurable day of week (0=Monday) and hour (UTC)
+- Automatic next run calculation
+- Job cancellation and rescheduling
+- Progress tracking and status updates
+- Snapshot delta calculations from previous run
+- Category scores and benchmark data preservation
+
+**Test Summary:**
+- Scheduler tests: 16 tests
+- Monitoring schema tests: 22 tests
+- Model enum test: 1 test (SnapshotTrigger)
+- **Total new tests: 39**
+- **Total project tests: 871**
+
+---
+
+#### Day 26: Alerts v1 ✅ COMPLETE
+**Date:** 2026-01-29
+**Commit:** TBD
+
+**Deliverables:**
+- [x] AlertType enum (score_drop, score_improvement, score_critical, mention_rate changes, competitor_overtake, snapshot_failed/complete)
+- [x] AlertSeverity enum (critical, warning, info)
+- [x] AlertChannel enum (email, webhook, in_app)
+- [x] AlertStatus enum (pending, sent, failed, acknowledged, dismissed)
+- [x] AlertConfig model for per-site alert preferences
+- [x] Alert model for individual alert instances
+- [x] Configurable thresholds (score drop, improvement, critical, mention rate)
+- [x] Rate limiting (min hours between alerts)
+- [x] AlertService for alert creation and management
+- [x] Snapshot alert checking (score drops, improvements, critical thresholds)
+- [x] Mention rate change alerts
+- [x] Failed snapshot alerts
+- [x] EmailProvider (logs in dev, ready for SendGrid/SES integration)
+- [x] WebhookProvider with timeout and error handling
+- [x] InAppProvider for UI notifications
+- [x] Alert endpoints (list, stats, acknowledge, dismiss)
+- [x] Alert config endpoints (get, create, update, delete)
+- [x] Webhook test endpoint
+- [x] Integration with monitoring tasks (alerts triggered after snapshots)
+- [x] Test suite (32 new tests)
+
+**Files Created:**
+- `api/models/alert.py` - Alert and AlertConfig SQLAlchemy models
+- `api/schemas/alert.py` - Alert API schemas
+- `api/services/alert_service.py` - Alert service layer
+- `api/routers/alerts.py` - Alert API endpoints
+- `worker/alerts/__init__.py` - Package exports
+- `worker/alerts/providers.py` - Notification providers
+- `tests/unit/test_alert_schemas.py` - Schema tests (20 tests)
+- `tests/unit/test_alert_models.py` - Model enum tests (4 tests)
+- `tests/unit/test_alert_providers.py` - Provider tests (8 tests)
+
+**Files Modified:**
+- `api/models/__init__.py` - Added Alert, AlertConfig, AlertType, etc. exports
+- `api/routers/v1.py` - Added alerts and config routers
+- `worker/tasks/monitoring.py` - Integrated alert checking after snapshots
+
+**Alert Endpoints Added:**
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/v1/alerts` | List all alerts for user |
+| GET | `/v1/alerts/stats` | Get alert statistics |
+| GET | `/v1/alerts/{id}` | Get specific alert |
+| POST | `/v1/alerts/acknowledge` | Acknowledge alerts |
+| POST | `/v1/alerts/dismiss` | Dismiss alerts |
+| POST | `/v1/alerts/test-webhook` | Test webhook URL |
+| GET | `/v1/sites/{id}/alerts/config` | Get alert config |
+| POST | `/v1/sites/{id}/alerts/config` | Create/update config |
+| PATCH | `/v1/sites/{id}/alerts/config` | Partial update config |
+| DELETE | `/v1/sites/{id}/alerts/config` | Delete config |
+
+**Alert Features:**
+- Threshold-based alerting for score changes
+- Critical score threshold alerts
+- Mention rate change alerts
+- Snapshot failure notifications
+- Multi-channel delivery (email, webhook, in-app)
+- Rate limiting to prevent alert fatigue
+- Acknowledge/dismiss workflow
+- Alert statistics dashboard
+
+**Test Summary:**
+- Alert schema tests: 20 tests
+- Alert model tests: 4 tests
+- Alert provider tests: 8 tests
+- **Total new tests: 32**
+- **Total project tests: 903**
+
+---
+
+#### Day 27: Plan Caps + Billing Hooks ✅ COMPLETE
+**Date:** 2026-01-29
+**Commit:** TBD
+
+**Deliverables:**
+- [x] SubscriptionStatus enum (active, past_due, canceled, incomplete, trialing, unpaid, paused)
+- [x] UsageType enum (site_created, run_started, snapshot_taken, observation_run, benchmark_run, api_call)
+- [x] BillingEventType enum (subscription_created/updated/canceled, payment_succeeded/failed, plan_upgraded/downgraded)
+- [x] Subscription model (Stripe IDs, status, billing cycle, period dates)
+- [x] UsageRecord model (usage tracking with period context)
+- [x] BillingEvent model (audit trail for billing events)
+- [x] UsageSummary model (aggregated usage per billing period)
+- [x] PLAN_LIMITS configuration with tier-specific limits
+- [x] BillingService with:
+  - Subscription management (get/create/update)
+  - Usage tracking (record usage, get current usage)
+  - Limit checking (sites, runs, snapshots, competitors, monitoring interval)
+  - Feature access checking (API access, webhook alerts, priority support)
+  - Billing event logging
+  - Usage summary aggregation
+  - Plan change handling
+- [x] Billing router with endpoints for:
+  - Subscription details
+  - Usage statistics
+  - Plan comparison and limits
+  - Limit checks (sites, runs, snapshots)
+  - Feature access checks
+  - Billing history
+  - Stripe checkout session (stub)
+  - Stripe customer portal (stub)
+  - Plan change (dev endpoint)
+  - Stripe webhook handler with signature verification
+- [x] Stripe configuration settings added to config.py
+- [x] Test suite (95 tests passing)
+
+**Files Created:**
+- `api/models/billing.py` - Billing and usage tracking models
+- `api/schemas/billing.py` - Billing API schemas with PLAN_LIMITS config
+- `api/services/billing_service.py` - Billing service layer
+- `api/routers/billing.py` - Billing API endpoints
+- `tests/unit/test_billing_schemas.py` - Schema tests (29 tests)
+- `tests/unit/test_billing_service.py` - Service tests (43 tests)
+- `tests/unit/test_billing_router.py` - Router tests (23 tests)
+
+**Files Modified:**
+- `api/models/__init__.py` - Added billing model exports
+- `api/models/user.py` - Added subscription relationship
+- `api/config.py` - Added Stripe configuration settings
+- `api/routers/v1.py` - Added billing router
+
+**Billing Endpoints Added:**
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/v1/billing/subscription` | Get subscription details |
+| GET | `/v1/billing/usage` | Get current period usage |
+| GET | `/v1/billing/plans` | Compare all plans |
+| GET | `/v1/billing/plans/{plan}` | Get specific plan limits |
+| GET | `/v1/billing/limits/sites` | Check site creation limit |
+| GET | `/v1/billing/limits/runs` | Check run start limit |
+| GET | `/v1/billing/limits/snapshots` | Check snapshot limit |
+| GET | `/v1/billing/features/{feature}` | Check feature access |
+| GET | `/v1/billing/history` | Get billing event history |
+| POST | `/v1/billing/checkout` | Create Stripe checkout (stub) |
+| POST | `/v1/billing/portal` | Create customer portal (stub) |
+| POST | `/v1/billing/change-plan` | Change plan (dev only) |
+| POST | `/v1/billing/webhooks/stripe` | Handle Stripe webhooks |
+
+**Plan Limits Configuration:**
+| Feature | Starter | Professional | Agency |
+|---------|---------|--------------|--------|
+| Sites | 1 | 5 | 25 |
+| Runs/month | 10 | 50 | 250 |
+| Snapshots/month | 30 | 150 | 750 |
+| Monitoring interval | 168h (weekly) | 24h (daily) | 6h (4x daily) |
+| Competitors/site | 3 | 10 | 25 |
+| API access | No | Yes | Yes |
+| Webhook alerts | No | Yes | Yes |
+| Priority support | No | No | Yes |
+
+**Stripe Webhook Events Handled:**
+- `customer.subscription.created` - New subscription
+- `customer.subscription.updated` - Subscription changes
+- `customer.subscription.deleted` - Subscription canceled
+- `invoice.paid` - Payment succeeded
+- `invoice.payment_failed` - Payment failed
+
+**Test Summary:**
+- Billing schema tests: 29 tests
+- Billing service tests: 43 tests
+- Billing router tests: 23 tests
+- **Total new tests: 95**
+- **Total project tests: 998**
+
+---
+
+#### Day 28: Hardening + Observability ✅ COMPLETE
+**Date:** 2026-01-29
+**Commit:** TBD
+
+**Deliverables:**
+- [x] Prometheus metrics integration with custom business metrics
+- [x] Request latency histograms (HTTP + per-endpoint)
+- [x] Request count by method, endpoint, and status code
+- [x] In-progress request tracking
+- [x] Error counter by type and endpoint
+- [x] Business metrics (sites, runs, snapshots, alerts, observations)
+- [x] Job queue size and processing time metrics
+- [x] MetricsMiddleware with path normalization
+- [x] Rate limiting middleware with token bucket algorithm
+- [x] Plan-tier based rate limits (starter/professional/agency)
+- [x] Stricter rate limits for auth endpoints
+- [x] Rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining)
+- [x] Security headers middleware (X-Content-Type-Options, X-Frame-Options, etc.)
+- [x] Content Security Policy for API endpoints
+- [x] Permissions Policy for feature restriction
+- [x] Sentry error tracking integration
+- [x] Exception filtering (skip 4xx errors)
+- [x] Sensitive header filtering (auth, cookies, API keys)
+- [x] Transaction filtering (skip health checks)
+- [x] User context and breadcrumb helpers
+- [x] Enhanced health checks with latency tracking
+- [x] Uptime tracking
+- [x] Degraded status detection
+- [x] `/metrics` endpoint for Prometheus scraping
+- [x] Test suite (92 tests passing)
+
+**Files Created:**
+- `api/metrics.py` - Prometheus metrics definitions and middleware
+- `api/sentry.py` - Sentry integration and helpers
+- `tests/unit/test_metrics.py` - Metrics tests (25 tests)
+- `tests/unit/test_middleware.py` - Middleware tests (30 tests)
+- `tests/unit/test_sentry.py` - Sentry tests (18 tests)
+- `tests/unit/test_health_extended.py` - Health check tests (19 tests)
+
+**Files Modified:**
+- `api/middleware.py` - Added RateLimitMiddleware and SecurityHeadersMiddleware
+- `api/main.py` - Integrated Sentry, metrics, rate limiting, and security middleware
+- `api/routers/health.py` - Added latency tracking, uptime, and degraded status
+
+**Metrics Exposed:**
+| Metric | Type | Description |
+|--------|------|-------------|
+| `findable_http_requests_total` | Counter | Total HTTP requests |
+| `findable_http_request_duration_seconds` | Histogram | Request latency |
+| `findable_http_requests_in_progress` | Gauge | Active requests |
+| `findable_errors_total` | Counter | Application errors |
+| `findable_sites_total` | Gauge | Total sites |
+| `findable_runs_total` | Counter | Audit runs |
+| `findable_runs_in_progress` | Gauge | Active runs |
+| `findable_snapshots_total` | Counter | Snapshots taken |
+| `findable_alerts_total` | Counter | Alerts created |
+| `findable_observations_total` | Counter | LLM observations |
+| `findable_api_calls_total` | Counter | API calls |
+| `findable_job_queue_size` | Gauge | Job queue size |
+| `findable_job_processing_seconds` | Histogram | Job duration |
+
+**Rate Limits:**
+| Plan | Requests/min | Requests/hour | Burst |
+|------|--------------|---------------|-------|
+| Starter | 30 | 500 | 10 |
+| Professional | 120 | 5,000 | 10 |
+| Agency | 300 | 20,000 | 10 |
+| Auth endpoints | 10 | 50 | 5 |
+
+**Security Headers Added:**
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `X-XSS-Protection: 1; mode=block`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), etc.`
+- `Content-Security-Policy: default-src 'none'` (API only)
+
+**Test Summary:**
+- Metrics tests: 25 tests
+- Middleware tests: 30 tests
+- Sentry tests: 18 tests
+- Health check tests: 19 tests
+- **Total new tests: 92**
+- **Total project tests: 1,090**
+
+---
+
+#### Day 29: Determinism + Replay Tests ✅ COMPLETE
+**Date:** 2026-01-29
+**Commit:** TBD
+
+**Deliverables:**
+- [x] DeterministicContext for reproducible random state management
+- [x] SeededRandom class for isolated random number generation
+- [x] set_seed and reset_seeds global utilities
+- [x] freeze_time context manager for time mocking
+- [x] Content hashing utilities (content_hash, request_hash, prompt_hash)
+- [x] HTTPInteraction dataclass for request/response pairs
+- [x] HTTPCassette for VCR-style interaction storage
+- [x] HTTPRecorder for recording/replaying HTTP interactions
+- [x] RecordMode enum (none, new_episodes, all, optional)
+- [x] record_http context manager for easy cassette usage
+- [x] LLMResponse dataclass with prompt hash matching
+- [x] LLMCassette for LLM response storage and lookup
+- [x] LLMRecorder with fuzzy matching support
+- [x] record_llm context manager
+- [x] Snapshot dataclass for storing test outputs
+- [x] SnapshotStore for file-based snapshot management
+- [x] SnapshotAssertion for comparing actual vs expected
+- [x] SnapshotDiff with unified diff output
+- [x] Normalizers (timestamps, UUIDs, IDs, floats, whitespace)
+- [x] Convenience functions (assert_snapshot, update_snapshot, get_snapshot, list_snapshots)
+- [x] Test suite (137 tests passing)
+
+**Files Created:**
+- `tests/fixtures/__init__.py` - Package exports
+- `tests/fixtures/determinism.py` - Seed control, time freezing, hash utilities
+- `tests/fixtures/http_recorder.py` - VCR-style HTTP recording
+- `tests/fixtures/llm_recorder.py` - LLM response caching and replay
+- `tests/fixtures/snapshots.py` - Snapshot testing utilities
+- `tests/unit/test_determinism.py` - Determinism tests (35 tests)
+- `tests/unit/test_http_recorder.py` - HTTP recorder tests (28 tests)
+- `tests/unit/test_llm_recorder.py` - LLM recorder tests (36 tests)
+- `tests/unit/test_snapshots.py` - Snapshot tests (38 tests)
+
+**Determinism Features:**
+- Seed-based reproducibility for random module
+- Context manager preserves/restores random state
+- Convenience methods: deterministic_choice, deterministic_sample, deterministic_shuffle
+- Time freezing with datetime or ISO string input
+- Content-based hashing for request/prompt deduplication
+
+**HTTP Recording Features:**
+- VCR-style cassette storage (JSON format)
+- Request matching by method, URL, and body
+- URL pattern matching with regex
+- RecordMode: NONE (replay only), NEW_EPISODES (record new), ALL (record all), OPTIONAL (soft fail)
+- Automatic cassette loading/saving via context manager
+
+**LLM Recording Features:**
+- Prompt hash-based response lookup
+- Fuzzy matching with Jaccard similarity
+- Strict mode for test validation
+- Response metadata (model, temperature, usage, latency)
+- Cassette storage with index for fast lookup
+
+**Snapshot Testing Features:**
+- File-based snapshot storage (.snap.json files)
+- Automatic serialization (dict, list, objects with to_dict)
+- Update mode for regenerating snapshots
+- Normalizers for removing non-deterministic content
+- Unified diff output for mismatches
+
+**Test Summary:**
+- Determinism tests: 35 tests
+- HTTP recorder tests: 28 tests
+- LLM recorder tests: 36 tests
+- Snapshot tests: 38 tests
+- **Total new tests: 137**
+- **Total project tests: 1,227**
+
+---
+
+#### Day 30: Deployment (Railway) ✅ COMPLETE
+**Date:** 2026-01-29
+**Commit:** TBD
+
+**Deliverables:**
+- [x] Updated railway.toml with correct health check path (/api/health)
+- [x] Multi-stage Dockerfile (api, worker, scheduler, migrate stages)
+- [x] Production docker-compose.prod.yml with all services
+- [x] Production startup script (scripts/start.py) with:
+  - Automatic migrations on startup
+  - Graceful signal handling
+  - Configurable via environment variables
+- [x] Procfile for Railway/Heroku deployment
+- [x] Updated .env.example with all environment variables (including Stripe)
+- [x] Updated migrations/env.py to import all models
+- [x] Comprehensive DEPLOYMENT.md with:
+  - Railway deployment guide
+  - Docker deployment guide
+  - Environment variable documentation
+  - Database setup instructions
+  - Post-deployment checklist
+  - Monitoring and troubleshooting guides
+- [x] Security: Non-root user in Docker, no real secrets in examples
+- [x] Test suite (32 tests passing)
+
+**Files Created:**
+- `scripts/start.py` - Production startup script
+- `scripts/__init__.py` - Package marker
+- `scripts/__main__.py` - Module entry point
+- `docker-compose.prod.yml` - Production compose file
+- `Procfile` - Railway/Heroku process definitions
+- `DEPLOYMENT.md` - Comprehensive deployment guide
+- `tests/unit/test_deployment.py` - Deployment tests (32 tests)
+
+**Files Modified:**
+- `railway.toml` - Updated health check path, added config
+- `Dockerfile` - Multi-stage build with security hardening
+- `.env.example` - Added Stripe and Railway variables
+- `migrations/env.py` - Import all models for migrations
+
+**Test Summary:**
+- Deployment tests: 32 tests
+- **Total new tests: 32**
+- **Total project tests: 1,259**
+
+---
+
+## 🎉 30-DAY BUILD COMPLETE! 🎉
+
+The Findable Score Analyzer MVP is now ready for production deployment.
+
+### Final Statistics
+
+| Metric | Count |
+|--------|-------|
+| Total Days | 30 |
+| Total Tests | 1,259 |
+| API Endpoints | 50+ |
+| Worker Modules | 12 |
+| Lines of Code | ~15,000 |
+
+### What Was Built
+
+1. **Foundation** (Week 1): FastAPI skeleton, JWT auth, DB models, RQ jobs
+2. **Crawl & Extract** (Week 2): BFS crawler, content extraction, embeddings, hybrid retrieval
+3. **Scoring Engine** (Week 3): Simulation, scoring rubric, fix generation, impact estimation
+4. **Observation & Report** (Week 4): LLM observation, competitor benchmark, reports, monitoring, alerts, billing, deployment
+
+### Deployment Options
+
+- **Railway**: `railway up` (recommended)
+- **Docker**: `docker-compose -f docker-compose.prod.yml up -d`
+- **Heroku**: Deploy with Procfile
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for full instructions.
 
 ---
 
@@ -923,74 +1582,60 @@ Last Updated: 2026-01-29 (Session #15)
 | 2026-01-28 | #14 | Day 20 complete: Observation provider layer with retry/failover |
 | 2026-01-28 | #14 | Bonus: UI templates (dashboard + score report) using frontend-design skill |
 | 2026-01-29 | #15 | Day 21 complete: Observation parsing with fuzzy matching and comparison
+| 2026-01-29 | #16 | Day 22 complete: Competitor benchmark with win/loss tables
+| 2026-01-29 | #16 | Day 23 complete: Report assembler with JSON contract
+| 2026-01-29 | #17 | Day 24 complete: Minimal UI with Jinja2 templates and web routes
+| 2026-01-29 | #18 | Day 25 complete: Monitoring scheduler with rq-scheduler and snapshots
+| 2026-01-29 | #19 | Day 26 complete: Alerts v1 with multi-channel notifications
+| 2026-01-29 | #20 | Day 27 complete: Plan caps + billing hooks with Stripe integration
+| 2026-01-29 | #20 | Day 28 complete: Hardening + observability with metrics, rate limiting, security
+| 2026-01-29 | #21 | Day 29 complete: Determinism + replay tests with VCR, LLM caching, snapshots
+| 2026-01-29 | #22 | Day 30 complete: Deployment (Railway) - 30-DAY BUILD COMPLETE!
 
 ---
 
-## Next Session: Day 22 - Competitor Benchmark
+## Final Architecture
 
-### What to Build
-Day 22 runs observations for competitors and creates win/loss comparison tables.
-
-**Deliverables from spec:**
-- Run observation for competitors (same question set, same method)
-- Create win/loss table (you vs competitor per question)
-- Compute deltas (simple heuristics)
-- Benchmark section generated
-
-### Key Files to Know
-
-**Observation Layer (Days 20-21):**
-- `worker/observation/runner.py` - `ObservationRunner` to run competitor observations
-- `worker/observation/parser.py` - `ObservationParser` to parse responses
-- `worker/observation/comparison.py` - `SimulationObservationComparator` (can be extended for competitor comparison)
-
-**What Day 22 Should Add:**
-1. **Competitor benchmark module** (`worker/observation/benchmark.py`):
-   - Run same questions for multiple companies
-   - Track which company gets mentioned/cited per question
-   - Calculate win/loss/tie per question
-   - Aggregate competitive metrics
-
-2. **Win/loss table** - Show head-to-head comparison
-3. **Delta analysis** - Highlight where competitor beats you
-
-### Architecture Context
-
-**Scoring Pipeline Flow:**
+**Complete Pipeline (Day 30):**
 ```
-Crawl → Extract → Chunk → Embed → Retrieve → Simulate → Score → Fix Generate → Impact Estimate
-                                                                         ↓
-                                              Observe (Day 20) → Parse (Day 21) → Compare
+Crawl → Extract → Chunk → Embed → Retrieve → Simulate → Score → Fix Generate → Impact
+                                                   ↓                    ↓
+                                              Observe → Parse → Compare → Benchmark
+                                                                          ↓
+                                                                 Report Assembler → Report JSON
+                                                                          ↓
+                                                                    Web UI (Jinja2 + HTMX)
+                                                                          ↓
+                                                                 Monitoring Scheduler → Snapshots
+                                                                          ↓
+                                                                    Alerts (email/webhook/in-app)
+                                                                          ↓
+                                                                 Plan Caps + Billing (Stripe)
+                                                                          ↓
+                                                                 Metrics + Rate Limiting + Security
+                                                                          ↓
+                                                                 Determinism + Replay Tests
+                                                                          ↓
+                                                                 Production Deployment (Railway)
 ```
 
-**Impact Estimation Tiers:**
-- Tier C: Precomputed lookup tables (fast, conservative) - `worker/fixes/impact.py`
-- Tier B: Synthetic patching (more accurate) - `worker/fixes/synthetic.py`
-- Tier A: Full re-simulation (most accurate, expensive) - not yet implemented
-
-**Question Categories (5):**
-- Identity (25%): Who you are, what you do
-- Offerings (30%): Products, services, pricing
-- Contact (15%): How to reach/engage
-- Trust (15%): Credibility, social proof
-- Differentiation (15%): What makes you unique
-
-### UI Templates (Bonus - Added Ahead of Schedule)
-
-Created using `/frontend-design` skill with "Signal Observatory" design system:
-- `web/templates/reports/score_report.html` - Full report page with animated score gauge, category breakdown, fix cards
-- `web/templates/sites/dashboard.html` - Sites listing with stats, table, actions
-- `web/templates/base.html` - Updated base template
-
-Day 24 (Minimal UI) can now focus on Jinja2 integration with FastAPI rather than design.
-
-### Test Count Summary
+### Final Test Count Summary
 - Day 16 (Scoring): 51 tests
 - Day 17 (Fix Generator): 70 tests
 - Day 18 (Tier C Impact): 35 tests
 - Day 19 (Tier B Synthetic): 29 tests
-- Day 20 (Observation): 44 tests
-- **Total project tests: 400+**
+- Day 20 (Observation Providers): 44 tests
+- Day 21 (Observation Parsing): 56 tests
+- Day 22 (Benchmark): 32 tests
+- Day 23 (Report Assembler): 45 tests
+- Day 24 (Web Routes): 16 tests
+- Day 25 (Monitoring Scheduler): 39 tests
+- Day 26 (Alerts v1): 32 tests
+- Day 27 (Plan Caps + Billing): 95 tests
+- Day 28 (Hardening + Observability): 92 tests
+- Day 29 (Determinism + Replay Tests): 137 tests
+- Day 30 (Deployment): 32 tests
+- **FINAL TOTAL: 1,259 tests**
 
 ---
 

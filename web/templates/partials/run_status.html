@@ -1,0 +1,256 @@
+{# Run status partial for HTMX polling - Signal Observatory Design #}
+{% if run.completed %}
+{# Final state - no more polling #}
+<div class="active-run-card"
+     style="border-color: {% if run.status == 'complete' %}var(--signal-good){% else %}var(--signal-poor){% endif %};
+            box-shadow: 0 0 32px {% if run.status == 'complete' %}rgba(74, 222, 128, 0.12){% else %}rgba(248, 113, 113, 0.12){% endif %};">
+  <div class="active-run-header">
+    <div class="active-run-title">
+      {% if run.status == 'complete' %}
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--signal-good)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <span style="color: var(--signal-good);">Analysis Complete</span>
+      {% else %}
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--signal-poor)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      <span style="color: var(--signal-poor);">Analysis Failed</span>
+      {% endif %}
+    </div>
+    <span class="active-run-status" style="color: {% if run.status == 'complete' %}var(--signal-good){% else %}var(--signal-poor){% endif %};">
+      {{ run.status | upper }}
+    </span>
+  </div>
+
+  {% if run.status == 'complete' %}
+  <div class="progress-bar-container">
+    <div class="progress-bar" style="width: 100%; background: linear-gradient(90deg, var(--signal-good), var(--signal-excellent));"></div>
+  </div>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.875rem; position: relative; z-index: 1;">
+    <div class="progress-text" style="color: var(--signal-good);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: -2px; margin-right: 0.375rem;">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      Analysis complete — ready to view
+    </div>
+    {% if run.report_id %}
+    <a href="/reports/{{ run.report_id }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      View Report
+    </a>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="progress-text" style="color: var(--signal-poor); display: flex; align-items: flex-start; gap: 0.5rem; position: relative; z-index: 1;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 0.125rem;">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 8v4"/>
+      <path d="M12 16h.01"/>
+    </svg>
+    <span>{{ run.error_message or 'An error occurred during analysis. Please try again.' }}</span>
+  </div>
+  <div style="margin-top: 1rem; position: relative; z-index: 1;">
+    <a href="/sites/{{ run.site_id }}" class="btn btn-ghost" style="font-size: 0.8125rem; padding: 0.5rem 1rem;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="m15 18-6-6 6-6"/>
+      </svg>
+      Back to Site
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+{# Still running - continue polling #}
+<div class="active-run-card"
+     hx-get="/runs/{{ run.id }}/status"
+     hx-trigger="every 3s"
+     hx-swap="outerHTML">
+  <div class="active-run-header">
+    <div class="active-run-title">
+      <span class="pulse-dot"></span>
+      Analysis in Progress
+    </div>
+    <span class="active-run-status">{{ run.job_status or run.status }}</span>
+  </div>
+  <div class="progress-bar-container">
+    <div class="progress-bar" style="width: {{ run.progress }}%"></div>
+  </div>
+  <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
+    <div class="progress-text">
+      {{ run.progress }}% complete
+      {% if run.current_step %}
+      <span style="color: var(--slate-500); margin-left: 0.5rem;">— {{ run.current_step }}</span>
+      {% endif %}
+    </div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--slate-500);">
+      {% if run.started_at %}
+      Started {{ run.started_at }}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+  /* Scoped styles for the partial - ensures consistency when swapped via HTMX */
+  .active-run-card {
+    background: linear-gradient(135deg, var(--slate-900) 0%, var(--slate-800) 100%);
+    border: 1px solid var(--accent-teal);
+    border-radius: 18px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 32px rgba(20, 184, 166, 0.1);
+  }
+
+  .active-run-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, var(--accent-teal-glow), transparent 60%);
+    pointer-events: none;
+  }
+
+  .active-run-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .active-run-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    color: var(--slate-100);
+    font-size: 1rem;
+  }
+
+  .pulse-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--accent-teal);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--accent-teal);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .active-run-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8125rem;
+    color: var(--accent-teal);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .progress-bar-container {
+    height: 8px;
+    background: var(--slate-700);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.875rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-teal), var(--accent-cyan));
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .progress-text {
+    font-size: 0.8125rem;
+    color: var(--slate-400);
+    line-height: 1.5;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-teal), var(--accent-teal-deep));
+    color: var(--slate-950);
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--accent-teal-deep), var(--accent-teal));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(20, 184, 166, 0.35);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--slate-400);
+    border: 1px solid var(--slate-700);
+  }
+
+  .btn-ghost:hover {
+    background: var(--slate-800);
+    color: var(--slate-100);
+  }
+
+  /* CSS Variables fallback */
+  :root {
+    --slate-950: #0a0f1a;
+    --slate-900: #0f172a;
+    --slate-800: #1e293b;
+    --slate-700: #334155;
+    --slate-500: #64748b;
+    --slate-400: #94a3b8;
+    --slate-100: #f1f5f9;
+    --accent-teal: #14b8a6;
+    --accent-teal-glow: rgba(20, 184, 166, 0.15);
+    --accent-teal-deep: #0d9488;
+    --accent-cyan: #06b6d4;
+    --signal-excellent: #2dd4bf;
+    --signal-good: #4ade80;
+    --signal-poor: #f87171;
+  }
+</style>

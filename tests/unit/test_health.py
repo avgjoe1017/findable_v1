@@ -7,7 +7,7 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_health_check(client: AsyncClient) -> None:
     """Test health endpoint returns healthy status."""
-    response = await client.get("/health")
+    response = await client.get("/api/health")
 
     assert response.status_code == 200
     data = response.json()
@@ -17,9 +17,19 @@ async def test_health_check(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_root_endpoint(client: AsyncClient) -> None:
-    """Test root endpoint returns API info."""
+async def test_root_endpoint_returns_dashboard(client: AsyncClient) -> None:
+    """Test root endpoint returns the web dashboard."""
     response = await client.get("/")
+
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert b"Findable" in response.content
+
+
+@pytest.mark.asyncio
+async def test_api_root_returns_info(client: AsyncClient) -> None:
+    """Test API root endpoint returns API info."""
+    response = await client.get("/api/")
 
     assert response.status_code == 200
     data = response.json()
@@ -42,7 +52,7 @@ async def test_v1_root(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_ready_endpoint_structure(client: AsyncClient) -> None:
     """Test ready endpoint returns expected structure."""
-    response = await client.get("/ready")
+    response = await client.get("/api/ready")
 
     # May be unhealthy if DB/Redis not running, but structure should be correct
     assert response.status_code == 200

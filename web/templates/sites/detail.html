@@ -1,0 +1,1193 @@
+{% extends "base.html" %}
+
+{% block title %}{{ site.name }} - Findable Score Analyzer{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Observatory Dark Palette */
+    --slate-950: #0a0f1a;
+    --slate-900: #0f172a;
+    --slate-800: #1e293b;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-500: #64748b;
+    --slate-400: #94a3b8;
+    --slate-300: #cbd5e1;
+    --slate-200: #e2e8f0;
+    --slate-100: #f1f5f9;
+
+    /* Signal Colors */
+    --accent-teal: #14b8a6;
+    --accent-teal-glow: rgba(20, 184, 166, 0.15);
+    --accent-teal-deep: #0d9488;
+    --accent-cyan: #06b6d4;
+    --accent-coral: #fb7185;
+    --accent-indigo: rgba(99, 102, 241, 0.06);
+    --signal-excellent: #2dd4bf;
+    --signal-good: #4ade80;
+    --signal-fair: #fbbf24;
+    --signal-poor: #f87171;
+
+    /* Grade Colors */
+    --grade-a: #2dd4bf;
+    --grade-b: #4ade80;
+    --grade-c: #fbbf24;
+    --grade-d: #fb923c;
+    --grade-f: #f87171;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--slate-950);
+    color: var(--slate-300);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .font-serif { font-family: 'Instrument Serif', Georgia, serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Animated gradient mesh background */
+  .bg-mesh {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(20, 184, 166, 0.08), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 20%, var(--accent-indigo), transparent),
+      radial-gradient(ellipse 50% 30% at 60% 90%, rgba(251, 113, 133, 0.04), transparent),
+      var(--slate-950);
+  }
+
+  /* Subtle noise texture overlay */
+  .noise-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* Navigation */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--slate-800);
+    background: rgba(10, 15, 26, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: var(--slate-100);
+    transition: opacity 0.2s ease;
+  }
+
+  .nav-brand:hover {
+    opacity: 0.9;
+  }
+
+  .nav-logo {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent-teal), var(--accent-cyan));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25);
+  }
+
+  .nav-logo svg {
+    width: 20px;
+    height: 20px;
+    color: var(--slate-950);
+  }
+
+  .nav-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.25rem;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+  }
+
+  .btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--slate-400);
+  }
+
+  .btn-ghost:hover {
+    background: var(--slate-800);
+    color: var(--slate-100);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-teal), var(--accent-teal-deep));
+    color: var(--slate-950);
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--accent-teal-deep), var(--accent-teal));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(20, 184, 166, 0.35);
+  }
+
+  .btn-primary:disabled {
+    background: var(--slate-700);
+    color: var(--slate-500);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Main content */
+  .main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* Site Header */
+  .site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2.5rem;
+  }
+
+  .site-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .site-favicon {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--slate-800) 0%, var(--slate-700) 100%);
+    border: 1px solid var(--slate-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem;
+    color: var(--accent-teal);
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  .site-meta h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2.25rem;
+    color: var(--slate-100);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
+
+  .site-domain {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    color: var(--slate-400);
+  }
+
+  .site-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  /* Score Card */
+  .score-card {
+    background: linear-gradient(135deg, var(--slate-900) 0%, rgba(30, 41, 59, 0.8) 100%);
+    border: 1px solid var(--slate-800);
+    border-radius: 20px;
+    padding: 1.75rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 0% 50%, var(--accent-teal-glow), transparent 50%);
+    pointer-events: none;
+  }
+
+  .score-display {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+
+  .score-display svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .score-ring-bg {
+    fill: none;
+    stroke: var(--slate-700);
+    stroke-width: 8;
+  }
+
+  .score-ring-progress {
+    fill: none;
+    stroke: url(#scoreGradient);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 282.74;
+    stroke-dashoffset: calc(282.74 - (282.74 * var(--score-percent, 0) / 100));
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .score-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .score-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--slate-100);
+    line-height: 1;
+  }
+
+  .score-content {
+    flex: 1;
+    z-index: 1;
+  }
+
+  .score-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--slate-500);
+    margin-bottom: 0.625rem;
+  }
+
+  .score-grade {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .grade-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.625rem;
+    border: 2px solid currentColor;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .grade-badge::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: 0.12;
+    border-radius: 12px;
+  }
+
+  .grade-a { color: var(--grade-a); }
+  .grade-b { color: var(--grade-b); }
+  .grade-c { color: var(--grade-c); }
+  .grade-d { color: var(--grade-d); }
+  .grade-f { color: var(--grade-f); }
+
+  .score-description {
+    font-size: 0.9375rem;
+    color: var(--slate-300);
+    line-height: 1.5;
+  }
+
+  .score-action {
+    display: flex;
+    gap: 0.75rem;
+    z-index: 1;
+  }
+
+  .score-empty {
+    text-align: center;
+    padding: 1.25rem;
+    flex: 1;
+    z-index: 1;
+  }
+
+  .score-empty-text {
+    color: var(--slate-400);
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+
+  /* Active Run Card */
+  .active-run-card {
+    background: linear-gradient(135deg, var(--slate-900) 0%, var(--slate-800) 100%);
+    border: 1px solid var(--accent-teal);
+    border-radius: 18px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 32px rgba(20, 184, 166, 0.1);
+  }
+
+  .active-run-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, var(--accent-teal-glow), transparent 60%);
+    pointer-events: none;
+  }
+
+  .active-run-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .active-run-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    color: var(--slate-100);
+    font-size: 1rem;
+  }
+
+  .pulse-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--accent-teal);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--accent-teal);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .active-run-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8125rem;
+    color: var(--accent-teal);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .progress-bar-container {
+    height: 8px;
+    background: var(--slate-700);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.875rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-teal), var(--accent-cyan));
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .progress-text {
+    font-size: 0.8125rem;
+    color: var(--slate-400);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Grid layout */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+  }
+
+  /* Section Cards */
+  .section-card {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.125rem 1.5rem;
+    border-bottom: 1px solid var(--slate-800);
+    background: linear-gradient(135deg, var(--slate-800) 0%, rgba(30, 41, 59, 0.8) 100%);
+  }
+
+  .section-title {
+    font-weight: 600;
+    color: var(--slate-200);
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .section-title::before {
+    content: '';
+    width: 3px;
+    height: 16px;
+    background: linear-gradient(to bottom, var(--accent-teal), var(--accent-coral));
+    border-radius: 2px;
+  }
+
+  .section-title svg {
+    width: 18px;
+    height: 18px;
+    color: var(--accent-teal);
+  }
+
+  /* Run List */
+  .run-list {
+    list-style: none;
+  }
+
+  .run-item {
+    padding: 1.125rem 1.5rem;
+    border-bottom: 1px solid var(--slate-800);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .run-item:last-child {
+    border-bottom: none;
+  }
+
+  .run-item:hover {
+    background: rgba(30, 41, 59, 0.6);
+  }
+
+  .run-status-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .run-status-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .run-status-icon.complete {
+    background: rgba(74, 222, 128, 0.12);
+    color: var(--signal-good);
+  }
+
+  .run-status-icon.running {
+    background: var(--accent-teal-glow);
+    color: var(--accent-teal);
+  }
+
+  .run-status-icon.failed {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--signal-poor);
+  }
+
+  .run-status-icon.pending {
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--slate-400);
+  }
+
+  .run-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .run-title {
+    font-weight: 500;
+    color: var(--slate-200);
+    margin-bottom: 0.25rem;
+    font-size: 0.9375rem;
+  }
+
+  .run-meta {
+    font-size: 0.8125rem;
+    color: var(--slate-500);
+    display: flex;
+    gap: 1rem;
+  }
+
+  .run-action {
+    flex-shrink: 0;
+  }
+
+  .run-action a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    border-radius: 9px;
+    background: var(--slate-800);
+    border: 1px solid var(--slate-700);
+    color: var(--slate-300);
+    text-decoration: none;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .run-action a:hover {
+    background: var(--slate-700);
+    border-color: var(--slate-600);
+    color: var(--slate-100);
+  }
+
+  .run-action a svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .run-error {
+    color: var(--signal-poor);
+    font-size: 0.8125rem;
+    margin-top: 0.375rem;
+    line-height: 1.4;
+  }
+
+  /* Empty State */
+  .empty-state {
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+  }
+
+  .empty-icon {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 1.25rem;
+    background: linear-gradient(135deg, var(--slate-800) 0%, var(--slate-700) 100%);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--slate-600);
+  }
+
+  .empty-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .empty-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.375rem;
+    color: var(--slate-300);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-text {
+    color: var(--slate-500);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .sidebar-card {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 18px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sidebar-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-teal), var(--accent-coral));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar-card:hover::before {
+    opacity: 1;
+  }
+
+  .sidebar-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--slate-500);
+    margin-bottom: 1.125rem;
+    font-weight: 600;
+  }
+
+  /* Competitor List */
+  .competitor-list {
+    list-style: none;
+  }
+
+  .competitor-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--slate-800);
+    transition: transform 0.2s ease;
+  }
+
+  .competitor-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .competitor-item:hover {
+    transform: translateX(4px);
+  }
+
+  .competitor-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--slate-800) 0%, var(--slate-700) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Instrument Serif', serif;
+    font-size: 1rem;
+    color: var(--slate-400);
+    flex-shrink: 0;
+  }
+
+  .competitor-name {
+    font-size: 0.875rem;
+    color: var(--slate-300);
+    font-weight: 500;
+  }
+
+  .competitor-domain {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--slate-500);
+    margin-top: 0.125rem;
+  }
+
+  .no-competitors {
+    color: var(--slate-500);
+    font-size: 0.875rem;
+    text-align: center;
+    padding: 1.25rem 0;
+    line-height: 1.5;
+  }
+
+  /* Run Form */
+  .run-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--slate-300);
+    padding: 0.625rem;
+    border-radius: 10px;
+    transition: background 0.2s ease;
+  }
+
+  .checkbox-label:hover {
+    background: rgba(30, 41, 59, 0.5);
+  }
+
+  .checkbox-label input {
+    margin-top: 0.125rem;
+    accent-color: var(--accent-teal);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  .checkbox-text {
+    flex: 1;
+  }
+
+  .checkbox-hint {
+    font-size: 0.75rem;
+    color: var(--slate-500);
+    margin-top: 0.25rem;
+    line-height: 1.4;
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-in {
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
+  .delay-1 { animation-delay: 0.05s; }
+  .delay-2 { animation-delay: 0.1s; }
+  .delay-3 { animation-delay: 0.15s; }
+  .delay-4 { animation-delay: 0.2s; }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .content-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .sidebar-card {
+      flex: 1;
+      min-width: 280px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .nav {
+      padding: 1rem 1.25rem;
+    }
+
+    .main {
+      padding: 1.5rem 1.25rem;
+    }
+
+    .site-header {
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .site-meta h1 {
+      font-size: 1.75rem;
+    }
+
+    .site-actions {
+      width: 100%;
+    }
+
+    .site-actions .btn {
+      flex: 1;
+    }
+
+    .score-card {
+      flex-direction: column;
+      text-align: center;
+      padding: 1.5rem;
+    }
+
+    .score-action {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .sidebar {
+      flex-direction: column;
+    }
+
+    .sidebar-card {
+      min-width: auto;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-mesh"></div>
+<div class="noise-overlay"></div>
+
+<!-- SVG Gradient Definition -->
+<svg style="position: absolute; width: 0; height: 0;">
+  <defs>
+    <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color: var(--accent-teal)" />
+      <stop offset="100%" style="stop-color: var(--signal-good)" />
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- Navigation -->
+<nav class="nav">
+  <a href="/" class="nav-brand">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+        <path d="M11 8v6"/>
+        <path d="M8 11h6"/>
+      </svg>
+    </div>
+    <span class="nav-title">Findable</span>
+  </a>
+
+  <div class="nav-actions">
+    <a href="/" class="btn btn-ghost">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="m15 18-6-6 6-6"/>
+      </svg>
+      Back to Dashboard
+    </a>
+  </div>
+</nav>
+
+<main class="main">
+  <!-- Site Header -->
+  <div class="site-header animate-in">
+    <div class="site-info">
+      <div class="site-favicon">{{ site.name[0] }}</div>
+      <div class="site-meta">
+        <h1>{{ site.name }}</h1>
+        <div class="site-domain">{{ site.domain }}</div>
+      </div>
+    </div>
+    <div class="site-actions">
+      <a href="/sites/{{ site.id }}/settings" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+        </svg>
+        Settings
+      </a>
+    </div>
+  </div>
+
+  <!-- Active Run (if any) -->
+  {% if active_run %}
+  <div class="active-run-card animate-in delay-1"
+       hx-get="/runs/{{ active_run.id }}/status"
+       hx-trigger="every 3s"
+       hx-swap="outerHTML">
+    <div class="active-run-header">
+      <div class="active-run-title">
+        <span class="pulse-dot"></span>
+        Analysis in Progress
+      </div>
+      <span class="active-run-status">{{ active_run.status }}</span>
+    </div>
+    <div class="progress-bar-container">
+      <div class="progress-bar" style="width: {{ active_run.progress }}%"></div>
+    </div>
+    <div class="progress-text">
+      {{ active_run.progress }}% complete
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Score Card -->
+  <div class="score-card animate-in delay-1">
+    {% if latest_score %}
+    <div class="score-display" style="--score-percent: {{ latest_score }}">
+      <svg viewBox="0 0 100 100">
+        <circle class="score-ring-bg" cx="50" cy="50" r="45" />
+        <circle class="score-ring-progress" cx="50" cy="50" r="45" />
+      </svg>
+      <div class="score-value">
+        <div class="score-number">{{ latest_score | int }}</div>
+      </div>
+    </div>
+    <div class="score-content">
+      <div class="score-label">Latest Score</div>
+      <div class="score-grade">
+        <span class="grade-badge grade-{{ latest_grade[0] | lower }}">{{ latest_grade }}</span>
+        <span class="score-description">
+          {% if latest_score >= 80 %}Excellent AI sourceability — strong visibility across models
+          {% elif latest_score >= 60 %}Good foundation with room for improvement
+          {% elif latest_score >= 40 %}Needs attention to improve AI visibility
+          {% else %}Significant gaps in AI sourceability detected
+          {% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="score-action">
+      {% if latest_report_id %}
+      <a href="/reports/{{ latest_report_id }}" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        View Report
+      </a>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="score-empty">
+      <p class="score-empty-text">No analysis has been run yet. Start your first audit to see your Findable Score and get actionable recommendations.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="content-grid">
+    <!-- Main Content -->
+    <div>
+      <!-- Runs History -->
+      <div class="section-card animate-in delay-2">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v4"/>
+              <path d="m16.24 7.76-2.12 2.12"/>
+              <path d="M20 12h-4"/>
+              <path d="m17.66 17.66-2.12-2.12"/>
+              <path d="M12 18v4"/>
+              <path d="m6.34 17.66 2.12-2.12"/>
+              <path d="M4 12h4"/>
+              <path d="m6.34 6.34 2.12 2.12"/>
+            </svg>
+            Audit History
+          </h2>
+          <span style="font-size: 0.8125rem; color: var(--slate-500); font-family: 'JetBrains Mono', monospace;">{{ total_runs }} runs</span>
+        </div>
+
+        {% if runs %}
+        <ul class="run-list">
+          {% for run in runs %}
+          <li class="run-item">
+            <div class="run-status-icon {{ run.status }}">
+              {% if run.status == 'complete' %}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              {% elif run.status == 'running' %}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              {% elif run.status == 'failed' %}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+              {% else %}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              {% endif %}
+            </div>
+            <div class="run-content">
+              <div class="run-title">
+                {% if run.status == 'complete' %}Completed Analysis
+                {% elif run.status == 'running' %}Running...
+                {% elif run.status == 'failed' %}Failed
+                {% else %}Pending
+                {% endif %}
+              </div>
+              <div class="run-meta">
+                <span>{{ run.started_at or 'Queued' }}</span>
+                {% if run.include_observation %}<span>+ Observation</span>{% endif %}
+                {% if run.include_benchmark %}<span>+ Benchmark</span>{% endif %}
+              </div>
+              {% if run.error_message %}
+              <div class="run-error">{{ run.error_message }}</div>
+              {% endif %}
+            </div>
+            {% if run.has_report %}
+            <div class="run-action">
+              <a href="/reports/{{ run.report_id }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                View Report
+              </a>
+            </div>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 2v4"/>
+              <path d="m16.24 7.76-2.12 2.12"/>
+              <path d="M20 12h-4"/>
+            </svg>
+          </div>
+          <h3 class="empty-title">No runs yet</h3>
+          <p class="empty-text">Start your first audit to analyze your AI sourceability</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Start New Run -->
+      <div class="sidebar-card animate-in delay-2">
+        <h3 class="sidebar-title">Start New Audit</h3>
+        <form method="post" action="/sites/{{ site.id }}/runs" class="run-form">
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="include_observation" checked>
+              <div class="checkbox-text">
+                Include Observation
+                <div class="checkbox-hint">Query real AI models to verify predictions</div>
+              </div>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="include_benchmark" {% if site.competitors %}checked{% endif %}>
+              <div class="checkbox-text">
+                Include Benchmark
+                <div class="checkbox-hint">Compare against {{ site.competitors | length if site.competitors else 0 }} competitor(s)</div>
+              </div>
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;" {% if active_run %}disabled{% endif %}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            {% if active_run %}Run in Progress{% else %}Run Analysis{% endif %}
+          </button>
+        </form>
+      </div>
+
+      <!-- Competitors -->
+      <div class="sidebar-card animate-in delay-3">
+        <h3 class="sidebar-title">Competitors</h3>
+        {% if site.competitors %}
+        <ul class="competitor-list">
+          {% for comp in site.competitors %}
+          <li class="competitor-item">
+            <div class="competitor-icon">{{ comp.name[0] if comp.name else comp.domain[0] }}</div>
+            <div>
+              <div class="competitor-name">{{ comp.name or comp.domain }}</div>
+              <div class="competitor-domain">{{ comp.domain }}</div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="no-competitors">No competitors configured yet. Add competitors to benchmark your AI visibility.</p>
+        {% endif %}
+        <a href="/sites/{{ site.id }}/settings#competitors" class="btn btn-ghost" style="width: 100%; margin-top: 1rem;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Manage Competitors
+        </a>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -15,6 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from api.database import Base
 
 if TYPE_CHECKING:
+    from api.models.billing import Subscription
     from api.models.site import Site
 
 
@@ -63,4 +64,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     # Relationships
     sites: Mapped[list[Site]] = relationship(
         "Site", back_populates="user", cascade="all, delete-orphan"
+    )
+    subscription: Mapped[Subscription | None] = relationship(
+        "Subscription", back_populates="user", uselist=False
     )

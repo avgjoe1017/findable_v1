@@ -1,8 +1,27 @@
+# Railway deployment configuration for Findable Score Analyzer
+# https://docs.railway.app/reference/config-as-code
+
 [build]
 builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-healthcheckPath = "/health"
+# Health check configuration (updated for Day 24 route changes)
+healthcheckPath = "/api/health"
 healthcheckTimeout = 30
+startCommand = "python -m scripts.start"
+numReplicas = 1
+
+# Restart policy
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
+
+# Resource limits (adjust based on plan)
+# memory = "512Mi"
+# cpu = "0.5"
+
+[deploy.env]
+# Runtime environment
+PORT = "8000"
+ENV = "production"
+LOG_LEVEL = "INFO"

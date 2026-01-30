@@ -64,6 +64,17 @@ class Settings(BaseSettings):
     # Sentry
     sentry_dsn: str | None = None
 
+    # Stripe (billing)
+    stripe_secret_key: str | None = None
+    stripe_publishable_key: str | None = None
+    stripe_webhook_secret: str | None = None
+    stripe_price_starter_monthly: str | None = None
+    stripe_price_starter_yearly: str | None = None
+    stripe_price_professional_monthly: str | None = None
+    stripe_price_professional_yearly: str | None = None
+    stripe_price_agency_monthly: str | None = None
+    stripe_price_agency_yearly: str | None = None
+
     @property
     def is_production(self) -> bool:
         """Check if running in production."""

@@ -3,7 +3,8 @@
 This package provides a unified interface for running observations
 (questions about companies) through various AI providers, parsing
 the responses for mentions, citations, and sourceability signals,
-and comparing results with simulation predictions.
+comparing results with simulation predictions, and benchmarking
+against competitors.
 
 Use explicit imports:
     from worker.observation.providers import ObservationProvider, get_provider
@@ -11,6 +12,7 @@ Use explicit imports:
     from worker.observation.runner import ObservationRunner
     from worker.observation.parser import ObservationParser, parse_observation
     from worker.observation.comparison import compare_simulation_observation
+    from worker.observation.benchmark import CompetitorBenchmarker, run_benchmark
 """
 
 __all__ = [
@@ -51,4 +53,14 @@ __all__ = [
     "OutcomeMatch",
     "SourceabilityOutcome",
     "compare_simulation_observation",
+    # Benchmark (Day 22)
+    "CompetitorBenchmarker",
+    "CompetitorInfo",
+    "CompetitorResult",
+    "BenchmarkResult",
+    "QuestionBenchmark",
+    "HeadToHead",
+    "BenchmarkOutcome",
+    "MentionLevel",
+    "run_benchmark",
 ]

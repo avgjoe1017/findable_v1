@@ -5,6 +5,7 @@ from api.models import (
     PlanTier,
     RunStatus,
     RunType,
+    SnapshotTrigger,
 )
 
 
@@ -36,3 +37,11 @@ def test_run_type_enum() -> None:
     assert RunType.STARTER_AUDIT.value == "starter_audit"
     assert RunType.SNAPSHOT.value == "snapshot"
     assert RunType.RESCORE.value == "rescore"
+
+
+def test_snapshot_trigger_enum() -> None:
+    """Test SnapshotTrigger enum values."""
+    assert SnapshotTrigger.SCHEDULED_WEEKLY.value == "scheduled_weekly"
+    assert SnapshotTrigger.SCHEDULED_MONTHLY.value == "scheduled_monthly"
+    assert SnapshotTrigger.MANUAL.value == "manual"
+    assert SnapshotTrigger.ON_DEMAND.value == "on_demand"
