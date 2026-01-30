@@ -10,23 +10,26 @@ The system has two modes:
 - **Simulated Findability**: Deterministic sourceability engine (crawl → extract → chunk → retrieve → grade)
 - **Observed Findability**: Reality snapshots from actual AI model outputs
 
-## Tech Stack (MVP)
+## Tech Stack
 
 - **Backend**: Python 3.11+, FastAPI (async)
 - **Database**: PostgreSQL + pgvector (hybrid retrieval)
 - **Queue**: Redis + RQ
 - **Crawling**: httpx (static) + Playwright (headless when render delta triggers)
 - **Extraction**: trafilatura + BeautifulSoup fallback
+- **Embeddings**: sentence-transformers (bge-small-en-v1.5)
 - **Hosting**: Railway (api + worker services)
 - **Storage**: Cloudflare R2 or S3-compatible bucket
 
 ## Repository Structure
 
 ```
-/api         # FastAPI application
-/worker      # RQ worker entrypoint
+/api         # FastAPI application (routers, models, schemas, services)
+/worker      # Background job processing (crawler, extraction, chunking, scoring)
 /migrations  # Alembic database migrations
 /web         # Jinja2 templates for MVP UI
+/tests       # Pytest test suite (unit + integration)
+/scripts     # Startup and utility scripts
 ```
 
 ## Key Commands
@@ -35,7 +38,7 @@ The system has two modes:
 # Linting and formatting
 ruff check .
 black .
-mypy .
+mypy api worker
 
 # Database migrations
 alembic upgrade head
@@ -44,12 +47,35 @@ alembic revision --autogenerate -m "description"
 # Run API server (dev)
 uvicorn api.main:app --reload
 
-# Run worker
-rq worker --with-scheduler
+# Run worker (separate terminal)
+python -m worker.main
+
+# Run scheduler (for monitoring snapshots)
+python -m worker.scheduler
 
 # Run tests
 pytest
-pytest tests/test_specific.py -v
+pytest tests/unit/test_auth.py -v      # Single file
+pytest -k "test_create"                 # Pattern match
+pytest --cov=api --cov=worker          # With coverage
+```
+
+## Local Development Setup
+
+```bash
+# Start PostgreSQL + Redis
+docker-compose up -d
+
+# Create and activate virtual environment
+python -m venv venv
+.\venv\Scripts\Activate.ps1  # Windows
+source venv/bin/activate     # Linux/Mac
+
+# Install dependencies
+pip install -e ".[dev]"
+
+# Run migrations
+alembic upgrade head
 ```
 
 ## Core Architecture
@@ -63,6 +89,24 @@ pytest tests/test_specific.py -v
 6. `simulate_run` → retrieve top-k per question, grade per band
 7. `observe_run` → hit provider layer, parse mentions/citations
 8. `assemble_report` → JSON contract (Section 19 of spec)
+
+### Worker Module Structure
+
+```
+/worker
+├── tasks/           # Job entry points (audit.py, monitoring.py)
+├── crawler/         # BFS crawler, fetcher, Playwright renderer
+├── extraction/      # Content extraction (trafilatura + BeautifulSoup)
+├── chunking/        # Semantic text chunking
+├── embeddings/      # sentence-transformers wrapper
+├── questions/       # Question generation (universal, derived, custom)
+├── retrieval/       # Hybrid search (BM25 + vector, RRF fusion)
+├── simulation/      # Simulate AI retrieval per question
+├── observation/     # Real LLM provider calls + parsing
+├── scoring/         # Score calculation (coverage, extractability, etc.)
+├── fixes/           # Fix recommendations + impact estimation
+└── reports/         # Final report assembly
+```
 
 ### Retrieval System
 - **Lexical**: Postgres FTS (BM25-style)
@@ -80,10 +124,22 @@ Scores computed at three context budgets:
 - **Site-derived (5)**: Deterministic rules from FAQ/nav/claims/policies
 - **Custom (up to 5)**: User-supplied "money questions"
 
-### Observation Provider Layer
-Abstract interface supporting multiple providers with failover:
-- Router provider (aggregator, default)
-- Direct OpenAI (fallback)
+## API Structure
+
+All endpoints under `/v1`. Key routes:
+- `/v1/auth/*` - JWT authentication (register, login, logout)
+- `/v1/sites` - Site CRUD + competitor management
+- `/v1/sites/{id}/questions/generate` - Question suite generation
+- `/v1/sites/{id}/runs` - Start audit runs
+- `/v1/runs/{id}` - Run status polling
+- `/v1/reports/{id}` - Full report JSON
+- `/v1/jobs/{id}` - Background job status
+- `/v1/monitoring/*` - Snapshots and alerts
+
+### Key Patterns
+- **Dependency Injection**: `DbSession`, `CurrentUser`, `Pagination` in deps.py
+- **Response Envelope**: All endpoints return `SuccessResponse[T]`
+- **Exception Hierarchy**: `FindableError` subclasses with HTTP status codes
 
 ## Database Schema (Key Tables)
 
@@ -100,18 +156,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 ```
 
-## API Versioning
-
-All endpoints under `/v1`. Key routes:
-- `/v1/auth/*` - JWT authentication
-- `/v1/sites` - Site CRUD + competitors
-- `/v1/sites/{id}/questions/generate` - Question suite
-- `/v1/sites/{id}/runs` - Start audit runs
-- `/v1/runs/{id}` - Run status polling
-- `/v1/reports/{id}` - Report JSON
-- `/v1/fixes/{id}/impact/estimate` - Fix impact (Tier B/C)
-
-## Scoring System ("Show the Math")
+## Scoring System
 
 Score components:
 - **Coverage**: questions answered / total
@@ -138,12 +183,12 @@ Score components:
 ## Environment Variables
 
 ```
-DATABASE_URL
-REDIS_URL
-JWT_SECRET
-STORAGE_BUCKET_URL
-PROVIDER_ROUTER_API_KEY
-OPENAI_API_KEY
+DATABASE_URL          # PostgreSQL connection (asyncpg)
+REDIS_URL             # Redis for job queue
+JWT_SECRET            # JWT signing key
+OPENROUTER_API_KEY    # LLM aggregator (primary)
+OPENAI_API_KEY        # Direct LLM (fallback)
+STORAGE_BUCKET_NAME   # S3/R2 bucket for artifacts
 ENV=prod|dev
 ```
 
