@@ -100,5 +100,13 @@ crawl_artifacts/
 .DS_Store
 Thumbs.db
 
+# Windows reserved device names (invalid as filenames in git on Windows)
+nul
+con
+prn
+aux
+com1
+lpt1
+
 # Claude Code
 .claude/

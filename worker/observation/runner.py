@@ -44,12 +44,16 @@ class RunConfig:
     concurrent_requests: int = 3
 
     # Timeouts
-    request_timeout_seconds: float = 30.0
+    request_timeout_seconds: float = 60.0
     total_timeout_seconds: float = 600.0  # 10 minutes max
 
     # Limits
-    max_questions: int = 50
+    max_questions: int = 25
     max_tokens_per_request: int = 1024
+
+    # Cost guardrails
+    max_cost_per_run: float = 1.0  # USD
+    model_allowlist: list[str] | None = None
 
     def get_provider_config(self, provider_type: ProviderType) -> ProviderConfig:
         """Get config for a specific provider."""
@@ -65,6 +69,37 @@ class RunConfig:
             max_retries=self.max_retries,
             retry_delay_seconds=self.retry_delay_seconds,
             requests_per_minute=self.requests_per_minute,
+        )
+
+    @classmethod
+    def from_settings(cls) -> "RunConfig":
+        """Create RunConfig from application settings."""
+        from api.config import get_settings
+
+        settings = get_settings()
+
+        # Determine primary provider based on available keys
+        if settings.openrouter_api_key:
+            primary = ProviderType.OPENROUTER
+            fallback = ProviderType.OPENAI if settings.openai_api_key else ProviderType.MOCK
+        elif settings.openai_api_key:
+            primary = ProviderType.OPENAI
+            fallback = ProviderType.MOCK
+        else:
+            primary = ProviderType.MOCK
+            fallback = ProviderType.MOCK
+
+        return cls(
+            primary_provider=primary,
+            fallback_provider=fallback,
+            model=settings.get_observation_model(),
+            openrouter_api_key=settings.openrouter_api_key or "",
+            openai_api_key=settings.openai_api_key or "",
+            request_timeout_seconds=settings.observation_timeout_seconds,
+            total_timeout_seconds=settings.observation_total_timeout_seconds,
+            max_questions=settings.observation_max_questions,
+            max_cost_per_run=settings.observation_max_cost_per_run,
+            model_allowlist=settings.observation_model_allowlist,
         )
 
 
@@ -85,6 +120,10 @@ class ObservationRunner:
 
         # Initialize providers
         self._providers: dict[ProviderType, ObservationProvider] = {}
+
+        # Cost tracking
+        self._total_cost: float = 0.0
+        self._cost_exceeded: bool = False
 
     def _get_provider(self, provider_type: ProviderType) -> ObservationProvider:
         """Get or create a provider instance."""
@@ -147,19 +186,41 @@ class ObservationRunner:
 
         self._report_progress(0, len(requests), "Starting observations")
 
+        # Reset cost tracking
+        self._total_cost = 0.0
+        self._cost_exceeded = False
+
         # Process requests with concurrency limit
         semaphore = asyncio.Semaphore(self.config.concurrent_requests)
         completed = 0
 
         async def process_request(request: ObservationRequest) -> ObservationResult:
             nonlocal completed
+
+            # Check cost cap before processing
+            if self._cost_exceeded:
+                return ObservationResult(
+                    question_id=request.question_id,
+                    question_text=request.question_text,
+                    company_name=company_name,
+                    domain=domain,
+                )
+
             async with semaphore:
                 result = await self._observe_with_retry(request)
+
+                # Track cost
+                if result.response and result.response.usage:
+                    cost = result.response.usage.estimated_cost_usd or 0.0
+                    self._total_cost += cost
+                    if self._total_cost >= self.config.max_cost_per_run:
+                        self._cost_exceeded = True
+
                 completed += 1
                 self._report_progress(
                     completed,
                     len(requests),
-                    f"Processed {completed}/{len(requests)} questions",
+                    f"Processed {completed}/{len(requests)} (${self._total_cost:.4f})",
                 )
                 return result
 
@@ -211,6 +272,19 @@ class ObservationRunner:
                     retryable=False,
                 )
             )
+
+        # Report cost cap exceeded
+        if self._cost_exceeded:
+            obs_run.errors.append(
+                ProviderError(
+                    provider=self.config.primary_provider,
+                    error_type="cost_limit",
+                    message=f"Cost cap exceeded: ${self._total_cost:.4f} >= ${self.config.max_cost_per_run:.2f}",
+                    retryable=False,
+                )
+            )
+            if obs_run.status != ObservationStatus.FAILED:
+                obs_run.status = ObservationStatus.PARTIAL
 
         obs_run.completed_at = datetime.utcnow()
         self._report_progress(

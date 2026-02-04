@@ -189,6 +189,22 @@ class SiteService:
         )
         return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
+    async def get_previous_report(
+        self,
+        db: AsyncSession,
+        site_id: uuid.UUID,
+    ) -> Report | None:
+        """Get the second-most-recent report for a site (for trend calculation)."""
+        result = await db.execute(
+            select(Report)
+            .join(Run)
+            .where(Run.site_id == site_id, Run.status == "complete")
+            .order_by(Report.created_at.desc())
+            .offset(1)
+            .limit(1)
+        )
+        return result.scalar_one_or_none()  # type: ignore[no-any-return]
+
 
 # Singleton instance
 site_service = SiteService()

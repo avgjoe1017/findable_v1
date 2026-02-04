@@ -19,6 +19,7 @@ from api.models.billing import (  # noqa: F401
     UsageRecord,
     UsageSummary,
 )
+from api.models.embedding import Embedding  # noqa: F401
 from api.models.run import Report, Run  # noqa: F401
 from api.models.site import Competitor, Site  # noqa: F401
 from api.models.snapshot import MonitoringSchedule, Snapshot  # noqa: F401

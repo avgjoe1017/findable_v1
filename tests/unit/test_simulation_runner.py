@@ -82,9 +82,12 @@ class TestSimulationConfig:
         config = SimulationConfig()
 
         assert config.chunks_per_question == 5
-        assert config.min_relevance_score == 0.3
+        # min_relevance_score = 0.0 because RRF scores are tiny (0.001-0.03)
+        assert config.min_relevance_score == 0.0
         assert config.fully_answerable_threshold == 0.7
         assert config.partially_answerable_threshold == 0.3
+        # signal_match_threshold = 0.6 to require 60%+ word matches
+        assert config.signal_match_threshold == 0.6
 
     def test_custom_config(self) -> None:
         """Can create custom config."""
@@ -445,3 +448,29 @@ class TestSignalMatching:
 
         matched = [m for m in result.signal_matches if m.found]
         assert len(matched) == 0
+
+    def test_pattern_based_signal_match_email(self) -> None:
+        """Pattern-based matching detects real emails for 'email address' signal."""
+        retriever = MockRetriever([make_result("Contact us at help@example.com for support.")])
+        runner = SimulationRunner(retriever)  # type: ignore
+
+        question = make_question(signals=["email address"])
+        result = runner._evaluate_question(question)
+
+        matched = [m for m in result.signal_matches if m.found]
+        assert len(matched) == 1
+        assert matched[0].signal == "email address"
+        assert "help@example.com" in (matched[0].evidence or "")
+
+    def test_pattern_based_signal_match_phone(self) -> None:
+        """Pattern-based matching detects real phone numbers for 'phone number' signal."""
+        retriever = MockRetriever([make_result("Call us at 1-800-555-1234 anytime.")])
+        runner = SimulationRunner(retriever)  # type: ignore
+
+        question = make_question(signals=["phone number"])
+        result = runner._evaluate_question(question)
+
+        matched = [m for m in result.signal_matches if m.found]
+        assert len(matched) == 1
+        assert matched[0].signal == "phone number"
+        assert "1-800-555-1234" in (matched[0].evidence or "")

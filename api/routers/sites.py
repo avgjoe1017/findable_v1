@@ -220,3 +220,37 @@ async def update_competitors(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(e),
         )
+
+
+@router.post(
+    "/{site_id}/cache/invalidate",
+    response_model=SuccessResponse[dict],
+    summary="Invalidate crawl cache",
+)
+async def invalidate_cache(
+    site_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+) -> SuccessResponse[dict]:
+    """
+    Invalidate the crawl cache for a site.
+
+    Forces the next audit to perform a fresh crawl instead of using cached data.
+    Useful when site content has changed significantly.
+    """
+    from worker.crawler.cache import crawl_cache
+
+    try:
+        site = await site_service.get_site(db, site_id, user.id)
+        invalidated = await crawl_cache.invalidate(site.domain)
+        return SuccessResponse(
+            data={
+                "domain": site.domain,
+                "cache_invalidated": invalidated,
+            }
+        )
+    except NotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Site {site_id} not found",
+        )

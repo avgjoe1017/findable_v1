@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from worker.crawler.fetcher import Fetcher
 from worker.crawler.robots import RobotsChecker
+from worker.crawler.sitemap import fetch_sitemap_urls
 from worker.crawler.url import (
     extract_domain,
     is_internal_url,
@@ -72,6 +73,34 @@ class CrawlConfig:
     follow_external_links: bool = False
     concurrency: int = 5
     min_delay: float = 0.5
+
+    # Priority paths to seed the crawl with (improves score coverage)
+    # These paths often contain high-value content not linked from homepage
+    priority_paths: list[str] | None = None
+
+
+# Default priority paths for better findability coverage
+DEFAULT_PRIORITY_PATHS = [
+    "/about",
+    "/pricing",
+    "/press",  # Founder info, company history
+    "/newsroom",  # Alternative to /press
+    "/contact",
+    "/support",
+    "/help",
+    "/faq",
+    "/features",
+    "/products",
+    "/services",
+    "/solutions",
+    "/customers",
+    "/case-studies",
+    "/testimonials",
+    "/blog",
+    "/company",
+    "/team",
+    "/careers",
+]
 
 
 class Crawler:
@@ -168,6 +197,75 @@ class Crawler:
         # Add start URL to queue
         queue.append((normalized_start, 0))
         seen.add(normalized_start)
+
+        # Seed queue with priority paths (depth 0 so they're crawled early)
+        # These paths often contain high-value content for AI findability
+        priority_paths = self.config.priority_paths or DEFAULT_PRIORITY_PATHS
+        base_url = normalized_start.rstrip("/")
+        priority_count = 0
+        for path in priority_paths:
+            priority_url = normalize_url(path, base_url)
+            if (
+                priority_url
+                and priority_url not in seen
+                and is_internal_url(priority_url, base_domain)
+            ):
+                queue.append((priority_url, 0))
+                seen.add(priority_url)
+                priority_count += 1
+
+        if priority_count > 0:
+            logger.info(
+                "priority_paths_seeded",
+                count=priority_count,
+                paths=priority_paths[:5],  # Log first 5 for debugging
+            )
+
+        # Seed queue with URLs from sitemap.xml (if available)
+        # Sitemaps are discovered from robots.txt
+        try:
+            # First, trigger robots.txt fetch to populate the cache
+            await self.robots.is_allowed(normalized_start)
+            sitemap_urls = self.robots.get_sitemaps(normalized_start)
+
+            if sitemap_urls:
+                logger.info(
+                    "sitemaps_found_in_robots",
+                    count=len(sitemap_urls),
+                    sitemaps=sitemap_urls[:3],
+                )
+
+                # Fetch URLs from sitemaps (limit to avoid overwhelming the queue)
+                sitemap_page_urls = await fetch_sitemap_urls(
+                    sitemap_urls=sitemap_urls,
+                    user_agent=self.config.user_agent,
+                    max_urls=min(100, self.config.max_pages * 2),
+                )
+
+                sitemap_count = 0
+                for sitemap_url in sitemap_page_urls:
+                    normalized = normalize_url(sitemap_url)
+                    if (
+                        normalized
+                        and normalized not in seen
+                        and is_internal_url(normalized, base_domain)
+                    ):
+                        queue.append((normalized, 0))  # Depth 0 for priority
+                        seen.add(normalized)
+                        sitemap_count += 1
+
+                if sitemap_count > 0:
+                    logger.info(
+                        "sitemap_urls_seeded",
+                        count=sitemap_count,
+                        sample=list(sitemap_page_urls)[:5],
+                    )
+        except Exception as e:
+            logger.warning(
+                "sitemap_seeding_failed",
+                error=str(e),
+                url=normalized_start,
+            )
 
         while queue and len(pages) < self.config.max_pages:
             url, depth = queue.popleft()

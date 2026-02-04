@@ -1,0 +1,3 @@
+Total: 377
+Outcomes: {'correct': 285, 'optimistic': 2, 'pessimistic': 90}
+Accuracy: 75.6%

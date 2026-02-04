@@ -455,3 +455,57 @@ class TestCostEstimation:
         response = await provider.observe(request)
 
         assert response.usage.estimated_cost_usd > 0
+
+
+class TestRecordedResponses:
+    """Tests using recorded LLM responses for determinism."""
+
+    def test_load_observation_cassette(self) -> None:
+        """Can load the observation samples cassette."""
+        from pathlib import Path
+
+        from tests.fixtures.llm_recorder import load_llm_cassette
+
+        cassette = load_llm_cassette(
+            "observation_samples",
+            cassette_dir=Path("tests/fixtures/llm_cassettes"),
+        )
+
+        assert cassette.name == "observation_samples"
+        assert len(cassette.responses) >= 1
+
+    def test_find_recorded_response(self) -> None:
+        """Can find a matching recorded response."""
+        from pathlib import Path
+
+        from tests.fixtures.llm_recorder import load_llm_cassette
+
+        cassette = load_llm_cassette(
+            "observation_samples",
+            cassette_dir=Path("tests/fixtures/llm_cassettes"),
+        )
+
+        # Find a response about Acme
+        response = cassette.find_similar(
+            "What does Acme Corporation do?",
+            threshold=0.5,
+        )
+
+        assert response is not None
+        assert "Acme" in response.response
+
+    def test_recorded_responses_have_usage(self) -> None:
+        """Recorded responses include usage stats."""
+        from pathlib import Path
+
+        from tests.fixtures.llm_recorder import load_llm_cassette
+
+        cassette = load_llm_cassette(
+            "observation_samples",
+            cassette_dir=Path("tests/fixtures/llm_cassettes"),
+        )
+
+        for response in cassette.responses:
+            assert response.usage is not None
+            assert response.usage.get("prompt_tokens", 0) > 0
+            assert response.latency_ms is not None

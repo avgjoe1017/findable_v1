@@ -39,9 +39,24 @@ class GeneratedQuestion:
     expected_signals: list[str] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
 
+    @property
+    def id(self) -> str:
+        """Generate deterministic ID from question text or use universal_id from metadata."""
+        if "universal_id" in self.metadata:
+            return self.metadata["universal_id"]
+        import hashlib
+
+        return hashlib.md5(self.question.encode()).hexdigest()[:8]
+
+    @property
+    def text(self) -> str:
+        """Alias for question attribute."""
+        return self.question
+
     def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
+            "id": self.id,
             "question": self.question,
             "source": self.source.value,
             "category": self.category.value,
@@ -338,8 +353,8 @@ class QuestionGenerator:
         context = SiteContext(
             company_name=company_name,
             domain=domain,
-            title=title if isinstance(title, (str, type(None))) else None,
-            description=description if isinstance(description, (str, type(None))) else None,
+            title=title if isinstance(title, str | type(None)) else None,
+            description=description if isinstance(description, str | type(None)) else None,
             schema_types=schema_types or [],
             headings=headings or {},
             keywords=keywords if isinstance(keywords, list) else [],

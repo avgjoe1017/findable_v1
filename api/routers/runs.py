@@ -1,18 +1,57 @@
 """Audit run management endpoints."""
 
+import asyncio
+import json
 import uuid
+from collections.abc import AsyncGenerator
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, status
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
+from sqlalchemy import select
 
-from api.auth import CurrentUser
-from api.database import DbSession
+from api.auth import CurrentUser, current_user_optional
+from api.config import get_settings
+from api.database import DbSession, get_session_maker
 from api.deps import PaginationDep
 from api.exceptions import ConflictError, NotFoundError
+from api.models.user import User
 from api.schemas.responses import PaginatedResponse, SuccessResponse
 from api.schemas.run import RunCreate, RunRead, RunWithReport
 from api.services import job_service, run_service, site_service
 
 router = APIRouter(prefix="/sites/{site_id}/runs", tags=["runs"])
+
+
+async def get_user_from_token_param(
+    token: Annotated[str | None, Query(description="JWT token for SSE auth")] = None,
+) -> User | None:
+    """Get user from token query parameter (for SSE/EventSource which can't send headers)."""
+    if not token:
+        return None
+
+    settings = get_settings()
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret,
+            algorithms=[settings.jwt_algorithm],
+            audience="fastapi-users:auth",
+        )
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+
+        async with get_session_maker()() as session:
+            result = await session.execute(select(User).where(User.id == uuid.UUID(user_id)))
+            user: User | None = result.scalar_one_or_none()
+            if user and user.is_active:
+                return user
+    except (jwt.InvalidTokenError, ValueError):
+        pass
+
+    return None
 
 
 @router.post(
@@ -144,6 +183,117 @@ async def get_run(
             data=RunWithReport.model_validate(run),
             meta={"job_status": job_status} if job_status else None,
         )
+    except NotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+
+@router.get(
+    "/{run_id}/progress/stream",
+    summary="Stream run progress (SSE)",
+    response_class=StreamingResponse,
+)
+async def stream_run_progress(
+    site_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: DbSession,
+    user: Annotated[User | None, Depends(current_user_optional)] = None,
+    token_user: Annotated[User | None, Depends(get_user_from_token_param)] = None,
+) -> StreamingResponse:
+    """
+    Stream real-time progress updates for a run using Server-Sent Events.
+
+    Supports authentication via:
+    - Authorization header (Bearer token)
+    - Query parameter (?token=...) for EventSource compatibility
+
+    The stream emits events in the format:
+    ```
+    event: progress
+    data: {"status": "crawling", "progress": {...}}
+
+    event: complete
+    data: {"status": "complete", "report_id": "..."}
+    ```
+
+    The stream closes when the run completes or fails.
+    """
+    # Allow auth via either header or query param (for EventSource)
+    auth_user = user or token_user
+    if not auth_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
+
+    try:
+        # Verify user owns site
+        await site_service.get_site(db, site_id, auth_user.id)
+
+        # Verify run exists
+        await run_service.get_run(db, run_id, auth_user.id)
+
+        async def event_generator() -> AsyncGenerator[str, None]:
+            """Generate SSE events for run progress."""
+            from sqlalchemy import select
+
+            from api.models import Run
+
+            last_status = None
+            last_progress = None
+
+            while True:
+                # Get fresh run data
+                async with get_session_maker()() as session:
+                    result = await session.execute(select(Run).where(Run.id == run_id))
+                    current_run = result.scalar_one_or_none()
+
+                    if not current_run:
+                        yield f"event: error\ndata: {json.dumps({'error': 'Run not found'})}\n\n"
+                        break
+
+                    # Check if status or progress changed
+                    current_status = current_run.status
+                    current_progress = current_run.progress
+
+                    if current_status != last_status or current_progress != last_progress:
+                        # Emit progress event
+                        event_data = {
+                            "status": current_status,
+                            "progress": current_progress,
+                        }
+
+                        if current_status == "complete":
+                            event_data["report_id"] = (
+                                str(current_run.report_id) if current_run.report_id else None
+                            )
+                            yield f"event: complete\ndata: {json.dumps(event_data)}\n\n"
+                            break
+                        elif current_status == "failed":
+                            event_data["error"] = current_run.error_message
+                            yield f"event: failed\ndata: {json.dumps(event_data)}\n\n"
+                            break
+                        else:
+                            yield f"event: progress\ndata: {json.dumps(event_data)}\n\n"
+
+                        last_status = current_status
+                        last_progress = current_progress
+
+                # Poll every 500ms
+                await asyncio.sleep(0.5)
+
+        return StreamingResponse(
+            event_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",  # Disable nginx buffering
+            },
+        )
+
     except NotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

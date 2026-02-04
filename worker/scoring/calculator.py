@@ -354,8 +354,12 @@ class ScoreCalculator:
 
         for result in results:
             # Get raw scores
-            relevance = result.context.avg_relevance_score
-            signal = result.signals_found / result.signals_total if result.signals_total > 0 else 0
+            # Normalize RRF scores (0.001-0.03) to 0-1 range
+            raw_relevance = result.context.avg_relevance_score
+            relevance = min(1.0, raw_relevance / 0.02) if raw_relevance < 0.1 else raw_relevance
+            signal = (
+                result.signals_found / result.signals_total if result.signals_total > 0 else 0.5
+            )
             confidence = self._confidence_to_score(result.confidence)
 
             # Calculate base score
@@ -531,18 +535,23 @@ class ScoreCalculator:
         """Calculate average relevance score."""
         if not simulation.question_results:
             return 0.0
-        return sum(r.context.avg_relevance_score for r in simulation.question_results) / len(
-            simulation.question_results
-        )
+        # Normalize RRF scores (0.001-0.03) to 0-1 range
+        normalized_scores = []
+        for r in simulation.question_results:
+            raw = r.context.avg_relevance_score
+            normalized = min(1.0, raw / 0.02) if raw < 0.1 else raw
+            normalized_scores.append(normalized)
+        return sum(normalized_scores) / len(normalized_scores)
 
     def _calculate_signal_score(self, simulation: SimulationResult) -> float:
         """Calculate overall signal coverage."""
-        total_signals = 0
-        found_signals = 0
-        for r in simulation.question_results:
-            total_signals += r.signals_total
-            found_signals += r.signals_found
-        return found_signals / total_signals if total_signals > 0 else 0.0
+        questions_with_signals = [r for r in simulation.question_results if r.signals_total > 0]
+        if not questions_with_signals:
+            return 0.5
+
+        total_signals = sum(r.signals_total for r in questions_with_signals)
+        found_signals = sum(r.signals_found for r in questions_with_signals)
+        return found_signals / total_signals if total_signals > 0 else 0.5
 
     def _calculate_confidence_score(self, simulation: SimulationResult) -> float:
         """Calculate average confidence score."""

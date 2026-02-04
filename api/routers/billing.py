@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
@@ -12,8 +12,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.auth import current_active_user
 from api.config import get_settings
+
+if TYPE_CHECKING:
+    from api.config import Settings
+from datetime import UTC
+
 from api.database import get_db
 from api.models import User
+from api.models.billing import BillingEventType
 from api.schemas.billing import (
     PLAN_LIMITS,
     BillingEventResponse,
@@ -196,13 +202,12 @@ async def get_billing_history(
 async def create_checkout_session(
     request: CreateCheckoutSessionRequest,
     current_user: Annotated[User, Depends(current_active_user)],
-    billing_service: Annotated[BillingService, Depends(get_billing_service)],  # noqa: ARG001
-    db: Annotated[AsyncSession, Depends(get_db)],  # noqa: ARG001
+    billing_service: Annotated[BillingService, Depends(get_billing_service)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> CheckoutSessionResponse:
-    """Create a Stripe checkout session for plan upgrade.
+    """Create a Stripe checkout session for plan upgrade."""
+    import stripe
 
-    Note: This is a stub. In production, this would integrate with Stripe.
-    """
     settings = get_settings()
 
     if not settings.stripe_secret_key:
@@ -211,32 +216,84 @@ async def create_checkout_session(
             detail="Stripe is not configured",
         )
 
-    # In production, create Stripe checkout session here
-    # For now, return a placeholder
-    logger.info(
-        "checkout_session_requested",
-        user_id=str(current_user.id),
-        plan=request.plan.value,
-        billing_cycle=request.billing_cycle.value,
-    )
+    stripe.api_key = settings.stripe_secret_key
 
-    # Placeholder response
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Stripe checkout not yet implemented. Contact support for plan changes.",
-    )
+    # Get or create subscription to get/create Stripe customer
+    subscription = await billing_service.get_or_create_subscription(current_user.id)
+
+    # Create Stripe customer if needed
+    if not subscription.stripe_customer_id:
+        try:
+            customer = stripe.Customer.create(
+                email=current_user.email,
+                metadata={"user_id": str(current_user.id)},
+            )
+            subscription.stripe_customer_id = customer.id
+            await db.commit()
+        except stripe.StripeError as e:
+            logger.error("stripe_customer_creation_failed", error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Failed to create billing account",
+            )
+
+    # Get the price ID for the requested plan/cycle
+    price_id = _get_price_id(request.plan, request.billing_cycle, settings)
+    if not price_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No price configured for {request.plan.value} {request.billing_cycle.value}",
+        )
+
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            customer=subscription.stripe_customer_id,
+            mode="subscription",
+            line_items=[{"price": price_id, "quantity": 1}],
+            success_url=(
+                str(request.success_url)
+                if request.success_url
+                else f"{settings.api_host}/billing/success"
+            ),
+            cancel_url=(
+                str(request.cancel_url)
+                if request.cancel_url
+                else f"{settings.api_host}/billing/cancel"
+            ),
+            metadata={"user_id": str(current_user.id)},
+            subscription_data={"metadata": {"user_id": str(current_user.id)}},
+        )
+
+        logger.info(
+            "checkout_session_created",
+            user_id=str(current_user.id),
+            plan=request.plan.value,
+            billing_cycle=request.billing_cycle.value,
+            session_id=checkout_session.id,
+        )
+
+        return CheckoutSessionResponse(
+            session_id=checkout_session.id,
+            url=checkout_session.url or "",
+        )
+
+    except stripe.StripeError as e:
+        logger.error("stripe_checkout_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to create checkout session",
+        )
 
 
 @router.post("/portal", response_model=PortalSessionResponse)
 async def create_portal_session(
-    request: CreatePortalSessionRequest,  # noqa: ARG001
+    request: CreatePortalSessionRequest,
     current_user: Annotated[User, Depends(current_active_user)],
     billing_service: Annotated[BillingService, Depends(get_billing_service)],
 ) -> PortalSessionResponse:
-    """Create a Stripe customer portal session.
+    """Create a Stripe customer portal session for managing subscription."""
+    import stripe
 
-    Note: This is a stub. In production, this would integrate with Stripe.
-    """
     settings = get_settings()
 
     if not settings.stripe_secret_key:
@@ -244,6 +301,8 @@ async def create_portal_session(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Stripe is not configured",
         )
+
+    stripe.api_key = settings.stripe_secret_key
 
     subscription = await billing_service.get_user_subscription(current_user.id)
 
@@ -253,11 +312,26 @@ async def create_portal_session(
             detail="No billing account found. Please contact support.",
         )
 
-    # Placeholder response
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Stripe portal not yet implemented. Contact support for billing changes.",
-    )
+    try:
+        portal_session = stripe.billing_portal.Session.create(
+            customer=subscription.stripe_customer_id,
+            return_url=str(request.return_url) if request.return_url else f"{settings.api_host}/",
+        )
+
+        logger.info(
+            "portal_session_created",
+            user_id=str(current_user.id),
+            customer_id=subscription.stripe_customer_id,
+        )
+
+        return PortalSessionResponse(url=portal_session.url)
+
+    except stripe.StripeError as e:
+        logger.error("stripe_portal_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to create portal session",
+        )
 
 
 @router.post("/change-plan")
@@ -300,8 +374,8 @@ async def change_plan(
 @router.post("/webhooks/stripe")
 async def stripe_webhook(
     request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
     stripe_signature: Annotated[str | None, Header(alias="stripe-signature")] = None,
-    db: Annotated[AsyncSession, Depends(get_db)] = None,
 ) -> dict:
     """Handle Stripe webhook events.
 
@@ -386,6 +460,33 @@ async def stripe_webhook(
     return {"received": True}
 
 
+def _get_price_id(plan: PlanTier, billing_cycle: str, settings: Settings) -> str | None:
+    """Get Stripe price ID for a plan and billing cycle."""
+    price_map = {
+        (PlanTier.STARTER, "monthly"): settings.stripe_price_starter_monthly,
+        (PlanTier.STARTER, "yearly"): settings.stripe_price_starter_yearly,
+        (PlanTier.PROFESSIONAL, "monthly"): settings.stripe_price_professional_monthly,
+        (PlanTier.PROFESSIONAL, "yearly"): settings.stripe_price_professional_yearly,
+        (PlanTier.AGENCY, "monthly"): settings.stripe_price_agency_monthly,
+        (PlanTier.AGENCY, "yearly"): settings.stripe_price_agency_yearly,
+    }
+    return price_map.get((plan, billing_cycle))
+
+
+def _plan_from_price_id(price_id: str, settings: Settings) -> PlanTier | None:
+    """Get plan tier from Stripe price ID."""
+    if price_id in (settings.stripe_price_starter_monthly, settings.stripe_price_starter_yearly):
+        return PlanTier.STARTER
+    if price_id in (
+        settings.stripe_price_professional_monthly,
+        settings.stripe_price_professional_yearly,
+    ):
+        return PlanTier.PROFESSIONAL
+    if price_id in (settings.stripe_price_agency_monthly, settings.stripe_price_agency_yearly):
+        return PlanTier.AGENCY
+    return None
+
+
 def _verify_stripe_signature(payload: bytes, signature: str, secret: str) -> None:
     """Verify Stripe webhook signature."""
     # Parse signature header
@@ -412,81 +513,264 @@ def _verify_stripe_signature(payload: bytes, signature: str, secret: str) -> Non
 
 async def _handle_subscription_created(
     event: dict,
-    _billing_service: BillingService,
-    _db: AsyncSession,
+    billing_service: BillingService,
+    db: AsyncSession,
 ) -> None:
     """Handle subscription created event."""
+    from datetime import datetime
+
+    from sqlalchemy import select
+
+    from api.models.billing import Subscription
+
     data = event.get("data", {}).get("object", {})
     customer_id = data.get("customer")
+    subscription_id = data.get("id")
+    sub_status = data.get("status")
 
-    # Look up user by customer ID
-    # In production, you'd have a mapping of Stripe customer IDs to users
     logger.info(
         "stripe_subscription_created",
         customer_id=customer_id,
-        subscription_id=data.get("id"),
+        subscription_id=subscription_id,
+        status=sub_status,
     )
+
+    # Find subscription by customer ID
+    result = await db.execute(
+        select(Subscription).where(Subscription.stripe_customer_id == customer_id)
+    )
+    subscription = result.scalar_one_or_none()
+
+    if subscription:
+        # Update subscription with Stripe data
+        subscription.stripe_subscription_id = subscription_id
+        subscription.status = sub_status
+
+        # Get plan from price
+        items = data.get("items", {}).get("data", [])
+        if items:
+            price_id = items[0].get("price", {}).get("id")
+            settings = get_settings()
+            plan = _plan_from_price_id(price_id, settings)
+            if plan:
+                subscription.plan = plan.value
+
+        # Period dates
+        if data.get("current_period_start"):
+            subscription.current_period_start = datetime.fromtimestamp(
+                data["current_period_start"], tz=UTC
+            )
+        if data.get("current_period_end"):
+            subscription.current_period_end = datetime.fromtimestamp(
+                data["current_period_end"], tz=UTC
+            )
+
+        await billing_service.log_billing_event(
+            subscription.user_id,
+            BillingEventType.SUBSCRIPTION_CREATED,
+            event.get("id"),
+            data,
+        )
 
 
 async def _handle_subscription_updated(
     event: dict,
-    _billing_service: BillingService,
-    _db: AsyncSession,
+    billing_service: BillingService,
+    db: AsyncSession,
 ) -> None:
     """Handle subscription updated event."""
+    from datetime import datetime
+
+    from sqlalchemy import select
+
+    from api.models.billing import Subscription
+
     data = event.get("data", {}).get("object", {})
     customer_id = data.get("customer")
+    subscription_id = data.get("id")
     sub_status = data.get("status")
 
     logger.info(
         "stripe_subscription_updated",
         customer_id=customer_id,
+        subscription_id=subscription_id,
         status=sub_status,
     )
+
+    # Find subscription
+    result = await db.execute(
+        select(Subscription).where(Subscription.stripe_subscription_id == subscription_id)
+    )
+    subscription = result.scalar_one_or_none()
+
+    if subscription:
+        old_plan = subscription.plan
+        subscription.status = sub_status
+
+        # Update plan if changed
+        items = data.get("items", {}).get("data", [])
+        if items:
+            price_id = items[0].get("price", {}).get("id")
+            settings = get_settings()
+            plan = _plan_from_price_id(price_id, settings)
+            if plan:
+                subscription.plan = plan.value
+
+        # Period dates
+        if data.get("current_period_start"):
+            subscription.current_period_start = datetime.fromtimestamp(
+                data["current_period_start"], tz=UTC
+            )
+        if data.get("current_period_end"):
+            subscription.current_period_end = datetime.fromtimestamp(
+                data["current_period_end"], tz=UTC
+            )
+
+        # Cancellation
+        if data.get("cancel_at"):
+            subscription.cancel_at = datetime.fromtimestamp(data["cancel_at"], tz=UTC)
+        if data.get("canceled_at"):
+            subscription.canceled_at = datetime.fromtimestamp(data["canceled_at"], tz=UTC)
+
+        # Determine event type
+        event_type = BillingEventType.SUBSCRIPTION_UPDATED
+        if subscription.plan != old_plan:
+            if _plan_tier_order(subscription.plan) > _plan_tier_order(old_plan):
+                event_type = BillingEventType.PLAN_UPGRADED
+            else:
+                event_type = BillingEventType.PLAN_DOWNGRADED
+
+        await billing_service.log_billing_event(
+            subscription.user_id,
+            event_type,
+            event.get("id"),
+            data,
+        )
+
+
+def _plan_tier_order(plan: str) -> int:
+    """Get numeric order of plan tier for comparison."""
+    order = {"starter": 1, "professional": 2, "agency": 3}
+    return order.get(plan, 0)
 
 
 async def _handle_subscription_deleted(
     event: dict,
-    _billing_service: BillingService,
-    _db: AsyncSession,
+    billing_service: BillingService,
+    db: AsyncSession,
 ) -> None:
     """Handle subscription deleted event."""
+    from datetime import datetime
+
+    from sqlalchemy import select
+
+    from api.models.billing import Subscription
+
     data = event.get("data", {}).get("object", {})
     customer_id = data.get("customer")
+    subscription_id = data.get("id")
 
     logger.info(
         "stripe_subscription_deleted",
         customer_id=customer_id,
+        subscription_id=subscription_id,
     )
+
+    # Find subscription
+    result = await db.execute(
+        select(Subscription).where(Subscription.stripe_subscription_id == subscription_id)
+    )
+    subscription = result.scalar_one_or_none()
+
+    if subscription:
+        subscription.status = "canceled"
+        subscription.canceled_at = datetime.now(UTC)
+        # Downgrade to starter plan
+        subscription.plan = "starter"
+
+        await billing_service.log_billing_event(
+            subscription.user_id,
+            BillingEventType.SUBSCRIPTION_CANCELED,
+            event.get("id"),
+            data,
+        )
 
 
 async def _handle_invoice_paid(
     event: dict,
-    _billing_service: BillingService,
-    _db: AsyncSession,
+    billing_service: BillingService,
+    db: AsyncSession,
 ) -> None:
     """Handle invoice paid event."""
+    from sqlalchemy import select
+
+    from api.models.billing import Subscription
+
     data = event.get("data", {}).get("object", {})
     customer_id = data.get("customer")
     amount = data.get("amount_paid")
+    subscription_id = data.get("subscription")
 
     logger.info(
         "stripe_invoice_paid",
         customer_id=customer_id,
         amount=amount,
+        subscription_id=subscription_id,
     )
+
+    # Find subscription and log payment
+    if subscription_id:
+        result = await db.execute(
+            select(Subscription).where(Subscription.stripe_subscription_id == subscription_id)
+        )
+        subscription = result.scalar_one_or_none()
+
+        if subscription:
+            # Update status to active if it was past_due
+            if subscription.status == "past_due":
+                subscription.status = "active"
+
+            await billing_service.log_billing_event(
+                subscription.user_id,
+                BillingEventType.PAYMENT_SUCCEEDED,
+                event.get("id"),
+                {"amount": amount, "currency": data.get("currency")},
+            )
 
 
 async def _handle_invoice_payment_failed(
     event: dict,
-    _billing_service: BillingService,
-    _db: AsyncSession,
+    billing_service: BillingService,
+    db: AsyncSession,
 ) -> None:
     """Handle invoice payment failed event."""
+    from sqlalchemy import select
+
+    from api.models.billing import Subscription
+
     data = event.get("data", {}).get("object", {})
     customer_id = data.get("customer")
+    subscription_id = data.get("subscription")
 
     logger.warning(
         "stripe_invoice_payment_failed",
         customer_id=customer_id,
+        subscription_id=subscription_id,
     )
+
+    # Find subscription and update status
+    if subscription_id:
+        result = await db.execute(
+            select(Subscription).where(Subscription.stripe_subscription_id == subscription_id)
+        )
+        subscription = result.scalar_one_or_none()
+
+        if subscription:
+            subscription.status = "past_due"
+
+            await billing_service.log_billing_event(
+                subscription.user_id,
+                BillingEventType.PAYMENT_FAILED,
+                event.get("id"),
+                {"reason": data.get("billing_reason")},
+            )

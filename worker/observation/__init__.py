@@ -13,6 +13,7 @@ Use explicit imports:
     from worker.observation.parser import ObservationParser, parse_observation
     from worker.observation.comparison import compare_simulation_observation
     from worker.observation.benchmark import CompetitorBenchmarker, run_benchmark
+    from worker.observation.benchmark_v2 import CompetitorBenchmarkerV2, run_benchmark_v2
 """
 
 __all__ = [
@@ -63,4 +64,11 @@ __all__ = [
     "BenchmarkOutcome",
     "MentionLevel",
     "run_benchmark",
+    # Benchmark v2 (pillar comparison)
+    "CompetitorBenchmarkerV2",
+    "BenchmarkV2Result",
+    "HeadToHeadV2",
+    "PillarComparison",
+    "CompetitorV2Score",
+    "run_benchmark_v2",
 ]

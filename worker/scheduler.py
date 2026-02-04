@@ -1,9 +1,10 @@
-"""Monitoring scheduler using rq-scheduler for periodic snapshots.
+"""Monitoring and calibration scheduler using rq-scheduler for periodic jobs.
 
 This module provides:
 - Scheduler service for managing periodic monitoring jobs
 - Schedule calculation for weekly/monthly snapshots
 - Plan-aware scheduling (Starter=monthly, Professional/Agency=weekly)
+- Daily calibration drift detection scheduling
 """
 
 from __future__ import annotations
@@ -286,5 +287,228 @@ def run_scheduler_tick() -> int:
     return count or 0
 
 
-# Singleton instance
+# ============================================================================
+# Calibration Drift Detection Scheduling
+# ============================================================================
+
+
+# Default calibration check time (4 AM UTC - off-peak)
+DEFAULT_CALIBRATION_HOUR = 4
+
+
+def run_calibration_drift_check_sync() -> dict:
+    """
+    Synchronous wrapper for calibration drift check.
+
+    Called by rq-scheduler as a background job.
+
+    Returns:
+        Dict with results including alerts created
+    """
+    import asyncio
+
+    from worker.tasks.calibration import check_calibration_drift
+
+    settings = get_settings()
+
+    # Skip if drift checking is disabled
+    if not settings.calibration_drift_check_enabled:
+        logger.info("calibration_drift_check_disabled")
+        return {"status": "disabled", "alerts_created": 0}
+
+    try:
+        # Run the async drift check
+        alerts = asyncio.run(
+            check_calibration_drift(
+                accuracy_threshold=settings.calibration_drift_threshold_accuracy,
+                bias_threshold=settings.calibration_drift_threshold_bias,
+                min_samples=settings.calibration_min_samples_for_analysis
+                // 2,  # Lower bar for drift
+            )
+        )
+
+        result = {
+            "status": "completed",
+            "alerts_created": len(alerts),
+            "alert_types": [a.drift_type for a in alerts] if alerts else [],
+        }
+
+        logger.info("calibration_drift_check_completed", **result)
+        return result
+
+    except Exception as e:
+        logger.error("calibration_drift_check_failed", error=str(e))
+        return {"status": "error", "error": str(e), "alerts_created": 0}
+
+
+class CalibrationScheduler:
+    """Service for managing calibration-related scheduled jobs."""
+
+    DRIFT_CHECK_JOB_ID = "calibration_drift_check_daily"
+
+    def __init__(self) -> None:
+        self._scheduler = get_scheduler()
+        self._settings = get_settings()
+
+    @property
+    def scheduler(self) -> Scheduler:
+        """Get the underlying rq-scheduler instance."""
+        return self._scheduler
+
+    def schedule_daily_drift_check(
+        self,
+        hour: int = DEFAULT_CALIBRATION_HOUR,
+        minute: int = 0,
+    ) -> Job | None:
+        """
+        Schedule a daily calibration drift check.
+
+        Args:
+            hour: Hour of day to run (UTC)
+            minute: Minute of hour to run
+
+        Returns:
+            The scheduled job, or None if drift checking is disabled
+        """
+        if not self._settings.calibration_drift_check_enabled:
+            logger.info("drift_check_scheduling_skipped_disabled")
+            return None
+
+        # Cancel any existing drift check job
+        self.cancel_drift_check()
+
+        # Calculate next run time
+        now = datetime.now(UTC)
+        next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+        # If today's time has passed, schedule for tomorrow
+        if next_run <= now:
+            next_run += timedelta(days=1)
+
+        job = self._scheduler.schedule(
+            scheduled_time=next_run,
+            func=run_calibration_drift_check_sync,
+            interval=86400,  # 24 hours in seconds
+            repeat=None,  # Repeat indefinitely
+            id=self.DRIFT_CHECK_JOB_ID,
+            job_timeout=1800,  # 30 minutes
+            meta={
+                "type": "calibration_drift_check",
+                "scheduled_at": datetime.now(UTC).isoformat(),
+                "interval": "daily",
+            },
+        )
+
+        logger.info(
+            "drift_check_scheduled",
+            job_id=job.id,
+            next_run=next_run.isoformat(),
+            hour=hour,
+            minute=minute,
+        )
+
+        return job
+
+    def cancel_drift_check(self) -> bool:
+        """
+        Cancel the scheduled drift check job.
+
+        Returns:
+            True if cancelled, False if not found
+        """
+        try:
+            for job in self._scheduler.get_jobs():
+                if job.id == self.DRIFT_CHECK_JOB_ID:
+                    self._scheduler.cancel(job)
+                    logger.info("drift_check_cancelled", job_id=job.id)
+                    return True
+            return False
+        except Exception as e:
+            logger.error("drift_check_cancel_failed", error=str(e))
+            return False
+
+    def get_drift_check_status(self) -> dict | None:
+        """
+        Get status of the scheduled drift check job.
+
+        Returns:
+            Job info dict or None if not scheduled
+        """
+        try:
+            for job in self._scheduler.get_jobs():
+                if job.id == self.DRIFT_CHECK_JOB_ID:
+                    meta = job.meta or {}
+                    return {
+                        "job_id": job.id,
+                        "scheduled_at": meta.get("scheduled_at"),
+                        "interval": meta.get("interval"),
+                        "type": meta.get("type"),
+                        "next_run": (
+                            job.to_dict().get("scheduled_time") if hasattr(job, "to_dict") else None
+                        ),
+                    }
+            return None
+        except Exception as e:
+            logger.error("drift_check_status_failed", error=str(e))
+            return None
+
+    def run_drift_check_now(self) -> Job:
+        """
+        Enqueue a drift check to run immediately.
+
+        Returns:
+            The enqueued job
+        """
+        job = self._scheduler.enqueue_at(
+            datetime.now(UTC),
+            run_calibration_drift_check_sync,
+            job_id=f"drift_check_manual_{datetime.now(UTC).isoformat()}",
+            job_timeout=1800,
+            meta={
+                "type": "calibration_drift_check",
+                "trigger": "manual",
+                "scheduled_at": datetime.now(UTC).isoformat(),
+            },
+        )
+
+        logger.info("drift_check_enqueued_manually", job_id=job.id)
+        return job
+
+
+def ensure_calibration_schedules() -> dict:
+    """
+    Ensure all calibration-related schedules are in place.
+
+    Call this at startup to initialize schedules.
+
+    Returns:
+        Dict with schedule status
+    """
+    scheduler = CalibrationScheduler()
+    settings = get_settings()
+
+    result = {
+        "drift_check_enabled": settings.calibration_drift_check_enabled,
+        "drift_check_scheduled": False,
+    }
+
+    if settings.calibration_drift_check_enabled:
+        # Check if already scheduled
+        status = scheduler.get_drift_check_status()
+        if status:
+            result["drift_check_scheduled"] = True
+            result["drift_check_job_id"] = status["job_id"]
+        else:
+            # Schedule it
+            job = scheduler.schedule_daily_drift_check()
+            if job:
+                result["drift_check_scheduled"] = True
+                result["drift_check_job_id"] = job.id
+
+    logger.info("calibration_schedules_ensured", **result)
+    return result
+
+
+# Singleton instances
 monitoring_scheduler = MonitoringScheduler()
+calibration_scheduler = CalibrationScheduler()

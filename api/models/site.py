@@ -14,6 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from api.database import Base
 
 if TYPE_CHECKING:
+    from api.models.embedding import Embedding
     from api.models.run import Run
     from api.models.user import User
 
@@ -95,6 +96,9 @@ class Site(Base):
     )
     runs: Mapped[list[Run]] = relationship(
         "Run", back_populates="site", cascade="all, delete-orphan"
+    )
+    embeddings: Mapped[list[Embedding]] = relationship(
+        "Embedding", back_populates="site", cascade="all, delete-orphan"
     )
 
 

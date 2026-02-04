@@ -730,24 +730,73 @@
         </defs>
       </svg>
 
-      <div class="score-ring" style="--score-percent: {{ overall_score | default(67) }}">
+      <div class="score-ring" style="--score-percent: {% if is_partial %}{{ evaluated_score_pct }}{% else %}{{ overall_score | default(67) }}{% endif %}">
         <svg viewBox="0 0 200 200">
           <circle class="score-ring-bg" cx="100" cy="100" r="90" />
           <circle class="score-ring-progress" cx="100" cy="100" r="90" />
         </svg>
         <div class="score-value">
           <div class="score-number" data-target="{{ overall_score | default(67) }}">0</div>
+          {% if is_partial %}
+          <div class="score-max">/ {{ max_evaluated_points|int }}</div>
+          {% else %}
           <div class="score-max">/ 100</div>
+          {% endif %}
         </div>
       </div>
 
-      <div class="grade-badge grade-{{ grade | default('c') | lower }}">
+      <div class="grade-badge grade-{{ grade | default('c') | lower | replace('+', '') | replace('-', '') }}">
         {{ grade | default("C+") }}
       </div>
       <p class="grade-description">{{ grade_description | default("Good foundation with room for significant improvement") }}</p>
+      {% if is_partial %}
+      <p style="font-size: 0.75rem; color: var(--signal-fair); margin-top: 0.5rem;">
+        {{ evaluated_score_pct }}% of evaluated pillars
+      </p>
+      {% endif %}
     </div>
 
     <div class="category-breakdown animate-in delay-2">
+      {% if has_v2_pillars %}
+      <h2 class="section-title">6-Pillar Breakdown</h2>
+      {% if is_partial %}
+      <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid var(--signal-fair); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.875rem; color: var(--signal-fair);">
+        Partial Analysis: {{ pillars_evaluated }}/6 pillars evaluated ({{ max_evaluated_points|int }} points max)
+      </div>
+      {% endif %}
+      <div class="category-grid">
+        {% for pillar in pillars %}
+        <div class="category-row" style="animation-delay: {{ 0.3 + loop.index * 0.1 }}s">
+          <span class="category-name" style="display: flex; align-items: center; gap: 0.5rem;">
+            {% if pillar.level == 'good' %}
+            <span style="color: var(--signal-good);">+</span>
+            {% elif pillar.level == 'warning' %}
+            <span style="color: var(--signal-fair);">!</span>
+            {% else %}
+            <span style="color: var(--signal-poor);">x</span>
+            {% endif %}
+            {{ pillar.display_name }}
+          </span>
+          <div class="category-bar-container">
+            <div class="category-bar"
+                 style="--bar-width: {{ pillar.raw_score }}%;
+                        background: linear-gradient(90deg,
+                          {% if pillar.level == 'good' %}var(--signal-good){% elif pillar.level == 'warning' %}var(--signal-fair){% else %}var(--signal-poor){% endif %},
+                          {% if pillar.level == 'good' %}var(--accent-teal){% elif pillar.level == 'warning' %}var(--accent-amber){% else %}var(--accent-coral){% endif %});">
+            </div>
+          </div>
+          <span class="category-score" style="color: {% if pillar.level == 'good' %}var(--signal-good){% elif pillar.level == 'warning' %}var(--signal-fair){% else %}var(--signal-poor){% endif %}">
+            {{ pillar.points_earned }}<span style="color: var(--slate-500); font-size: 0.75rem">/{{ pillar.max_points|int }}</span>
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="margin-top: 1rem; font-size: 0.8125rem; color: var(--slate-400); display: flex; gap: 1.5rem;">
+        <span><span style="color: var(--signal-good);">{{ pillars_good }}</span> good</span>
+        <span><span style="color: var(--signal-fair);">{{ pillars_warning }}</span> warning</span>
+        <span><span style="color: var(--signal-poor);">{{ pillars_critical }}</span> critical</span>
+      </div>
+      {% else %}
       <h2 class="section-title">Category Breakdown</h2>
       <div class="category-grid">
         {% set categories = categories | default([
@@ -774,6 +823,7 @@
         </div>
         {% endfor %}
       </div>
+      {% endif %}
     </div>
   </section>
 
@@ -882,6 +932,112 @@
   <!-- Show the Math -->
   <section class="math-section animate-in delay-6">
     <h2 class="section-title">Show the Math</h2>
+    {% if has_v2_pillars %}
+    <p style="color: var(--slate-400); margin-bottom: 1rem; font-size: 0.9375rem;">
+      Your Findable Score v2 is calculated from 6 pillars measuring AI sourceability.
+    </p>
+
+    <div class="math-grid">
+      <div class="math-card">
+        <h3 class="math-card-title">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="8" cy="8" r="6" />
+            <path d="M8 5v6M5 8h6" />
+          </svg>
+          Pillar Calculation
+        </h3>
+        <div class="formula">
+          Score = Σ(Pillar Score × Weight)
+        </div>
+        <ul class="breakdown-list">
+          {% for step in calculation_summary %}
+          {% if step %}
+          <li class="breakdown-item">
+            <span class="breakdown-value" style="width: 100%;">{{ step }}</span>
+          </li>
+          {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="math-card">
+        <h3 class="math-card-title">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="2" width="12" height="12" rx="2" />
+            <path d="M5 8h6M8 5v6" />
+          </svg>
+          Pillar Weights
+        </h3>
+        <div class="formula">
+          Total = 100 points maximum
+        </div>
+        <ul class="breakdown-list">
+          <li class="breakdown-item">
+            <span class="breakdown-label">Technical Readiness</span>
+            <span class="breakdown-value">15 pts</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Structure Quality</span>
+            <span class="breakdown-value">20 pts</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Schema Richness</span>
+            <span class="breakdown-value">15 pts</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Authority Signals</span>
+            <span class="breakdown-value">15 pts</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Retrieval Quality</span>
+            <span class="breakdown-value">25 pts</span>
+          </li>
+          <li class="breakdown-item">
+            <span class="breakdown-label">Answer Coverage</span>
+            <span class="breakdown-value">10 pts</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    {% if critical_issues %}
+    <div class="math-card" style="margin-top: 1.5rem; border-left: 3px solid var(--signal-poor);">
+      <h3 class="math-card-title" style="color: var(--signal-poor);">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="6" />
+          <path d="M8 5v4M8 11h.01" />
+        </svg>
+        Critical Issues
+      </h3>
+      <ul class="breakdown-list">
+        {% for issue in critical_issues[:5] %}
+        <li class="breakdown-item">
+          <span class="breakdown-value" style="width: 100%; color: var(--slate-300);">{{ issue }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if top_recommendations %}
+    <div class="math-card" style="margin-top: 1rem; border-left: 3px solid var(--accent-teal);">
+      <h3 class="math-card-title" style="color: var(--accent-teal);">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M8 2v12M2 8h12" />
+        </svg>
+        Top Recommendations
+      </h3>
+      <ul class="breakdown-list">
+        {% for rec in top_recommendations[:5] %}
+        <li class="breakdown-item">
+          <span class="breakdown-value" style="width: 100%; color: var(--slate-300);">{{ rec }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% else %}
     <p style="color: var(--slate-400); margin-bottom: 1rem; font-size: 0.9375rem;">
       Your Findable Score is calculated using a weighted combination of criteria and category performance.
     </p>
@@ -953,6 +1109,7 @@
         </ul>
       </div>
     </div>
+    {% endif %}
   </section>
 
   <!-- Footer -->

@@ -110,6 +110,9 @@ class Run(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Optimistic locking version
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -126,6 +129,8 @@ class Run(Base):
     # Relationships
     site: Mapped[Site] = relationship("Site", back_populates="runs")
     report: Mapped[Report | None] = relationship("Report", back_populates="run")
+
+    __mapper_args__ = {"version_id_col": version}
 
 
 class Report(Base):

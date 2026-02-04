@@ -32,4 +32,14 @@ __all__ = [
     "SyntheticChunk",
     "estimate_fix_tier_b",
     "estimate_plan_tier_b",
+    # v2 Fix Generator (Action Center)
+    "FixGeneratorV2",
+    "FixPlanV2",
+    "ActionCenter",
+    "ActionItem",
+    "UnifiedFix",
+    "FixCategory",
+    "EffortLevel",
+    "ImpactLevel",
+    "generate_fix_plan_v2",
 ]

@@ -1,0 +1,83 @@
+{
+  "url": "https://netflix.com/tudum",
+  "started_at": "2026-02-03T21:08:43.964030",
+  "pillars": {
+    "technical": {
+      "score": 16.0,
+      "level": "critical",
+      "js_dependent": false
+    },
+    "structure": {
+      "score": 61.5125,
+      "level": "warning"
+    },
+    "schema": {
+      "score": 10.227272727272727,
+      "level": "critical",
+      "types": []
+    },
+    "authority": {
+      "score": 14.95,
+      "level": "critical"
+    },
+    "retrieval": {
+      "score": 44.46954796839496,
+      "level": "warning"
+    },
+    "coverage": {
+      "score": 31.25,
+      "level": "critical"
+    }
+  },
+  "crawl": {
+    "pages_crawled": 10,
+    "urls_discovered": 292,
+    "duration_seconds": 36.640544
+  },
+  "extraction": {
+    "pages": 3,
+    "words": 2625
+  },
+  "chunking": {
+    "total_chunks": 9
+  },
+  "embedding": {
+    "total_embeddings": 9
+  },
+  "questions": {
+    "count": 16
+  },
+  "simulation": {
+    "questions_answered": 1,
+    "questions_partial": 8,
+    "questions_unanswered": 7,
+    "overall_score": 39.316732925218766
+  },
+  "v2_score": {
+    "total": 29.024096007592348,
+    "level": "not_yet_findable",
+    "level_label": "Not Yet Findable",
+    "level_summary": "AI crawlers can't effectively access or cite your content yet.",
+    "level_focus": "Fix critical technical barriers first.",
+    "next_milestone": {
+      "score": 40,
+      "name": "Partially Findable",
+      "description": "Basic AI accessibility achieved",
+      "points_needed": 6.6
+    },
+    "points_to_milestone": 6.6,
+    "pillars_evaluated": 6,
+    "pillars_not_evaluated": 1,
+    "max_evaluated_points": 87,
+    "is_partial": true,
+    "evaluated_score_pct": 33.36102989378431,
+    "pillars_good": 0,
+    "pillars_warning": 2,
+    "pillars_critical": 4,
+    "strengths": [
+      "llms.txt file exists - early adopter of AI discoverability standard",
+      "HTTPS enabled (secure connection)"
+    ]
+  },
+  "completed_at": "2026-02-03T21:09:41.318828"
+}

@@ -1,0 +1,89 @@
+{
+  "url": "https://www.shopify.com",
+  "started_at": "2026-02-01T20:58:33.371753",
+  "pillars": {
+    "technical": {
+      "score": 86.719,
+      "level": "good",
+      "js_dependent": false
+    },
+    "structure": {
+      "score": 62.6875,
+      "level": "warning"
+    },
+    "schema": {
+      "score": 20.099999999999998,
+      "level": "critical",
+      "types": [
+        "SiteNavigationElement",
+        "Corporation"
+      ]
+    },
+    "authority": {
+      "score": 32.7,
+      "level": "critical"
+    },
+    "retrieval": {
+      "score": 63.03033442161871,
+      "level": "warning"
+    },
+    "coverage": {
+      "score": 72.5,
+      "level": "good"
+    }
+  },
+  "crawl": {
+    "pages_crawled": 10,
+    "urls_discovered": 967,
+    "duration_seconds": 11.292946
+  },
+  "extraction": {
+    "pages": 3,
+    "words": 5129
+  },
+  "chunking": {
+    "total_chunks": 14
+  },
+  "embedding": {
+    "total_embeddings": 14
+  },
+  "questions": {
+    "count": 20
+  },
+  "simulation": {
+    "questions_answered": 9,
+    "questions_partial": 11,
+    "questions_unanswered": 0,
+    "overall_score": 65.92323628830755
+  },
+  "v2_score": {
+    "total": 56.47293360540468,
+    "level": "findable",
+    "level_label": "Findable",
+    "level_summary": "AI can find and cite you. Now optimize to become the preferred source.",
+    "level_focus": "Strengthen authority and content coverage.",
+    "next_milestone": {
+      "score": 70,
+      "name": "Highly Findable",
+      "description": "Competitive advantage unlocked",
+      "points_needed": 13.5
+    },
+    "points_to_milestone": 13.5,
+    "pillars_evaluated": 6,
+    "pillars_not_evaluated": 0,
+    "max_evaluated_points": 100,
+    "is_partial": false,
+    "evaluated_score_pct": 56.47293360540468,
+    "pillars_good": 2,
+    "pillars_warning": 2,
+    "pillars_critical": 2,
+    "strengths": [
+      "llms.txt with 5 links - early adopter of AI discoverability standard",
+      "robots.txt allows all AI crawlers",
+      "HTTPS enabled (secure connection)",
+      "Author credentials and expertise visible",
+      "Good question coverage (72%)"
+    ]
+  },
+  "completed_at": "2026-02-01T21:09:03.869540"
+}

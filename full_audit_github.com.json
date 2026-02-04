@@ -1,0 +1,85 @@
+{
+  "url": "https://github.com",
+  "started_at": "2026-02-03T20:35:38.584915",
+  "pillars": {
+    "technical": {
+      "score": 57.0475,
+      "level": "warning",
+      "js_dependent": false
+    },
+    "structure": {
+      "score": 78.69166666666666,
+      "level": "warning"
+    },
+    "schema": {
+      "score": 6.5,
+      "level": "critical",
+      "types": []
+    },
+    "authority": {
+      "score": 31.7,
+      "level": "critical"
+    },
+    "retrieval": {
+      "score": 66.23202679348685,
+      "level": "warning"
+    },
+    "coverage": {
+      "score": 82.35294117647058,
+      "level": "good"
+    }
+  },
+  "crawl": {
+    "pages_crawled": 5,
+    "urls_discovered": 167,
+    "duration_seconds": 13.110389
+  },
+  "extraction": {
+    "pages": 2,
+    "words": 5017
+  },
+  "chunking": {
+    "total_chunks": 13
+  },
+  "embedding": {
+    "total_embeddings": 13
+  },
+  "questions": {
+    "count": 17
+  },
+  "simulation": {
+    "questions_answered": 11,
+    "questions_partial": 6,
+    "questions_unanswered": 0,
+    "overall_score": 69.536865713837
+  },
+  "v2_score": {
+    "total": 48.46554001221416,
+    "level": "findable",
+    "level_label": "Findable",
+    "level_summary": "AI can find and cite you. Now optimize to become the preferred source.",
+    "level_focus": "Strengthen authority and content coverage.",
+    "next_milestone": {
+      "score": 70,
+      "name": "Highly Findable",
+      "description": "Competitive advantage unlocked",
+      "points_needed": 14.3
+    },
+    "points_to_milestone": 14.3,
+    "pillars_evaluated": 6,
+    "pillars_not_evaluated": 1,
+    "max_evaluated_points": 87,
+    "is_partial": true,
+    "evaluated_score_pct": 55.70751725541858,
+    "pillars_good": 1,
+    "pillars_warning": 3,
+    "pillars_critical": 2,
+    "strengths": [
+      "robots.txt allows all AI crawlers",
+      "HTTPS enabled (secure connection)",
+      "Well-structured content with clear hierarchy",
+      "Excellent question coverage (82%)"
+    ]
+  },
+  "completed_at": "2026-02-03T20:36:12.134480"
+}

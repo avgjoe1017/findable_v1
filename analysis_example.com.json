@@ -1,0 +1,53 @@
+{
+  "url": "https://example.com",
+  "started_at": "2026-02-01T18:40:32.397098",
+  "pillars": {
+    "technical": {
+      "score": 73.38,
+      "level": "warning",
+      "critical_issues": [],
+      "js_dependent": false
+    },
+    "structure": {
+      "score": 56.25,
+      "level": "warning",
+      "heading_score": 100.0,
+      "faq_score": 0.0
+    },
+    "schema": {
+      "score": 6.5,
+      "level": "critical",
+      "types_found": [],
+      "errors": []
+    },
+    "authority": {
+      "score": 9.2,
+      "level": "critical",
+      "has_author": false,
+      "citations": 1
+    }
+  },
+  "crawl": {
+    "pages_crawled": 1,
+    "urls_discovered": 20,
+    "duration_seconds": 0.631111
+  },
+  "extraction": {
+    "pages": 1,
+    "words": 21
+  },
+  "v2_score": {
+    "total": 24.612,
+    "grade": "F",
+    "grade_description": "Critical - Immediate action required",
+    "pillars_good": 0,
+    "pillars_warning": 2,
+    "pillars_critical": 2,
+    "pillars_evaluated": 4,
+    "pillars_not_evaluated": 2,
+    "max_evaluated_points": 65,
+    "is_partial": true,
+    "evaluated_score_pct": 37.86461538461538
+  },
+  "completed_at": "2026-02-01T18:40:34.140673"
+}

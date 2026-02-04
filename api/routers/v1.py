@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from api.routers import alerts, auth, billing, jobs, monitoring, questions, runs, sites
+from api.routers import alerts, auth, billing, calibration, jobs, monitoring, questions, runs, sites
 
 router = APIRouter()
 
@@ -35,6 +35,9 @@ router.include_router(alerts.config_router)
 
 # Billing endpoints
 router.include_router(billing.router)
+
+# Calibration endpoints
+router.include_router(calibration.router)
 
 
 @router.get("/")

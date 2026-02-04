@@ -82,10 +82,12 @@ def create_app() -> FastAPI:
 
     app.add_middleware(MetricsMiddleware)
 
-    # Rate limiting (disabled in test mode)
+    # Rate limiting (disabled in test mode or if configured)
     from api.middleware import RateLimitMiddleware
 
-    app.add_middleware(RateLimitMiddleware, enabled=not settings.is_test)
+    app.add_middleware(
+        RateLimitMiddleware, enabled=settings.rate_limit_enabled and not settings.is_test
+    )
 
     # Request logging and tracing
     from api.middleware import LoggingMiddleware, RequestIDMiddleware

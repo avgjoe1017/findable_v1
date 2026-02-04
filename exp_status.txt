@@ -1,0 +1,10 @@
+Experiment: schema_authority_boost_v1
+  Control samples: 0/100
+  Treatment samples: 0/100
+  Ready: False
+---
+Experiment: Authority Weights Test
+  Control samples: 0/50
+  Treatment samples: 0/50
+  Ready: False
+---

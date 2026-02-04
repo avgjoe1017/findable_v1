@@ -187,3 +187,105 @@ class TestDefaultValues:
         assert next_run.hour == DEFAULT_HOUR
         assert next_run.weekday() == DEFAULT_DAY_OF_WEEK
         assert next_run > datetime.now(UTC)
+
+
+# ============================================================================
+# Calibration Scheduler Tests
+# ============================================================================
+
+
+from worker.scheduler import (  # noqa: E402
+    DEFAULT_CALIBRATION_HOUR,
+    PLAN_FREQUENCIES,
+)
+
+
+class TestCalibrationSchedulerConstants:
+    """Tests for calibration scheduler constants."""
+
+    def test_default_calibration_hour(self) -> None:
+        """Calibration runs at 4 AM UTC (off-peak)."""
+        assert DEFAULT_CALIBRATION_HOUR == 4
+
+    def test_plan_frequencies_completeness(self) -> None:
+        """All plan tiers have frequency mappings."""
+        assert "starter" in PLAN_FREQUENCIES
+        assert "professional" in PLAN_FREQUENCIES
+        assert "agency" in PLAN_FREQUENCIES
+
+
+class TestCalculateNextRunEdgeCases:
+    """Additional edge case tests for calculate_next_run."""
+
+    def test_result_has_utc_timezone(self) -> None:
+        """Result should be in UTC."""
+        from_time = datetime(2024, 1, 15, 10, 0, 0, tzinfo=UTC)
+        next_run = calculate_next_run(
+            ScheduleFrequency.WEEKLY,
+            from_time=from_time,
+        )
+        assert next_run.tzinfo == UTC
+
+    def test_minutes_seconds_zeroed(self) -> None:
+        """Minutes and seconds should be zeroed."""
+        from_time = datetime(2024, 1, 14, 10, 35, 47, 123456, tzinfo=UTC)
+        next_run = calculate_next_run(
+            ScheduleFrequency.WEEKLY,
+            from_time=from_time,
+        )
+        assert next_run.minute == 0
+        assert next_run.second == 0
+        assert next_run.microsecond == 0
+
+    def test_custom_hour(self) -> None:
+        """Can use custom hour."""
+        from_time = datetime(2024, 1, 15, 10, 0, 0, tzinfo=UTC)
+        next_run = calculate_next_run(
+            ScheduleFrequency.WEEKLY,
+            hour=22,  # 10 PM UTC
+            from_time=from_time,
+        )
+        assert next_run.hour == 22
+
+    def test_leap_year_handling(self) -> None:
+        """Handles leap year February correctly."""
+        # January 2024 (leap year)
+        from_time = datetime(2024, 1, 31, 10, 0, 0, tzinfo=UTC)
+        next_run = calculate_next_run(
+            ScheduleFrequency.MONTHLY,
+            day_of_week=3,  # Thursday
+            from_time=from_time,
+        )
+        # Feb 1, 2024 is Thursday
+        assert next_run.month == 2
+        assert next_run.day == 1
+        assert next_run.weekday() == 3
+
+
+class TestWeeklyFrequencyBounds:
+    """Tests verifying weekly frequency stays within 7 days."""
+
+    def test_weekly_always_within_7_days(self) -> None:
+        """Weekly schedule is always within 7 days."""
+        for day_offset in range(7):
+            from_time = datetime(2024, 1, 15 + day_offset, 10, 0, 0, tzinfo=UTC)
+            next_run = calculate_next_run(
+                ScheduleFrequency.WEEKLY,
+                from_time=from_time,
+            )
+            diff = (next_run - from_time).days
+            assert 0 <= diff <= 7, f"Weekly diff {diff} days from offset {day_offset}"
+
+
+class TestMonthlyFrequencyBounds:
+    """Tests verifying monthly frequency targets next month."""
+
+    def test_monthly_always_in_next_month(self) -> None:
+        """Monthly schedule is always in the next calendar month."""
+        for month in range(1, 12):  # Skip December (crosses year)
+            from_time = datetime(2024, month, 15, 10, 0, 0, tzinfo=UTC)
+            next_run = calculate_next_run(
+                ScheduleFrequency.MONTHLY,
+                from_time=from_time,
+            )
+            assert next_run.month == month + 1

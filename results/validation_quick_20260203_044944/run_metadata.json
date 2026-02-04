@@ -1,0 +1,188 @@
+{
+  "run_id": "validation_quick_20260203_044944",
+  "started_at": "2026-02-03T04:49:44.240729+00:00",
+  "config": {
+    "corpus": "quick",
+    "query_filter": "informational",
+    "output_dir": "results",
+    "run_name": null,
+    "run_id": "validation_quick_20260203_044944",
+    "skip_ai_queries": false,
+    "skip_pipeline": false,
+    "verbose": false,
+    "dry_run": false,
+    "site_concurrency": 3,
+    "query_concurrency": 2,
+    "pipeline": {
+      "max_pages": 50,
+      "max_depth": 2,
+      "run_technical": true,
+      "run_structure": true,
+      "run_schema": true,
+      "run_authority": true,
+      "run_simulation": true
+    },
+    "ai_query": {
+      "query_chatgpt": true,
+      "query_perplexity": true,
+      "query_google_aio": false,
+      "query_claude": true,
+      "use_cache": true
+    }
+  },
+  "corpus": {
+    "name": "quick",
+    "description": "Quick subset for fast validation runs",
+    "site_count": 4,
+    "sites": [
+      {
+        "url": "https://moz.com",
+        "name": "Moz",
+        "category": "known_cited",
+        "domain": "moz.com",
+        "industry": "SEO",
+        "authority_level": "high",
+        "expected_queries": [
+          "what is domain authority",
+          "how to do keyword research",
+          "SEO best practices",
+          "what is link building"
+        ],
+        "notes": "Industry authority, strong E-E-A-T, frequently cited for SEO queries"
+      },
+      {
+        "url": "https://schema.org",
+        "name": "Schema.org",
+        "category": "known_cited",
+        "domain": "schema.org",
+        "industry": "Technical Standards",
+        "authority_level": "high",
+        "expected_queries": [
+          "what is schema markup",
+          "structured data types",
+          "JSON-LD examples"
+        ],
+        "notes": "Definitive source for schema markup, always cited"
+      },
+      {
+        "url": "https://backlinko.com",
+        "name": "Backlinko",
+        "category": "known_uncited",
+        "domain": "backlinko.com",
+        "industry": "SEO",
+        "authority_level": "medium",
+        "expected_queries": [
+          "link building strategies",
+          "SEO case studies"
+        ],
+        "notes": "Good content but less frequently cited than major authorities"
+      },
+      {
+        "url": "https://findable.so",
+        "name": "Findable",
+        "category": "own_property",
+        "domain": "findable.so",
+        "industry": "SaaS",
+        "authority_level": "medium",
+        "expected_queries": [
+          "AI SEO tools",
+          "findable score",
+          "GEO optimization tools"
+        ],
+        "notes": "Primary product site"
+      }
+    ]
+  },
+  "query_count": 12,
+  "queries": [
+    {
+      "query": "what is generative engine optimization",
+      "category": "informational",
+      "expected_sources": [
+        "amsive.com",
+        "searchengineland.com"
+      ]
+    },
+    {
+      "query": "what is AI search optimization",
+      "category": "informational",
+      "expected_sources": [
+        "searchengineland.com",
+        "searchenginejournal.com"
+      ]
+    },
+    {
+      "query": "what is answer engine optimization",
+      "category": "informational",
+      "expected_sources": []
+    },
+    {
+      "query": "how do AI search engines find content",
+      "category": "informational",
+      "expected_sources": [
+        "openai.com",
+        "anthropic.com"
+      ]
+    },
+    {
+      "query": "what is AI sourceability",
+      "category": "informational",
+      "expected_sources": []
+    },
+    {
+      "query": "what is domain authority",
+      "category": "informational",
+      "expected_sources": [
+        "moz.com"
+      ]
+    },
+    {
+      "query": "what is E-E-A-T in SEO",
+      "category": "informational",
+      "expected_sources": [
+        "developers.google.com",
+        "searchengineland.com"
+      ]
+    },
+    {
+      "query": "what are Core Web Vitals",
+      "category": "informational",
+      "expected_sources": [
+        "developers.google.com",
+        "web.dev"
+      ]
+    },
+    {
+      "query": "what is schema markup",
+      "category": "informational",
+      "expected_sources": [
+        "schema.org",
+        "developers.google.com"
+      ]
+    },
+    {
+      "query": "what is JSON-LD",
+      "category": "informational",
+      "expected_sources": [
+        "schema.org",
+        "json-ld.org",
+        "developer.mozilla.org"
+      ]
+    },
+    {
+      "query": "what is inbound marketing",
+      "category": "informational",
+      "expected_sources": [
+        "hubspot.com"
+      ]
+    },
+    {
+      "query": "what is content marketing",
+      "category": "informational",
+      "expected_sources": [
+        "hubspot.com",
+        "contentmarketinginstitute.com"
+      ]
+    }
+  ]
+}

@@ -327,3 +327,50 @@ class TestConfidenceParsing:
         # Mock response has "Based on my knowledge" which maps to medium
         obs_result = result.results[0]
         assert obs_result.confidence_expressed in ["unknown", "medium"]
+
+
+class TestCostGuardrails:
+    """Tests for cost cap functionality."""
+
+    @pytest.mark.asyncio
+    async def test_respects_cost_cap(self) -> None:
+        """Stops processing when cost cap is exceeded."""
+        # Very low cost cap to trigger quickly
+        config = RunConfig(
+            primary_provider=ProviderType.MOCK,
+            max_cost_per_run=0.001,  # $0.001 - will be exceeded after first question
+        )
+        runner = ObservationRunner(config=config)
+
+        # Multiple questions
+        questions = [
+            ("q1", "Question 1"),
+            ("q2", "Question 2"),
+            ("q3", "Question 3"),
+            ("q4", "Question 4"),
+            ("q5", "Question 5"),
+        ]
+
+        result = await runner.run_observation(
+            site_id=None,
+            run_id=None,
+            company_name="Test",
+            domain="test.com",
+            questions=questions,
+        )
+
+        # Should be partial status due to cost cap
+        from worker.observation.models import ObservationStatus
+
+        assert result.status == ObservationStatus.PARTIAL
+
+        # Should have cost_limit error
+        error_types = [e.error_type for e in result.errors]
+        assert "cost_limit" in error_types
+
+    def test_config_has_cost_cap_defaults(self) -> None:
+        """RunConfig has sensible cost cap defaults."""
+        config = RunConfig()
+
+        assert config.max_cost_per_run == 1.0  # $1 default
+        assert config.max_questions == 25

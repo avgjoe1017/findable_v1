@@ -18,6 +18,18 @@ from api.models.billing import (
     UsageSummary,
     UsageType,
 )
+from api.models.calibration import (
+    CalibrationConfig,
+    CalibrationConfigStatus,
+    CalibrationDriftAlert,
+    CalibrationExperiment,
+    CalibrationSample,
+    DriftAlertStatus,
+    DriftType,
+    ExperimentStatus,
+    OutcomeMatch,
+)
+from api.models.embedding import Embedding
 from api.models.run import Report, Run, RunStatus, RunType
 from api.models.site import BusinessModel, Competitor, Site
 from api.models.snapshot import MonitoringSchedule, Snapshot, SnapshotTrigger
@@ -59,4 +71,16 @@ __all__ = [
     "BillingEvent",
     "BillingEventType",
     "UsageSummary",
+    # Embedding
+    "Embedding",
+    # Calibration
+    "CalibrationSample",
+    "CalibrationConfig",
+    "CalibrationConfigStatus",
+    "CalibrationExperiment",
+    "ExperimentStatus",
+    "CalibrationDriftAlert",
+    "DriftType",
+    "DriftAlertStatus",
+    "OutcomeMatch",
 ]

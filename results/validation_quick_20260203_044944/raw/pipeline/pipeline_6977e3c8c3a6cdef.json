@@ -1,0 +1,225 @@
+{
+  "url": "https://moz.com",
+  "domain": "moz.com",
+  "status": "success",
+  "overall_score": 63.50593900560722,
+  "pillar_scores": {
+    "technical": 69.61,
+    "structure": 56.45882352941177,
+    "schema": 48.46078431372549,
+    "authority": 35.636274509803926,
+    "retrieval": 63.50593900560722,
+    "coverage": 95.0
+  },
+  "question_results": [
+    {
+      "question_id": "UQ-01",
+      "question_text": "What does Moz do?",
+      "category": "identity",
+      "answerability": "partially_answerable",
+      "score": 0.6799831639569185,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7699597251836058
+    },
+    {
+      "question_id": "UQ-02",
+      "question_text": "Who founded Moz and when was it established?",
+      "category": "identity",
+      "answerability": "fully_answerable",
+      "score": 0.8209792232900974,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.819672131147541
+    },
+    {
+      "question_id": "UQ-03",
+      "question_text": "Where is Moz headquartered and where do they operate?",
+      "category": "identity",
+      "answerability": "partially_answerable",
+      "score": 0.4951692646034264,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.4098360655737705
+    },
+    {
+      "question_id": "UQ-04",
+      "question_text": "What products or services does Moz offer?",
+      "category": "offerings",
+      "answerability": "fully_answerable",
+      "score": 0.8248319630161249,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.819672131147541
+    },
+    {
+      "question_id": "UQ-05",
+      "question_text": "What is Moz's pricing or how much do their services cost?",
+      "category": "offerings",
+      "answerability": "not_answerable",
+      "score": 0.24176906952615274,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.755338482507951
+    },
+    {
+      "question_id": "UQ-06",
+      "question_text": "Who are the typical customers or target audience for Moz?",
+      "category": "offerings",
+      "answerability": "fully_answerable",
+      "score": 0.7018712913780645,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7464349376114082
+    },
+    {
+      "question_id": "UQ-07",
+      "question_text": "What problems does Moz solve for their customers?",
+      "category": "offerings",
+      "answerability": "fully_answerable",
+      "score": 0.7266284521079311,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7299658994032395
+    },
+    {
+      "question_id": "UQ-08",
+      "question_text": "How can I contact Moz or get in touch with them?",
+      "category": "contact",
+      "answerability": "partially_answerable",
+      "score": 0.6402515688464305,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7504480286738351
+    },
+    {
+      "question_id": "UQ-09",
+      "question_text": "How do I get started with Moz or sign up for their service?",
+      "category": "contact",
+      "answerability": "fully_answerable",
+      "score": 0.7393077740656306,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.819672131147541
+    },
+    {
+      "question_id": "UQ-10",
+      "question_text": "What notable clients or customers does Moz have?",
+      "category": "trust",
+      "answerability": "partially_answerable",
+      "score": 0.6564193255050542,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7539682539682538
+    },
+    {
+      "question_id": "UQ-11",
+      "question_text": "What awards, certifications, or recognition has Moz received?",
+      "category": "trust",
+      "answerability": "partially_answerable",
+      "score": 0.5594449281427647,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7476739034116083
+    },
+    {
+      "question_id": "UQ-12",
+      "question_text": "What is Moz's track record or history of success?",
+      "category": "trust",
+      "answerability": "fully_answerable",
+      "score": 0.7879701006486877,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7708728652751423
+    },
+    {
+      "question_id": "UQ-13",
+      "question_text": "What makes Moz different from competitors?",
+      "category": "differentiation",
+      "answerability": "partially_answerable",
+      "score": 0.5560817165093008,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7270811380400422
+    },
+    {
+      "question_id": "UQ-14",
+      "question_text": "Why should someone choose Moz over alternatives?",
+      "category": "differentiation",
+      "answerability": "fully_answerable",
+      "score": 0.7309783626092774,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7886239443616494
+    },
+    {
+      "question_id": "UQ-15",
+      "question_text": "What is Moz's mission, vision, or core values?",
+      "category": "differentiation",
+      "answerability": "fully_answerable",
+      "score": 0.8153159887942683,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.8066614623991674
+    },
+    {
+      "question_id": "8e4ce518",
+      "question_text": "How many employees does Moz have?",
+      "category": "identity",
+      "answerability": "partially_answerable",
+      "score": 0.42024862968279153,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.819672131147541
+    },
+    {
+      "question_id": "6432abb4",
+      "question_text": "What is Moz's annual revenue?",
+      "category": "trust",
+      "answerability": "partially_answerable",
+      "score": 0.4994781156678798,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.8000512032770096
+    },
+    {
+      "question_id": "bace1ae2",
+      "question_text": "What are the features of Moz?",
+      "category": "offerings",
+      "answerability": "partially_answerable",
+      "score": 0.49174871448259627,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7655446470313231
+    },
+    {
+      "question_id": "674a3909",
+      "question_text": "What are Moz's pricing plans?",
+      "category": "offerings",
+      "answerability": "partially_answerable",
+      "score": 0.4854145459002844,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7820136852394917
+    },
+    {
+      "question_id": "c7a9e63c",
+      "question_text": "How can I get support from Moz?",
+      "category": "contact",
+      "answerability": "partially_answerable",
+      "score": 0.5059604213973883,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7886239443616494
+    }
+  ],
+  "questions_answered": 8,
+  "questions_partial": 11,
+  "questions_unanswered": 1,
+  "pages_crawled": 50,
+  "chunks_created": 264,
+  "duration_seconds": 357.490608,
+  "error_message": null,
+  "cached_at": "2026-02-03T04:55:41.734097+00:00",
+  "executed_at": "2026-02-03T04:55:41.733702+00:00"
+}

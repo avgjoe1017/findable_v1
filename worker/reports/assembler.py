@@ -4,10 +4,17 @@ Assembles simulation, scoring, observation, and benchmark results
 into a complete, versioned report.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
+if TYPE_CHECKING:
+    from worker.fixes.generator_v2 import FixPlanV2
+
+from worker.extraction.entity_recognition import EntityRecognitionResult
 from worker.fixes.generator import FixPlan
 from worker.fixes.impact import FixPlanImpact
 from worker.observation.benchmark import BenchmarkResult
@@ -15,19 +22,42 @@ from worker.observation.comparison import ComparisonSummary
 from worker.observation.models import ObservationRun
 from worker.reports.contract import (
     CURRENT_VERSION,
+    ActionCenterSection,
+    ActionItemSummary,
+    AuthorityComponent,
+    AuthoritySection,
     BenchmarkSection,
     CompetitorSummary,
+    CrawledPageInfo,
+    CrawlSection,
     DivergenceLevel,
     DivergenceSection,
     FixItem,
     FixSection,
     FullReport,
     ObservationSection,
+    PillarSummary,
     ReportMetadata,
+    SchemaComponent,
+    SchemaSection,
     ScoreSection,
+    ScoreSectionV2,
+    StructureComponent,
+    StructureSection,
+    TechnicalComponent,
+    TechnicalSection,
 )
+from worker.scoring.authority import AuthoritySignalsScore
 from worker.scoring.calculator import ScoreBreakdown
+from worker.scoring.calculator_v2 import FindableScoreV2, calculate_findable_score_v2
+from worker.scoring.schema import SchemaRichnessScore
+from worker.scoring.structure import StructureQualityScore
+from worker.scoring.technical import TechnicalReadinessScore
 from worker.simulation.runner import SimulationResult
+
+# Lazy import to avoid circular dependency
+# from worker.fixes.generator_v2 import FixPlanV2, generate_fix_plan_v2
+# Import in methods that need it instead
 
 
 @dataclass
@@ -68,6 +98,12 @@ class ReportAssembler:
         benchmark: BenchmarkResult | None = None,
         run_started_at: datetime | None = None,
         run_completed_at: datetime | None = None,
+        crawl_data: dict | None = None,
+        technical_score: TechnicalReadinessScore | None = None,
+        structure_score: StructureQualityScore | None = None,
+        schema_score: SchemaRichnessScore | None = None,
+        authority_score: AuthoritySignalsScore | None = None,
+        entity_recognition_result: EntityRecognitionResult | None = None,
     ) -> FullReport:
         """
         Assemble a complete report from analysis results.
@@ -86,6 +122,7 @@ class ReportAssembler:
             benchmark: Optional competitor benchmark results
             run_started_at: Optional run start time
             run_completed_at: Optional run completion time
+            entity_recognition_result: Optional entity recognition analysis
 
         Returns:
             FullReport with all sections assembled
@@ -129,10 +166,79 @@ class ReportAssembler:
         if comparison:
             divergence_section = self._build_divergence_section(comparison)
 
+        # Build crawl section if we have crawl data
+        crawl_section = None
+        if crawl_data:
+            crawl_section = self._build_crawl_section(crawl_data)
+
+        # Build technical section if we have technical score (v2)
+        technical_section = None
+        if technical_score:
+            technical_section = self._build_technical_section(technical_score)
+
+        # Build structure section if we have structure score (v2)
+        structure_section = None
+        if structure_score:
+            structure_section = self._build_structure_section(structure_score)
+
+        # Build schema section if we have schema score (v2)
+        schema_section = None
+        if schema_score:
+            schema_section = self._build_schema_section(schema_score)
+
+        # Build authority section if we have authority score (v2)
+        authority_section = None
+        if authority_score:
+            authority_section = self._build_authority_section(authority_score)
+
+        # Build v2 score section if we have any v2 pillar scores
+        score_v2_section = None
+        action_center_section = None
+        if (
+            technical_score
+            or structure_score
+            or schema_score
+            or authority_score
+            or entity_recognition_result
+        ):
+            # Lazy import to avoid circular dependency
+            from worker.fixes.generator_v2 import generate_fix_plan_v2
+
+            # Calculate v2 score
+            findable_v2 = calculate_findable_score_v2(
+                technical_score=technical_score,
+                structure_score=structure_score,
+                schema_score=schema_score,
+                authority_score=authority_score,
+                entity_recognition_result=entity_recognition_result,
+                simulation_breakdown=score_breakdown,
+            )
+            score_v2_section = self._build_score_v2_section(findable_v2)
+
+            # Generate v2 fix plan
+            fix_plan_v2 = generate_fix_plan_v2(
+                site_id=site_id,
+                run_id=run_id,
+                company_name=company_name,
+                technical_score=technical_score,
+                structure_score=structure_score,
+                schema_score=schema_score,
+                authority_score=authority_score,
+                content_fix_plan=fix_plan,
+            )
+            action_center_section = self._build_action_center_section(fix_plan_v2)
+
         return FullReport(
             metadata=metadata,
             score=score_section,
             fixes=fix_section,
+            crawl=crawl_section,
+            technical=technical_section,
+            structure=structure_section,
+            schema=schema_section,
+            authority=authority_section,
+            score_v2=score_v2_section,
+            action_center=action_center_section,
             observation=observation_section,
             benchmark=benchmark_section,
             divergence=divergence_section,
@@ -256,6 +362,350 @@ class ReportAssembler:
             fixes=fix_items,
             categories_addressed=[c.value for c in fix_plan.categories_addressed],
             questions_addressed=fix_plan.questions_addressed,
+        )
+
+    def _build_crawl_section(self, crawl_data: dict) -> CrawlSection:
+        """Build crawl section from crawl data."""
+        pages = []
+        for page in crawl_data.get("pages", []):
+            pages.append(
+                CrawledPageInfo(
+                    url=page["url"],
+                    title=page.get("title"),
+                    status_code=page.get("status_code", 200),
+                    depth=page.get("depth", 0),
+                    word_count=page.get("word_count", 0),
+                    chunk_count=page.get("chunk_count", 0),
+                )
+            )
+
+        return CrawlSection(
+            total_pages=crawl_data.get("total_pages", len(pages)),
+            total_words=crawl_data.get("total_words", 0),
+            total_chunks=crawl_data.get("total_chunks", 0),
+            urls_discovered=crawl_data.get("urls_discovered", 0),
+            urls_failed=crawl_data.get("urls_failed", 0),
+            max_depth_reached=crawl_data.get("max_depth_reached", 0),
+            duration_seconds=crawl_data.get("duration_seconds", 0),
+            pages=pages,
+        )
+
+    def _build_technical_section(
+        self,
+        technical_score: TechnicalReadinessScore,
+    ) -> TechnicalSection:
+        """Build technical readiness section from TechnicalReadinessScore."""
+        # Convert components
+        components = []
+        for comp in technical_score.components:
+            components.append(
+                TechnicalComponent(
+                    name=comp.name,
+                    score=comp.raw_score,
+                    weight=comp.weight,
+                    level=comp.level,
+                    explanation=comp.explanation,
+                )
+            )
+
+        # Extract crawler access data
+        crawlers_allowed = {}
+        if technical_score.robots_result:
+            for name, result in technical_score.robots_result.crawlers.items():
+                crawlers_allowed[name] = result.allowed
+
+        # Extract TTFB data
+        ttfb_ms = None
+        ttfb_level = None
+        if technical_score.ttfb_result:
+            if hasattr(technical_score.ttfb_result, "ttfb_ms"):
+                ttfb_ms = technical_score.ttfb_result.ttfb_ms
+            elif hasattr(technical_score.ttfb_result, "avg_ttfb_ms"):
+                ttfb_ms = technical_score.ttfb_result.avg_ttfb_ms
+            ttfb_level = technical_score.ttfb_result.level
+
+        # Extract llms.txt data
+        llms_txt_exists = False
+        llms_txt_quality = 0.0
+        if technical_score.llms_txt_result:
+            llms_txt_exists = technical_score.llms_txt_result.exists
+            llms_txt_quality = technical_score.llms_txt_result.quality_score
+
+        # Extract JS data
+        js_dependent = False
+        js_framework = None
+        if technical_score.js_result:
+            js_dependent = technical_score.js_result.likely_js_dependent
+            js_framework = technical_score.js_result.framework_detected
+
+        return TechnicalSection(
+            total_score=technical_score.total_score,
+            level=technical_score.level,
+            components=components,
+            robots_txt_exists=(
+                technical_score.robots_result.robots_txt_exists
+                if technical_score.robots_result
+                else False
+            ),
+            crawlers_allowed=crawlers_allowed,
+            critical_crawlers_blocked=technical_score.critical_issues[:],
+            ttfb_ms=ttfb_ms,
+            ttfb_level=ttfb_level,
+            llms_txt_exists=llms_txt_exists,
+            llms_txt_quality=llms_txt_quality,
+            js_dependent=js_dependent,
+            js_framework=js_framework,
+            is_https=technical_score.is_https,
+            critical_issues=technical_score.critical_issues[:],
+            all_issues=technical_score.all_issues[:],
+            show_the_math=technical_score.show_the_math(),
+        )
+
+    def _build_structure_section(
+        self,
+        structure_score: StructureQualityScore,
+    ) -> StructureSection:
+        """Build structure quality section from StructureQualityScore."""
+        # Convert components
+        components = []
+        for comp in structure_score.components:
+            components.append(
+                StructureComponent(
+                    name=comp.name,
+                    score=comp.raw_score,
+                    weight=comp.weight,
+                    level=comp.level,
+                    explanation=comp.explanation,
+                )
+            )
+
+        # Extract data from structure analysis
+        analysis = structure_score.structure_analysis
+
+        return StructureSection(
+            total_score=structure_score.total_score,
+            level=structure_score.level,
+            components=components,
+            h1_count=analysis.headings.h1_count if analysis else 0,
+            heading_hierarchy_valid=analysis.headings.hierarchy_valid if analysis else True,
+            heading_issues=[i.details for i in analysis.headings.issues[:3]] if analysis else [],
+            answer_in_first_paragraph=(
+                analysis.answer_first.answer_in_first_paragraph if analysis else False
+            ),
+            has_definition=analysis.answer_first.has_definition if analysis else False,
+            has_faq_section=analysis.faq.has_faq_section if analysis else False,
+            faq_count=analysis.faq.faq_count if analysis else 0,
+            has_faq_schema=analysis.faq.has_faq_schema if analysis else False,
+            internal_links=analysis.links.internal_links if analysis else 0,
+            link_density_level=analysis.links.density_level if analysis else "unknown",
+            table_count=analysis.formats.table_count if analysis else 0,
+            list_item_count=analysis.formats.total_list_items if analysis else 0,
+            critical_issues=structure_score.critical_issues[:],
+            all_issues=structure_score.all_issues[:],
+            recommendations=structure_score.recommendations[:5],
+            show_the_math=structure_score.show_the_math(),
+        )
+
+    def _build_schema_section(
+        self,
+        schema_score: SchemaRichnessScore,
+    ) -> SchemaSection:
+        """Build schema richness section from SchemaRichnessScore."""
+        # Convert components
+        components = []
+        for comp in schema_score.components:
+            components.append(
+                SchemaComponent(
+                    name=comp.name,
+                    score=comp.raw_score,
+                    weight=comp.weight,
+                    level=comp.level,
+                    explanation=comp.explanation,
+                )
+            )
+
+        # Extract data from schema analysis
+        analysis = schema_score.schema_analysis
+
+        return SchemaSection(
+            total_score=schema_score.total_score,
+            level=schema_score.level,
+            components=components,
+            has_json_ld=analysis.has_json_ld if analysis else False,
+            has_microdata=analysis.has_microdata if analysis else False,
+            total_schemas=analysis.total_schemas if analysis else 0,
+            schema_types=analysis.schema_types_found[:10] if analysis else [],
+            has_faq_page=analysis.has_faq_page if analysis else False,
+            has_article=analysis.has_article if analysis else False,
+            has_how_to=analysis.has_how_to if analysis else False,
+            has_organization=analysis.has_organization if analysis else False,
+            faq_count=analysis.faq_count if analysis else 0,
+            has_author=analysis.has_author if analysis else False,
+            author_name=analysis.author_name if analysis else None,
+            has_date_modified=analysis.has_date_modified if analysis else False,
+            date_modified=analysis.date_modified if analysis else None,
+            days_since_modified=analysis.days_since_modified if analysis else None,
+            freshness_level=analysis.freshness_level if analysis else "unknown",
+            validation_errors=analysis.error_count if analysis else 0,
+            critical_issues=schema_score.critical_issues[:],
+            all_issues=schema_score.all_issues[:],
+            recommendations=schema_score.recommendations[:5],
+            show_the_math=schema_score.show_the_math(),
+        )
+
+    def _build_authority_section(
+        self,
+        authority_score: AuthoritySignalsScore,
+    ) -> AuthoritySection:
+        """Build authority signals section from AuthoritySignalsScore."""
+        # Convert components
+        components = []
+        for comp in authority_score.components:
+            components.append(
+                AuthorityComponent(
+                    name=comp.name,
+                    score=comp.raw_score,
+                    weight=comp.weight,
+                    level=comp.level,
+                    explanation=comp.explanation,
+                )
+            )
+
+        # Extract data from authority analysis
+        analysis = authority_score.authority_analysis
+
+        return AuthoritySection(
+            total_score=authority_score.total_score,
+            level=authority_score.level,
+            components=components,
+            has_author=analysis.has_author if analysis else False,
+            author_name=(
+                analysis.primary_author.name if analysis and analysis.primary_author else None
+            ),
+            author_is_linked=(
+                analysis.primary_author.is_linked if analysis and analysis.primary_author else False
+            ),
+            has_author_photo=analysis.has_author_photo if analysis else False,
+            has_credentials=analysis.has_credentials if analysis else False,
+            has_author_bio=analysis.has_author_bio if analysis else False,
+            credentials_found=analysis.credentials_found[:5] if analysis else [],
+            total_citations=analysis.total_citations if analysis else 0,
+            authoritative_citations=analysis.authoritative_citations if analysis else 0,
+            has_original_data=analysis.has_original_data if analysis else False,
+            original_data_count=analysis.original_data_count if analysis else 0,
+            has_visible_date=analysis.has_visible_date if analysis else False,
+            days_since_published=analysis.days_since_published if analysis else None,
+            freshness_level=analysis.freshness_level if analysis else "unknown",
+            critical_issues=authority_score.critical_issues[:],
+            all_issues=authority_score.all_issues[:],
+            recommendations=authority_score.recommendations[:5],
+            show_the_math=authority_score.show_the_math(),
+        )
+
+    def _build_score_v2_section(
+        self,
+        findable_v2: FindableScoreV2,
+    ) -> ScoreSectionV2:
+        """Build v2 score section from FindableScoreV2."""
+        # Convert pillars to summaries
+        pillar_summaries = []
+        for pillar in findable_v2.pillars:
+            pillar_summaries.append(
+                PillarSummary(
+                    name=pillar.name,
+                    display_name=pillar.display_name,
+                    raw_score=pillar.raw_score,
+                    max_points=pillar.max_points,
+                    points_earned=pillar.points_earned,
+                    level=pillar.level,
+                )
+            )
+
+        return ScoreSectionV2(
+            total_score=findable_v2.total_score,
+            grade=findable_v2.grade.value,
+            grade_description=findable_v2.grade_description,
+            pillars=pillar_summaries,
+            pillars_good=findable_v2.pillars_good,
+            pillars_warning=findable_v2.pillars_warning,
+            pillars_critical=findable_v2.pillars_critical,
+            critical_issues=findable_v2.all_critical_issues[:5],
+            top_recommendations=findable_v2.top_recommendations[:5],
+            calculation_summary=findable_v2.calculation_summary,
+            show_the_math=findable_v2.show_the_math(),
+        )
+
+    def _build_action_center_section(
+        self,
+        fix_plan_v2: FixPlanV2,
+    ) -> ActionCenterSection:
+        """Build action center section from FixPlanV2."""
+        action_center = fix_plan_v2.action_center
+
+        # Convert quick wins
+        quick_wins = []
+        for item in action_center.quick_wins:
+            quick_wins.append(
+                ActionItemSummary(
+                    id=item.fix.id,
+                    category=item.fix.category.value,
+                    title=item.fix.title,
+                    description=item.fix.description,
+                    priority=item.fix.priority,
+                    impact_level=item.fix.impact_level.value,
+                    effort_level=item.fix.effort_level.value,
+                    estimated_points=item.fix.estimated_points,
+                    affected_pillar=item.fix.affected_pillar,
+                    scaffold=item.fix.scaffold,
+                )
+            )
+
+        # Convert high priority
+        high_priority = []
+        for item in action_center.high_priority:
+            high_priority.append(
+                ActionItemSummary(
+                    id=item.fix.id,
+                    category=item.fix.category.value,
+                    title=item.fix.title,
+                    description=item.fix.description,
+                    priority=item.fix.priority,
+                    impact_level=item.fix.impact_level.value,
+                    effort_level=item.fix.effort_level.value,
+                    estimated_points=item.fix.estimated_points,
+                    affected_pillar=item.fix.affected_pillar,
+                    scaffold=item.fix.scaffold,
+                )
+            )
+
+        # Convert all fixes
+        all_fixes = []
+        for item in action_center.all_fixes:
+            all_fixes.append(
+                ActionItemSummary(
+                    id=item.fix.id,
+                    category=item.fix.category.value,
+                    title=item.fix.title,
+                    description=item.fix.description,
+                    priority=item.fix.priority,
+                    impact_level=item.fix.impact_level.value,
+                    effort_level=item.fix.effort_level.value,
+                    estimated_points=item.fix.estimated_points,
+                    affected_pillar=item.fix.affected_pillar,
+                    scaffold=item.fix.scaffold,
+                )
+            )
+
+        return ActionCenterSection(
+            quick_wins=quick_wins,
+            high_priority=high_priority,
+            all_fixes=all_fixes,
+            total_fixes=action_center.total_fixes,
+            estimated_total_points=action_center.estimated_total_points,
+            critical_count=action_center.critical_count,
+            high_count=action_center.high_count,
+            medium_count=action_center.medium_count,
+            low_count=action_center.low_count,
         )
 
     def _build_observation_section(
@@ -440,6 +890,12 @@ def assemble_report(
     comparison: ComparisonSummary | None = None,
     benchmark: BenchmarkResult | None = None,
     config: ReportAssemblerConfig | None = None,
+    crawl_data: dict | None = None,
+    technical_score: TechnicalReadinessScore | None = None,
+    structure_score: StructureQualityScore | None = None,
+    schema_score: SchemaRichnessScore | None = None,
+    authority_score: AuthoritySignalsScore | None = None,
+    entity_recognition_result: EntityRecognitionResult | None = None,
 ) -> FullReport:
     """
     Convenience function to assemble a report.
@@ -457,6 +913,12 @@ def assemble_report(
         comparison: Optional comparison results
         benchmark: Optional benchmark results
         config: Optional assembler configuration
+        crawl_data: Optional crawl data with pages info
+        technical_score: Optional technical readiness score (v2)
+        structure_score: Optional structure quality score (v2)
+        schema_score: Optional schema richness score (v2)
+        authority_score: Optional authority signals score (v2)
+        entity_recognition_result: Optional entity recognition analysis (v2)
 
     Returns:
         FullReport with all sections
@@ -474,4 +936,10 @@ def assemble_report(
         observation=observation,
         comparison=comparison,
         benchmark=benchmark,
+        crawl_data=crawl_data,
+        technical_score=technical_score,
+        structure_score=structure_score,
+        schema_score=schema_score,
+        authority_score=authority_score,
+        entity_recognition_result=entity_recognition_result,
     )

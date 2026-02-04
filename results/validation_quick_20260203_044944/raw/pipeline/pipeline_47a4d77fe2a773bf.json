@@ -1,0 +1,225 @@
+{
+  "url": "https://backlinko.com",
+  "domain": "backlinko.com",
+  "status": "success",
+  "overall_score": 55.97920198861933,
+  "pillar_scores": {
+    "technical": 67.18,
+    "structure": 67.9578431372549,
+    "schema": 42.51176470588235,
+    "authority": 28.273529411764706,
+    "retrieval": 55.97920198861933,
+    "coverage": 85.0
+  },
+  "question_results": [
+    {
+      "question_id": "UQ-01",
+      "question_text": "What does Backlinko do?",
+      "category": "identity",
+      "answerability": "partially_answerable",
+      "score": 0.6774697975226072,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7270811380400422
+    },
+    {
+      "question_id": "UQ-02",
+      "question_text": "Who founded Backlinko and when was it established?",
+      "category": "identity",
+      "answerability": "not_answerable",
+      "score": 0.23543817890678853,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7634032634032634
+    },
+    {
+      "question_id": "UQ-03",
+      "question_text": "Where is Backlinko headquartered and where do they operate?",
+      "category": "identity",
+      "answerability": "not_answerable",
+      "score": 0.21036588844066664,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7196815026541444
+    },
+    {
+      "question_id": "UQ-04",
+      "question_text": "What products or services does Backlinko offer?",
+      "category": "offerings",
+      "answerability": "fully_answerable",
+      "score": 0.719537962488277,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.726010101010101
+    },
+    {
+      "question_id": "UQ-05",
+      "question_text": "What is Backlinko's pricing or how much do their services cost?",
+      "category": "offerings",
+      "answerability": "fully_answerable",
+      "score": 0.7505682343182343,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7224532224532225
+    },
+    {
+      "question_id": "UQ-06",
+      "question_text": "Who are the typical customers or target audience for Backlinko?",
+      "category": "offerings",
+      "answerability": "fully_answerable",
+      "score": 0.7721185868085654,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7878411910669975
+    },
+    {
+      "question_id": "UQ-07",
+      "question_text": "What problems does Backlinko solve for their customers?",
+      "category": "offerings",
+      "answerability": "partially_answerable",
+      "score": 0.6167983340989109,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7378472222222222
+    },
+    {
+      "question_id": "UQ-08",
+      "question_text": "How can I contact Backlinko or get in touch with them?",
+      "category": "contact",
+      "answerability": "fully_answerable",
+      "score": 0.7606344589481382,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.819672131147541
+    },
+    {
+      "question_id": "UQ-09",
+      "question_text": "How do I get started with Backlinko or sign up for their service?",
+      "category": "contact",
+      "answerability": "partially_answerable",
+      "score": 0.6118509529524017,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7619487416301085
+    },
+    {
+      "question_id": "UQ-10",
+      "question_text": "What notable clients or customers does Backlinko have?",
+      "category": "trust",
+      "answerability": "partially_answerable",
+      "score": 0.6899241426434062,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7820136852394917
+    },
+    {
+      "question_id": "UQ-11",
+      "question_text": "What awards, certifications, or recognition has Backlinko received?",
+      "category": "trust",
+      "answerability": "fully_answerable",
+      "score": 0.712057862910789,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7655446470313231
+    },
+    {
+      "question_id": "UQ-12",
+      "question_text": "What is Backlinko's track record or history of success?",
+      "category": "trust",
+      "answerability": "partially_answerable",
+      "score": 0.6377600253912085,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7367280606717227
+    },
+    {
+      "question_id": "UQ-13",
+      "question_text": "What makes Backlinko different from competitors?",
+      "category": "differentiation",
+      "answerability": "not_answerable",
+      "score": 0.2435639120278426,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7708728652751423
+    },
+    {
+      "question_id": "UQ-14",
+      "question_text": "Why should someone choose Backlinko over alternatives?",
+      "category": "differentiation",
+      "answerability": "partially_answerable",
+      "score": 0.6285025979367598,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.4098360655737705
+    },
+    {
+      "question_id": "UQ-15",
+      "question_text": "What is Backlinko's mission, vision, or core values?",
+      "category": "differentiation",
+      "answerability": "partially_answerable",
+      "score": 0.4804063552202639,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.6289556962025317
+    },
+    {
+      "question_id": "b1e3876d",
+      "question_text": "How many employees does Backlinko have?",
+      "category": "identity",
+      "answerability": "partially_answerable",
+      "score": 0.4364599305861279,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7456915598762703
+    },
+    {
+      "question_id": "6ec10eee",
+      "question_text": "What is Backlinko's annual revenue?",
+      "category": "trust",
+      "answerability": "partially_answerable",
+      "score": 0.40045598301182717,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.6538461538461539
+    },
+    {
+      "question_id": "db6a7e8d",
+      "question_text": "What is the main topic of this article?",
+      "category": "identity",
+      "answerability": "partially_answerable",
+      "score": 0.46265894848900985,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7699597251836058
+    },
+    {
+      "question_id": "83bd71b1",
+      "question_text": "How can I get support from Backlinko?",
+      "category": "contact",
+      "answerability": "partially_answerable",
+      "score": 0.4116576074743212,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.744047619047619
+    },
+    {
+      "question_id": "b42b1fc5",
+      "question_text": "What do customers say about Backlinko?",
+      "category": "trust",
+      "answerability": "partially_answerable",
+      "score": 0.5040387148603362,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7938508064516129
+    }
+  ],
+  "questions_answered": 5,
+  "questions_partial": 12,
+  "questions_unanswered": 3,
+  "pages_crawled": 50,
+  "chunks_created": 369,
+  "duration_seconds": 249.264093,
+  "error_message": null,
+  "cached_at": "2026-02-03T04:53:54.055899+00:00",
+  "executed_at": "2026-02-03T04:53:54.055437+00:00"
+}

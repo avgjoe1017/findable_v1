@@ -2,17 +2,18 @@
 
 import logging
 import os
+import platform
 import sys
 
-from rq import Worker
+from rq import SimpleWorker, Worker
 from rq.job import Job
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api.config import get_settings
-from api.logging import setup_logging
-from worker.redis import (
+from api.config import get_settings  # noqa: E402
+from api.logging import setup_logging  # noqa: E402
+from worker.redis import (  # noqa: E402
     QUEUE_DEFAULT,
     QUEUE_HIGH,
     QUEUE_LOW,
@@ -65,9 +66,24 @@ def run_worker() -> None:
 
     redis_conn = get_redis_connection_bytes()
 
+    # Initialize calibration schedules (drift detection)
+    try:
+        from worker.scheduler import ensure_calibration_schedules
+
+        schedule_status = ensure_calibration_schedules()
+        logging.info(
+            "Calibration schedules initialized",
+            extra=schedule_status,
+        )
+    except Exception as e:
+        logging.warning(f"Failed to initialize calibration schedules: {e}")
+
     queues = [QUEUE_HIGH, QUEUE_DEFAULT, QUEUE_LOW]
 
-    worker = Worker(
+    # Use SimpleWorker on Windows (no os.fork() support)
+    WorkerClass = SimpleWorker if platform.system() == "Windows" else Worker
+
+    worker = WorkerClass(
         queues,
         connection=redis_conn,
         name=f"findable-worker-{os.getpid()}",

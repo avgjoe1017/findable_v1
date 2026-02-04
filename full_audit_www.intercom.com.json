@@ -1,0 +1,85 @@
+{
+  "url": "https://www.intercom.com",
+  "started_at": "2026-02-01T21:09:32.968898",
+  "pillars": {
+    "technical": {
+      "score": 74.436,
+      "level": "warning",
+      "js_dependent": false
+    },
+    "structure": {
+      "score": 42.85,
+      "level": "critical"
+    },
+    "schema": {
+      "score": 14.918181818181818,
+      "level": "critical",
+      "types": []
+    },
+    "authority": {
+      "score": 11.879999999999999,
+      "level": "critical"
+    },
+    "retrieval": {
+      "score": 63.266631989487365,
+      "level": "warning"
+    },
+    "coverage": {
+      "score": 65.78947368421053,
+      "level": "warning"
+    }
+  },
+  "crawl": {
+    "pages_crawled": 10,
+    "urls_discovered": 114,
+    "duration_seconds": 11.103101
+  },
+  "extraction": {
+    "pages": 4,
+    "words": 3961
+  },
+  "chunking": {
+    "total_chunks": 13
+  },
+  "embedding": {
+    "total_embeddings": 13
+  },
+  "questions": {
+    "count": 19
+  },
+  "simulation": {
+    "questions_answered": 7,
+    "questions_partial": 11,
+    "questions_unanswered": 1,
+    "overall_score": 67.28750594531493
+  },
+  "v2_score": {
+    "total": 46.15073263852017,
+    "level": "partially_findable",
+    "level_label": "Partially Findable",
+    "level_summary": "Foundation in place, but missing key signals that drive citations.",
+    "level_focus": "Add structured data and trust signals.",
+    "next_milestone": {
+      "score": 55,
+      "name": "Findable",
+      "description": "AI can reliably find and cite you",
+      "points_needed": 8.8
+    },
+    "points_to_milestone": 8.8,
+    "pillars_evaluated": 6,
+    "pillars_not_evaluated": 0,
+    "max_evaluated_points": 100,
+    "is_partial": false,
+    "evaluated_score_pct": 46.15073263852017,
+    "pillars_good": 0,
+    "pillars_warning": 3,
+    "pillars_critical": 3,
+    "strengths": [
+      "llms.txt file exists - early adopter of AI discoverability standard",
+      "robots.txt allows all AI crawlers",
+      "HTTPS enabled (secure connection)",
+      "Good question coverage (66%)"
+    ]
+  },
+  "completed_at": "2026-02-01T21:21:03.003520"
+}

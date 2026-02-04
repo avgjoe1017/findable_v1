@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Validation - Predicted vs Observed | Findable Score{% endblock %}
+
+{% block head %}
+<style>
+    .outcome-correct { background-color: rgba(34, 197, 94, 0.2); border-left: 4px solid #22c55e; }
+    .outcome-optimistic { background-color: rgba(251, 146, 60, 0.2); border-left: 4px solid #fb923c; }
+    .outcome-pessimistic { background-color: rgba(59, 130, 246, 0.2); border-left: 4px solid #3b82f6; }
+    .outcome-unknown { background-color: rgba(148, 163, 184, 0.2); border-left: 4px solid #94a3b8; }
+
+    .driver-badge {
+        font-size: 0.75rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-weight: 500;
+    }
+    .driver-low_signal_coverage { background-color: rgba(251, 146, 60, 0.3); color: #fb923c; }
+    .driver-borderline_score { background-color: rgba(234, 179, 8, 0.3); color: #eab308; }
+    .driver-commercial_query_bias { background-color: rgba(239, 68, 68, 0.3); color: #ef4444; }
+    .driver-thin_content { background-color: rgba(168, 85, 247, 0.3); color: #a855f7; }
+    .driver-brand_authority_override { background-color: rgba(59, 130, 246, 0.3); color: #3b82f6; }
+    .driver-identity_query_override { background-color: rgba(34, 197, 94, 0.3); color: #22c55e; }
+    .driver-provider_specific_behavior { background-color: rgba(236, 72, 153, 0.3); color: #ec4899; }
+    .driver-unknown { background-color: rgba(148, 163, 184, 0.3); color: #94a3b8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-lg border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="/" class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8" stroke-width="2"/>
+                            <path stroke-linecap="round" stroke-width="2" d="m21 21-4.35-4.35"/>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-semibold text-white">Findable</span>
+                </a>
+                <span class="text-slate-500">/</span>
+                <span class="text-slate-300">Validation</span>
+            </div>
+            <a href="/" class="text-sm text-slate-400 hover:text-white transition-colors">
+                &larr; Back to Dashboard
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Title Section -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white mb-2">Predicted vs Observed</h1>
+            <p class="text-slate-400">Compare simulation predictions against actual AI model behavior</p>
+        </div>
+
+        <!-- Metrics Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <!-- Accuracy -->
+            <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <div class="text-slate-400 text-sm mb-1">Accuracy</div>
+                <div class="text-4xl font-bold text-white">{{ (accuracy * 100)|round|int }}%</div>
+                <div class="text-slate-500 text-sm mt-1">{{ correct_count }}/{{ total_known }} correct</div>
+            </div>
+
+            <!-- Correct -->
+            <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <div class="text-slate-400 text-sm mb-1">Correct Predictions</div>
+                <div class="text-4xl font-bold text-green-400">{{ correct_count }}</div>
+                <div class="text-slate-500 text-sm mt-1">Prediction matched observation</div>
+            </div>
+
+            <!-- Optimistic (False Positives) -->
+            <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <div class="text-slate-400 text-sm mb-1">Optimistic</div>
+                <div class="text-4xl font-bold text-orange-400">{{ optimistic_count }}</div>
+                <div class="text-slate-500 text-sm mt-1">False positives (over-predicted)</div>
+            </div>
+
+            <!-- Pessimistic (False Negatives) -->
+            <div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <div class="text-slate-400 text-sm mb-1">Pessimistic</div>
+                <div class="text-4xl font-bold text-blue-400">{{ pessimistic_count }}</div>
+                <div class="text-slate-500 text-sm mt-1">False negatives (under-predicted)</div>
+            </div>
+        </div>
+
+        <!-- Top Mismatch Drivers -->
+        {% if mismatch_drivers %}
+        <div class="mb-8 bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+            <h2 class="text-lg font-semibold text-white mb-4">Top Mismatch Drivers</h2>
+            <p class="text-slate-400 text-sm mb-4">Why predictions disagreed with observations</p>
+            <div class="flex flex-wrap gap-3">
+                {% for driver, count in mismatch_drivers %}
+                <div class="driver-badge driver-{{ driver|replace('unknown_optimism', 'unknown')|replace('unknown_pessimism', 'unknown') }}">
+                    {{ driver|replace('_', ' ')|title }}: {{ count }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Samples Table -->
+        <div class="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+            <div class="p-6 border-b border-slate-700">
+                <h2 class="text-lg font-semibold text-white">Calibration Samples</h2>
+                <p class="text-slate-400 text-sm">{{ samples|length }} samples from recent runs</p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-900/50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Question</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Predicted</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Observed</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Outcome</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Driver</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700">
+                        {% for sample in samples %}
+                        <tr class="outcome-{{ sample.outcome }}">
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-white max-w-xs truncate" title="{{ sample.question_text }}">
+                                    {{ sample.question_text[:60] }}{% if sample.question_text|length > 60 %}...{% endif %}
+                                </div>
+                                <div class="text-xs text-slate-500">{{ sample.question_category }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-white">{{ sample.sim_answerability }}</div>
+                                <div class="text-xs text-slate-500">Score: {{ sample.sim_score|round(2) }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex gap-2">
+                                    {% if sample.obs_cited %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">
+                                        Cited
+                                    </span>
+                                    {% elif sample.obs_mentioned %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
+                                        Mentioned
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-500/20 text-slate-400">
+                                        Not Found
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-xs text-slate-500 mt-1">{{ sample.obs_provider }}/{{ sample.obs_model }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if sample.outcome == 'correct' %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">
+                                    Correct
+                                </span>
+                                {% elif sample.outcome == 'optimistic' %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/20 text-orange-400">
+                                    Optimistic
+                                </span>
+                                {% elif sample.outcome == 'pessimistic' %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
+                                    Pessimistic
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-500/20 text-slate-400">
+                                    Unknown
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if sample.mismatch_driver and sample.outcome != 'correct' %}
+                                <span class="driver-badge driver-{{ sample.mismatch_driver|replace('unknown_optimism', 'unknown')|replace('unknown_pessimism', 'unknown') }}">
+                                    {{ sample.mismatch_driver|replace('_', ' ')|title }}
+                                </span>
+                                {% else %}
+                                <span class="text-slate-500">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                        {% if not samples %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                                No calibration samples yet. Run audits with observation enabled to collect samples.
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="mt-8 bg-slate-800/30 rounded-xl p-6 border border-slate-700/50">
+            <h3 class="text-white font-medium mb-3">How Validation Works</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                    <div class="text-teal-400 font-medium mb-1">1. Simulation (Predicted)</div>
+                    <p class="text-slate-400">Our pipeline crawls your site, retrieves relevant chunks, and predicts whether AI can answer each question.</p>
+                </div>
+                <div>
+                    <div class="text-cyan-400 font-medium mb-1">2. Observation (Actual)</div>
+                    <p class="text-slate-400">We query real AI models (ChatGPT, Claude, etc.) and detect whether they mention or cite your company.</p>
+                </div>
+                <div>
+                    <div class="text-blue-400 font-medium mb-1">3. Comparison</div>
+                    <p class="text-slate-400">We compare predictions to observations. Mismatches reveal calibration opportunities.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

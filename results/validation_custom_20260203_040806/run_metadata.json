@@ -1,0 +1,142 @@
+{
+  "run_id": "validation_custom_20260203_040806",
+  "started_at": "2026-02-03T04:08:06.466084+00:00",
+  "config": {
+    "corpus": "custom",
+    "query_filter": "informational",
+    "output_dir": "results",
+    "run_name": null,
+    "run_id": "validation_custom_20260203_040806",
+    "skip_ai_queries": false,
+    "skip_pipeline": false,
+    "verbose": false,
+    "dry_run": true,
+    "site_concurrency": 3,
+    "query_concurrency": 2,
+    "pipeline": {
+      "max_pages": 50,
+      "max_depth": 2,
+      "run_technical": true,
+      "run_structure": true,
+      "run_schema": true,
+      "run_authority": true,
+      "run_simulation": true
+    },
+    "ai_query": {
+      "query_chatgpt": true,
+      "query_perplexity": true,
+      "query_google_aio": false,
+      "query_claude": true,
+      "use_cache": true
+    }
+  },
+  "corpus": {
+    "name": "custom",
+    "description": "Single URL: https://example.com",
+    "site_count": 1,
+    "sites": [
+      {
+        "url": "https://example.com",
+        "name": "example.com",
+        "category": "own_property",
+        "domain": "example.com",
+        "industry": "",
+        "authority_level": "medium",
+        "expected_queries": [],
+        "notes": "Single URL test"
+      }
+    ]
+  },
+  "query_count": 12,
+  "queries": [
+    {
+      "query": "what is generative engine optimization",
+      "category": "informational",
+      "expected_sources": [
+        "amsive.com",
+        "searchengineland.com"
+      ]
+    },
+    {
+      "query": "what is AI search optimization",
+      "category": "informational",
+      "expected_sources": [
+        "searchengineland.com",
+        "searchenginejournal.com"
+      ]
+    },
+    {
+      "query": "what is answer engine optimization",
+      "category": "informational",
+      "expected_sources": []
+    },
+    {
+      "query": "how do AI search engines find content",
+      "category": "informational",
+      "expected_sources": [
+        "openai.com",
+        "anthropic.com"
+      ]
+    },
+    {
+      "query": "what is AI sourceability",
+      "category": "informational",
+      "expected_sources": []
+    },
+    {
+      "query": "what is domain authority",
+      "category": "informational",
+      "expected_sources": [
+        "moz.com"
+      ]
+    },
+    {
+      "query": "what is E-E-A-T in SEO",
+      "category": "informational",
+      "expected_sources": [
+        "developers.google.com",
+        "searchengineland.com"
+      ]
+    },
+    {
+      "query": "what are Core Web Vitals",
+      "category": "informational",
+      "expected_sources": [
+        "developers.google.com",
+        "web.dev"
+      ]
+    },
+    {
+      "query": "what is schema markup",
+      "category": "informational",
+      "expected_sources": [
+        "schema.org",
+        "developers.google.com"
+      ]
+    },
+    {
+      "query": "what is JSON-LD",
+      "category": "informational",
+      "expected_sources": [
+        "schema.org",
+        "json-ld.org",
+        "developer.mozilla.org"
+      ]
+    },
+    {
+      "query": "what is inbound marketing",
+      "category": "informational",
+      "expected_sources": [
+        "hubspot.com"
+      ]
+    },
+    {
+      "query": "what is content marketing",
+      "category": "informational",
+      "expected_sources": [
+        "hubspot.com",
+        "contentmarketinginstitute.com"
+      ]
+    }
+  ]
+}

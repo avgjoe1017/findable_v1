@@ -1,0 +1,55 @@
+'use client'
+
+import { LucideIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Card } from '@/components/ui/card'
+
+interface StatCardProps {
+  title: string
+  value: string | number
+  description?: string
+  icon: LucideIcon
+  trend?: {
+    value: number
+    isPositive: boolean
+  }
+  className?: string
+}
+
+export function StatCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+  trend,
+  className,
+}: StatCardProps) {
+  return (
+    <Card className={cn('p-6', className)}>
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground-muted">{title}</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-mono font-bold">{value}</p>
+            {trend && (
+              <span
+                className={cn(
+                  'text-xs font-medium',
+                  trend.isPositive ? 'text-green-400' : 'text-red-400'
+                )}
+              >
+                {trend.isPositive ? '+' : ''}{trend.value}%
+              </span>
+            )}
+          </div>
+          {description && (
+            <p className="text-xs text-foreground-muted">{description}</p>
+          )}
+        </div>
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Icon className="h-5 w-5 text-primary" />
+        </div>
+      </div>
+    </Card>
+  )
+}

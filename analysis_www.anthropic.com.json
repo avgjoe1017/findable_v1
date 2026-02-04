@@ -1,0 +1,48 @@
+{
+  "url": "https://www.anthropic.com",
+  "started_at": "2026-02-01T18:25:43.067848",
+  "pillars": {
+    "technical": {
+      "score": 76.012,
+      "level": "warning",
+      "critical_issues": [],
+      "js_dependent": false
+    },
+    "structure": {
+      "score": 67.625,
+      "level": "warning",
+      "heading_score": 95.0,
+      "faq_score": 0.0
+    },
+    "schema": {
+      "score": 8.833333333333334,
+      "level": "critical",
+      "types_found": [],
+      "errors": []
+    },
+    "authority": {
+      "score": 9.2,
+      "level": "critical",
+      "has_author": false,
+      "citations": 68
+    }
+  },
+  "crawl": {
+    "pages_crawled": 5,
+    "urls_discovered": 68,
+    "duration_seconds": 12.136738
+  },
+  "extraction": {
+    "pages": 1,
+    "words": 333
+  },
+  "v2_score": {
+    "total": 27.6318,
+    "grade": "F",
+    "grade_description": "Critical - Immediate action required",
+    "pillars_good": 0,
+    "pillars_warning": 2,
+    "pillars_critical": 4
+  },
+  "completed_at": "2026-02-01T18:26:45.823210"
+}

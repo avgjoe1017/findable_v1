@@ -1,0 +1,175 @@
+{
+  "url": "https://schema.org",
+  "domain": "schema.org",
+  "status": "success",
+  "overall_score": 65.87990908440888,
+  "pillar_scores": {
+    "technical": 65.89,
+    "structure": 60.9765625,
+    "schema": 13.5,
+    "authority": 29.572916666666668,
+    "retrieval": 65.87990908440888,
+    "coverage": 93.33333333333333
+  },
+  "question_results": [
+    {
+      "question_id": "UQ-01",
+      "question_text": "What does Schema do?",
+      "category": "identity",
+      "answerability": "partially_answerable",
+      "score": 0.6509690204031822,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.6776556776556777
+    },
+    {
+      "question_id": "UQ-02",
+      "question_text": "Who founded Schema and when was it established?",
+      "category": "identity",
+      "answerability": "fully_answerable",
+      "score": 0.8938216175328018,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7721549061534806
+    },
+    {
+      "question_id": "UQ-03",
+      "question_text": "Where is Schema headquartered and where do they operate?",
+      "category": "identity",
+      "answerability": "partially_answerable",
+      "score": 0.5449054820815793,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7166257166257166
+    },
+    {
+      "question_id": "UQ-04",
+      "question_text": "What products or services does Schema offer?",
+      "category": "offerings",
+      "answerability": "fully_answerable",
+      "score": 0.8846863007862209,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7378472222222222
+    },
+    {
+      "question_id": "UQ-05",
+      "question_text": "What is Schema's pricing or how much do their services cost?",
+      "category": "offerings",
+      "answerability": "partially_answerable",
+      "score": 0.4951692646034264,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.4098360655737705
+    },
+    {
+      "question_id": "UQ-06",
+      "question_text": "Who are the typical customers or target audience for Schema?",
+      "category": "offerings",
+      "answerability": "partially_answerable",
+      "score": 0.4951692646034264,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.4098360655737705
+    },
+    {
+      "question_id": "UQ-07",
+      "question_text": "What problems does Schema solve for their customers?",
+      "category": "offerings",
+      "answerability": "partially_answerable",
+      "score": 0.6813523685284659,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7476739034116083
+    },
+    {
+      "question_id": "UQ-08",
+      "question_text": "How can I contact Schema or get in touch with them?",
+      "category": "contact",
+      "answerability": "partially_answerable",
+      "score": 0.5764043210063934,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.819672131147541
+    },
+    {
+      "question_id": "UQ-09",
+      "question_text": "How do I get started with Schema or sign up for their service?",
+      "category": "contact",
+      "answerability": "fully_answerable",
+      "score": 0.7333808854269055,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.819672131147541
+    },
+    {
+      "question_id": "UQ-10",
+      "question_text": "What notable clients or customers does Schema have?",
+      "category": "trust",
+      "answerability": "not_answerable",
+      "score": 0.2130348792666984,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7262917617763022
+    },
+    {
+      "question_id": "UQ-11",
+      "question_text": "What awards, certifications, or recognition has Schema received?",
+      "category": "trust",
+      "answerability": "fully_answerable",
+      "score": 0.7819903765266463,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.741106719367589
+    },
+    {
+      "question_id": "UQ-12",
+      "question_text": "What is Schema's track record or history of success?",
+      "category": "trust",
+      "answerability": "partially_answerable",
+      "score": 0.5182461876803495,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.7944514501891552
+    },
+    {
+      "question_id": "UQ-13",
+      "question_text": "What makes Schema different from competitors?",
+      "category": "differentiation",
+      "answerability": "partially_answerable",
+      "score": 0.6715613709551433,
+      "confidence": 0.6,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.819672131147541
+    },
+    {
+      "question_id": "UQ-14",
+      "question_text": "Why should someone choose Schema over alternatives?",
+      "category": "differentiation",
+      "answerability": "fully_answerable",
+      "score": 0.823855162039324,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.819672131147541
+    },
+    {
+      "question_id": "UQ-15",
+      "question_text": "What is Schema's mission, vision, or core values?",
+      "category": "differentiation",
+      "answerability": "fully_answerable",
+      "score": 0.8078738071539397,
+      "confidence": 1.0,
+      "chunks_found": 5,
+      "top_chunk_relevance": 0.8130618720253835
+    }
+  ],
+  "questions_answered": 6,
+  "questions_partial": 8,
+  "questions_unanswered": 1,
+  "pages_crawled": 50,
+  "chunks_created": 232,
+  "duration_seconds": 123.616336,
+  "error_message": null,
+  "cached_at": "2026-02-03T04:51:48.139724+00:00",
+  "executed_at": "2026-02-03T04:51:48.139159+00:00"
+}

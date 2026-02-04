@@ -128,6 +128,8 @@ class EmbeddingStore:
         chunk_type: str = "text",
         heading_context: str | None = None,
         position_ratio: float = 0.0,
+        source_url: str | None = None,
+        page_title: str | None = None,
     ) -> UUID:
         """
         Store a single embedding.
@@ -163,12 +165,14 @@ class EmbeddingStore:
                 content, content_hash, embedding,
                 model_name, dimensions,
                 chunk_index, chunk_type, heading_context, position_ratio,
+                source_url, page_title,
                 created_at
             ) VALUES (
                 :id, :chunk_id, :page_id, :site_id,
                 :content, :content_hash, :embedding,
                 :model_name, :dimensions,
                 :chunk_index, :chunk_type, :heading_context, :position_ratio,
+                :source_url, :page_title,
                 NOW()
             )
             ON CONFLICT (content_hash, site_id) DO UPDATE SET
@@ -195,6 +199,8 @@ class EmbeddingStore:
                 "chunk_type": chunk_type,
                 "heading_context": heading_context,
                 "position_ratio": position_ratio,
+                "source_url": source_url,
+                "page_title": page_title,
             },
         )
 

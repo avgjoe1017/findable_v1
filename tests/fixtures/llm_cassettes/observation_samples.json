@@ -1,0 +1,75 @@
+{
+  "name": "observation_samples",
+  "responses": [
+    {
+      "prompt": "You are an AI assistant helping users find information about businesses. The user is asking about Acme Corporation (acme.com).\n\nQuestion: What does Acme Corporation do?",
+      "response": "Acme Corporation is a well-established company that specializes in providing enterprise software solutions. According to their website at acme.com, they offer a comprehensive suite of tools for business process automation, customer relationship management, and data analytics.\n\nTheir main products include:\n1. Acme Enterprise Suite - A full-featured ERP system\n2. Acme CRM - Customer relationship management platform\n3. Acme Analytics - Business intelligence and reporting tools\n\nThe company was founded in 2010 and is headquartered in San Francisco. They serve over 500 enterprise clients globally.\n\nFor more detailed information, you can visit https://acme.com/about or contact their sales team at https://acme.com/contact.",
+      "model": "openai/gpt-4o-mini",
+      "temperature": 0.3,
+      "max_tokens": 1000,
+      "usage": {
+        "prompt_tokens": 85,
+        "completion_tokens": 156,
+        "total_tokens": 241
+      },
+      "latency_ms": 1250.5,
+      "recorded_at": "2026-01-30T14:00:00.000Z"
+    },
+    {
+      "prompt": "You are an AI assistant helping users find information about businesses. The user is asking about Acme Corporation (acme.com).\n\nQuestion: What are the pricing plans for Acme Corporation's products?",
+      "response": "I don't have specific pricing information for Acme Corporation's products in my training data. Pricing for enterprise software like what Acme offers typically varies based on:\n\n- Number of users/seats\n- Feature tier selected\n- Contract length\n- Implementation requirements\n\nI'd recommend visiting their pricing page at acme.com/pricing or contacting their sales team directly for accurate, up-to-date pricing information. Enterprise software vendors often provide custom quotes based on specific business needs.",
+      "model": "openai/gpt-4o-mini",
+      "temperature": 0.3,
+      "max_tokens": 1000,
+      "usage": {
+        "prompt_tokens": 92,
+        "completion_tokens": 98,
+        "total_tokens": 190
+      },
+      "latency_ms": 980.2,
+      "recorded_at": "2026-01-30T14:01:00.000Z"
+    },
+    {
+      "prompt": "You are an AI assistant helping users find information about businesses. The user is asking about TechStartup Inc (techstartup.io).\n\nQuestion: Can you tell me about TechStartup Inc's team and leadership?",
+      "response": "I apologize, but I don't have specific information about TechStartup Inc or their leadership team in my knowledge base. This could be because:\n\n1. The company may be relatively new or small\n2. They may not have significant public presence yet\n3. My training data may not include information about them\n\nI'd recommend checking their website directly at techstartup.io, particularly their 'About' or 'Team' pages, for accurate information about their leadership and team members. You might also find information on LinkedIn or other professional networking platforms.",
+      "model": "openai/gpt-4o-mini",
+      "temperature": 0.3,
+      "max_tokens": 1000,
+      "usage": {
+        "prompt_tokens": 88,
+        "completion_tokens": 112,
+        "total_tokens": 200
+      },
+      "latency_ms": 1100.8,
+      "recorded_at": "2026-01-30T14:02:00.000Z"
+    },
+    {
+      "prompt": "You are an AI assistant helping users find information about businesses. The user is asking about Example Company (example.com).\n\nQuestion: What services does Example Company provide?",
+      "response": "Example Company, found at example.com, provides a range of digital services including:\n\n**Core Services:**\n- Web development and design\n- Mobile application development\n- Cloud infrastructure consulting\n- Digital marketing solutions\n\n**Notable Features:**\nAccording to their website, they emphasize a customer-first approach and have worked with clients across multiple industries including healthcare, finance, and retail.\n\nThey've been recognized for their innovative approach and have received several industry awards. Their team includes certified experts in major cloud platforms.\n\nSource: https://example.com/services\n\nFor specific inquiries about their services, I'd recommend reaching out through their contact form at https://example.com/contact.",
+      "model": "openai/gpt-4o-mini",
+      "temperature": 0.3,
+      "max_tokens": 1000,
+      "usage": {
+        "prompt_tokens": 82,
+        "completion_tokens": 145,
+        "total_tokens": 227
+      },
+      "latency_ms": 1320.4,
+      "recorded_at": "2026-01-30T14:03:00.000Z"
+    },
+    {
+      "prompt": "You are an AI assistant helping users find information about businesses. The user is asking about Example Company (example.com).\n\nQuestion: How can I contact Example Company for support?",
+      "response": "Based on their website, you can contact Example Company through several channels:\n\n**Support Options:**\n1. **Email:** support@example.com\n2. **Phone:** 1-800-EXAMPLE (available Monday-Friday, 9 AM - 6 PM EST)\n3. **Live Chat:** Available on their website at example.com during business hours\n4. **Help Center:** https://example.com/help\n\n**For Specific Inquiries:**\n- Sales: sales@example.com\n- Partnerships: partners@example.com\n- Press: media@example.com\n\nTheir average response time for support tickets is reportedly within 24 hours. For urgent issues, the phone line is recommended.",
+      "model": "openai/gpt-4o-mini",
+      "temperature": 0.3,
+      "max_tokens": 1000,
+      "usage": {
+        "prompt_tokens": 85,
+        "completion_tokens": 138,
+        "total_tokens": 223
+      },
+      "latency_ms": 1180.6,
+      "recorded_at": "2026-01-30T14:04:00.000Z"
+    }
+  ]
+}
