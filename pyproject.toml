@@ -2,7 +2,7 @@
 name = "findable"
 version = "0.1.0"
 description = "Findable Score Analyzer - Measure AI sourceability for websites"
-readme = "README.md"
+# readme omitted so Docker build succeeds when README.md is not copied (e.g. Railway cache); add back for PyPI
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Findable Team" }]
