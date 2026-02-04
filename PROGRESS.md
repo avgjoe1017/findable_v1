@@ -1,8 +1,12 @@
 # Findable Score Analyzer - Progress Tracker
 
-Last Updated: 2026-02-03 (Session #54)
+Last Updated: 2026-02-04 (Session #55)
 
 **Current Status:** Day 30 + Findable Score v2 Complete + Calibration System + Railway Deployment Ready
+
+### 2026-02-04 — Docker build fix (README.md in deps stage)
+**Decision:** In the Dockerfile `deps` stage we only copied `pyproject.toml` before running `pip install -e .`. Hatchling reads `readme = "README.md"` from pyproject.toml and requires that file to exist when generating package metadata; the build was failing with `OSError: Readme file does not exist: README.md`.
+**Change:** Added `COPY README.md ./` in the deps stage before the pip install step so the editable install can complete. This keeps the deps layer cacheable while satisfying the build backend.
 
 ## Overall Status
 

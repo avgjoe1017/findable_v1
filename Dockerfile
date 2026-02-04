@@ -34,6 +34,7 @@ FROM base as deps
 
 # Copy only dependency files first (for better caching)
 COPY pyproject.toml ./
+COPY README.md ./
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -e .
