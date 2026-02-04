@@ -568,7 +568,7 @@ class ScoreTrendSummary:
 
 
 def build_trend_data(
-    scores: list[tuple[FindableScoreV2, UUID | None, datetime]]
+    scores: list[tuple[FindableScoreV2, UUID | None, datetime]],
 ) -> ScoreTrendSummary:
     """
     Build trend summary from a list of scores over time.
