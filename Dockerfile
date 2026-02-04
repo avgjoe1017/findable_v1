@@ -32,9 +32,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # -----------------------------------------------------------------------------
 FROM base as deps
 
-# Copy only dependency files first (for better caching)
-COPY pyproject.toml ./
-COPY README.md ./
+# Copy only dependency files first (for better caching; README required by hatchling)
+COPY pyproject.toml README.md ./
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -e .
