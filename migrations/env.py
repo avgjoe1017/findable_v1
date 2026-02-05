@@ -1,6 +1,7 @@
 """Alembic environment configuration."""
 
 import asyncio
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -8,7 +9,6 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from api.config import get_settings
 from api.database import Base
 
 # Import all models to register them with Base.metadata
@@ -34,13 +34,24 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Get database URL from settings and ensure async driver (asyncpg) is used
-settings = get_settings()
-_raw_url = str(settings.database_url)
-# Use asyncpg so we don't require psycopg2 in the image
-if _raw_url.startswith("postgresql://") and "asyncpg" not in _raw_url:
-    _raw_url = _raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-config.set_main_option("sqlalchemy.url", _raw_url)
+
+def _normalize_async_url(url: str) -> str:
+    """Use asyncpg so we don't require psycopg2 in the image."""
+    if url.startswith("postgresql://") and "asyncpg" not in url:
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+
+# Prefer DATABASE_URL from environment so migrations can run when only Postgres is linked
+# (no need for REDIS_URL or JWT_SECRET in the migration subprocess)
+_raw_url = os.getenv("DATABASE_URL")
+if _raw_url:
+    config.set_main_option("sqlalchemy.url", _normalize_async_url(_raw_url))
+else:
+    from api.config import get_settings
+
+    settings = get_settings()
+    config.set_main_option("sqlalchemy.url", _normalize_async_url(str(settings.database_url)))
 
 
 def run_migrations_offline() -> None:

@@ -40,6 +40,10 @@ Last Updated: 2026-02-05 (Session #56)
 **Decision:** After env vars were set, deploy failed with (1) ModuleNotFoundError: No module named 'worker' — api.services.job_service imports worker.queue at module load, but the API stage did not copy worker/; (2) migrations step tried to use psycopg2 (sync) while only asyncpg is installed; migration continued but never ran.
 **Change:** (1) Dockerfile API stage: added `COPY worker/ ./worker/` and `ENV PYTHONPATH=/app` so the worker package is present and importable. (2) migrations/env.py: normalize DATABASE_URL to `postgresql+asyncpg://` when it is plain `postgresql://` so the async engine uses asyncpg; pass the url into the config dict for `async_engine_from_config` (get_section only returns [alembic] from ini and did not include sqlalchemy.url).
 
+### 2026-02-05 — Railway: migration/config resilience to missing env
+**Decision:** Containers were still failing with Settings ValidationError (database_url, redis_url, jwt_secret) when Railway had not yet injected linked-service vars or JWT_SECRET. Migrations were loading env.py which called get_settings(), requiring all three.
+**Change:** (1) migrations/env.py: if DATABASE_URL is set in the environment, use it directly for the Alembic connection and do not call get_settings(), so migrations can run with only Postgres linked. (2) api/config.py: in get_settings(), catch pydantic ValidationError and re-raise a RuntimeError that tells the user to link PostgreSQL and Redis and set JWT_SECRET in Railway Variables.
+
 ## Overall Status
 
 | Phase | Status | Progress |

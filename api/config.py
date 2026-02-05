@@ -153,4 +153,12 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
-    return Settings()
+    try:
+        return Settings()
+    except Exception as e:
+        if "validation" in type(e).__name__.lower() or "required" in str(e).lower():
+            raise RuntimeError(
+                "Missing required environment variables. Set DATABASE_URL, REDIS_URL, and JWT_SECRET "
+                "(e.g. in Railway: link PostgreSQL and Redis to this service, and add JWT_SECRET in Variables)."
+            ) from e
+        raise
