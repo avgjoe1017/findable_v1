@@ -163,6 +163,10 @@ class ScoreBreakdown:
     # Rubric reference
     rubric_version: str
 
+    # Coverage by question bucket
+    entity_coverage: float = 0.0  # % entity-fact questions answerable
+    product_coverage: float = 0.0  # % product/how-to questions answerable
+
     # Metadata
     metadata: dict = field(default_factory=dict)
 
@@ -340,6 +344,8 @@ class ScoreCalculator:
             questions_partial=partial,
             questions_unanswered=unanswered,
             coverage_percentage=coverage,
+            entity_coverage=getattr(simulation, "entity_coverage", 0.0),
+            product_coverage=getattr(simulation, "product_coverage", 0.0),
             calculation_summary=calculation_summary,
             formula_used=self._get_formula(),
             rubric_version=self.rubric.version,

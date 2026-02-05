@@ -27,6 +27,18 @@ if TYPE_CHECKING:
 logger = structlog.get_logger(__name__)
 
 
+# Coverage bucket mapping: question category → bucket name
+ENTITY_FACTS_CATEGORIES = {
+    QuestionCategory.IDENTITY,
+    QuestionCategory.CONTACT,
+    QuestionCategory.TRUST,
+}
+PRODUCT_HOWTO_CATEGORIES = {
+    QuestionCategory.OFFERINGS,
+    QuestionCategory.DIFFERENTIATION,
+}
+
+
 class Answerability(str, Enum):
     """How answerable a question is based on retrieved content."""
 
@@ -169,6 +181,10 @@ class SimulationResult:
     started_at: datetime
     completed_at: datetime
 
+    # Coverage by bucket (entity facts vs product/how-to)
+    entity_coverage: float = 0.0  # % of entity-fact questions answerable
+    product_coverage: float = 0.0  # % of product/how-to questions answerable
+
     # Metadata
     metadata: dict = field(default_factory=dict)
 
@@ -186,6 +202,8 @@ class SimulationResult:
             "difficulty_scores": self.difficulty_scores,
             "overall_score": self.overall_score,
             "coverage_score": self.coverage_score,
+            "entity_coverage": self.entity_coverage,
+            "product_coverage": self.product_coverage,
             "confidence_score": self.confidence_score,
             "total_time_ms": self.total_time_ms,
             "started_at": self.started_at.isoformat(),
@@ -391,6 +409,7 @@ class SimulationRunner:
         overall_score = self._calculate_overall_score(question_results)
         coverage_score = self._calculate_coverage_score(question_results)
         confidence_score = self._calculate_confidence_score(question_results)
+        entity_coverage, product_coverage = self._calculate_bucket_coverage(question_results)
 
         # Count by answerability
         answered = sum(
@@ -419,6 +438,8 @@ class SimulationRunner:
             difficulty_scores=difficulty_scores,
             overall_score=overall_score,
             coverage_score=coverage_score,
+            entity_coverage=entity_coverage,
+            product_coverage=product_coverage,
             confidence_score=confidence_score,
             total_time_ms=total_time,
             started_at=started_at,
@@ -854,6 +875,38 @@ class SimulationRunner:
         )
 
         return (answerable / len(results)) * 100
+
+    def _calculate_bucket_coverage(
+        self,
+        results: list[QuestionResult],
+    ) -> tuple[float, float]:
+        """Calculate coverage for entity-fact vs product/how-to question buckets.
+
+        Returns:
+            (entity_coverage_pct, product_coverage_pct) both 0-100
+        """
+        entity_total = 0
+        entity_answerable = 0
+        product_total = 0
+        product_answerable = 0
+
+        for r in results:
+            is_answerable = r.answerability in (
+                Answerability.FULLY_ANSWERABLE,
+                Answerability.PARTIALLY_ANSWERABLE,
+            )
+            if r.category in ENTITY_FACTS_CATEGORIES:
+                entity_total += 1
+                if is_answerable:
+                    entity_answerable += 1
+            elif r.category in PRODUCT_HOWTO_CATEGORIES:
+                product_total += 1
+                if is_answerable:
+                    product_answerable += 1
+
+        entity_pct = (entity_answerable / entity_total * 100) if entity_total else 0.0
+        product_pct = (product_answerable / product_total * 100) if product_total else 0.0
+        return entity_pct, product_pct
 
     def _calculate_confidence_score(self, results: list[QuestionResult]) -> float:
         """Calculate average confidence score."""

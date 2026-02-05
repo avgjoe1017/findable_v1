@@ -176,6 +176,14 @@ class ObservationResult:
     cited_urls: list[str] = field(default_factory=list)
     confidence_expressed: str = ""  # "high", "medium", "low", "unknown"
 
+    # Citation depth (0-5 scale, filled by citation_depth module)
+    citation_depth: int = 0  # 0=not_mentioned ... 5=authority
+    citation_depth_label: str = ""  # Human-readable label
+    heuristic_depth: int = 0  # 0-5, cross-check from free text signals
+    mention_position: str = ""  # "first_sentence" | "first_paragraph" | "body" | "absent"
+    source_framing: str = ""  # "authoritative" | "recommended" | "listed" | "passing" | "absent"
+    competitors_mentioned: int = 0
+
     # For comparison with simulation
     simulation_predicted: str = ""  # What simulation thought
     observation_actual: str = ""  # What model actually said
@@ -193,6 +201,12 @@ class ObservationResult:
             "mentions_url": self.mentions_url,
             "cited_urls": self.cited_urls,
             "confidence_expressed": self.confidence_expressed,
+            "citation_depth": self.citation_depth,
+            "citation_depth_label": self.citation_depth_label,
+            "heuristic_depth": self.heuristic_depth,
+            "mention_position": self.mention_position,
+            "source_framing": self.source_framing,
+            "competitors_mentioned": self.competitors_mentioned,
         }
 
 
@@ -223,6 +237,9 @@ class ObservationRun:
     company_mention_rate: float = 0.0
     domain_mention_rate: float = 0.0
     citation_rate: float = 0.0
+
+    # Citation depth (filled by citation_depth module)
+    avg_citation_depth: float = 0.0  # 0.0-5.0 scale
 
     # Usage
     total_usage: UsageStats = field(default_factory=UsageStats)
@@ -279,6 +296,7 @@ class ObservationRun:
             "total_questions": self.total_questions,
             "questions_completed": self.questions_completed,
             "questions_failed": self.questions_failed,
+            "avg_citation_depth": round(self.avg_citation_depth, 2),
             "company_mention_rate": round(self.company_mention_rate, 3),
             "domain_mention_rate": round(self.domain_mention_rate, 3),
             "citation_rate": round(self.citation_rate, 3),

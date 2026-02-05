@@ -160,6 +160,26 @@ def aggregate_structure_scores(
     else:
         level = "limited"
 
+    # Compute H1 sub-metrics across all pages
+    pages_missing_h1 = 0
+    pages_multiple_h1 = 0
+    total_heading_issues = 0
+    total_heading_score = 0.0
+
+    for ps in page_scores:
+        for comp in ps.components:
+            if comp.name == "Heading Hierarchy":
+                h1_count = comp.details.get("h1_count", 1)
+                if h1_count == 0:
+                    pages_missing_h1 += 1
+                elif h1_count > 1:
+                    pages_multiple_h1 += 1
+                total_heading_issues += comp.details.get("issues", 0)
+                total_heading_score += comp.raw_score
+                break
+
+    n = len(page_scores)
+
     return StructureQualityScore(
         total_score=avg_score,
         level=level,
@@ -168,6 +188,11 @@ def aggregate_structure_scores(
         all_issues=all_issues[:10],
         recommendations=all_recommendations[:5],
         structure_analysis=page_scores[0].structure_analysis if page_scores else None,
+        pages_analyzed=n,
+        pages_missing_h1=pages_missing_h1,
+        pages_multiple_h1=pages_multiple_h1,
+        avg_heading_issues=total_heading_issues / n if n else 0.0,
+        avg_heading_score=total_heading_score / n if n else 0.0,
     )
 
 

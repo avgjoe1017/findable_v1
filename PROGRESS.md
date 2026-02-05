@@ -1,8 +1,64 @@
 # Findable Score Analyzer - Progress Tracker
 
-Last Updated: 2026-02-05 (Session #56)
+Last Updated: 2026-02-05 (Session #57)
 
-**Current Status:** Day 30 + Findable Score v2 Complete + Calibration System + Railway Deployment Ready + Rubric Calibrated
+**Current Status:** Day 30 + Findable Score v2 Complete + Calibration System + Railway Deployment Ready + Rubric Calibrated + Validation Study PASS + Citation Depth Analysis
+
+### 2026-02-05 — Citation Depth Analysis (zero-cost + $0.001/site AI classifier)
+
+**Context:** Validation study showed 93.4% prediction accuracy (PASS) but binary mention/citation rates couldn't discriminate between sites — all 10 well-known brands had 100% mention rates. Citation rate (0-80%) showed more variation. Needed a richer signal without breaking the bank.
+
+**What was built:**
+
+1. **Free text parsing** (zero API cost) in `worker/observation/citation_depth.py`:
+   - `mention_position`: Where in the response the company first appears ("first_sentence" / "first_paragraph" / "body" / "absent")
+   - `source_framing`: How the AI frames the company ("authoritative" / "recommended" / "listed" / "passing" / "absent") — uses regex pattern matching for phrases like "According to X" vs "companies like X"
+   - `competitors_mentioned`: Count of other brand names in the response
+
+2. **Batch AI classifier** (ONE call per site, ~$0.001) in `citation_depth.py`:
+   - Sends ALL Q&A pairs in a single prompt to GPT-4o-mini
+   - Returns a 0-5 citation depth score per question:
+     - 0=NOT_MENTIONED, 1=PASSING, 2=DESCRIBED, 3=RECOMMENDED, 4=FEATURED, 5=AUTHORITY
+   - Cost: ~1,500 input + 50 output tokens per site = $0.0003
+
+3. **Integration** into observation pipeline:
+   - `RunConfig.citation_depth_enabled=True` opts in
+   - Free text signals captured automatically on every observation (in `_parse_response_to_result`)
+   - Batch classifier runs once after all observations complete (in `_run_citation_depth`)
+   - New fields on `ObservationResult`: `citation_depth`, `citation_depth_label`, `mention_position`, `source_framing`, `competitors_mentioned`
+   - New field on `ObservationRun`: `avg_citation_depth`
+
+4. **Validation study updated** (`scripts/run_validation_study.py`):
+   - Report now shows per-site citation depth, dominant framing, depth distribution histogram
+   - Computes Score vs Citation Depth correlation (bottom-half vs top-half)
+
+**3-site test results:**
+| Site | Score | Depth | Framing |
+|------|-------|-------|---------|
+| moz.com | 53.1 | 5.0/5 | authoritative |
+| stripe.com | 48.6 | 3.4/5 | authoritative |
+| calendly.com | 44.0 | 3.0/5 | listed |
+
+**Files created/modified:**
+- `worker/observation/citation_depth.py` — NEW: free parsing + batch classifier
+- `worker/observation/models.py` — Added citation depth fields to ObservationResult, ObservationRun
+- `worker/observation/runner.py` — Added `citation_depth_enabled` config, `_run_citation_depth()` post-processing
+- `scripts/run_validation_study.py` — Added citation depth to report, correlation analysis, JSON output
+
+### 2026-02-05 — Validation Study: 93.4% prediction accuracy (PASS)
+
+**Context:** Needed to verify that the Findable Score actually predicts real AI citability. Built and ran Level 2 validation: simulation predictions vs real AI observation on 10 sites.
+
+**Script:** `scripts/run_validation_study.py` — Full audit pipeline + real GPT-4o-mini observation + SimulationObservationComparator.
+
+**Results (10 sites, 182 questions, $0.049 total cost):**
+- **Aggregate accuracy: 93.4%** (170/182 correct) — PASS (threshold: >70%)
+- **Bias: PESSIMISTIC** — 0 optimistic errors, 12 pessimistic errors
+- **Interpretation:** Simulation is conservative — it sometimes predicts "not answerable" when AI actually does mention the company. This is the safer failure mode.
+- **Score compression:** All 10 sites scored 41.5-54.3 despite 100% mention rates
+- **Citation rate variation:** 0% (docs.python.org) to 80% (moz.com) — more discriminating than binary mention
+
+**Verdict:** The Findable Score is a defensible predictor of AI citability.
 
 ### 2026-02-05 — Rubric calibration: 5 bugs fixed from 12-site lead audit
 
@@ -61,6 +117,8 @@ Last Updated: 2026-02-05 (Session #56)
 | **7-Pillar Scoring** | Complete | All pillars implemented |
 | **Railway Deployment** | Ready | Infrastructure complete |
 | **Rubric Calibration** | Complete | 5 bugs fixed, 224 tests passing |
+| **Validation Study** | PASS | 93.4% accuracy, 10 sites, $0.05 |
+| **Citation Depth** | Complete | 0-5 scale, $0.001/site |
 
 ---
 

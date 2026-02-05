@@ -362,7 +362,7 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
                     logger.warning("js_detection_failed", error=str(e))
 
         # =========================================================
-        # Step 2.75: Structure Quality Analysis (v2)
+        # Step 2.75: Semantic Structure Analysis (v2)
         # =========================================================
         await update_run_status(
             run_id,

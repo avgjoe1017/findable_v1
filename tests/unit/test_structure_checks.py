@@ -364,7 +364,7 @@ class TestStructureScoring:
 
         output = score.show_the_math()
 
-        assert "STRUCTURE QUALITY SCORE" in output
+        assert "SEMANTIC STRUCTURE SCORE" in output
         assert "COMPONENT BREAKDOWN" in output
 
     def test_to_dict_serializable(self):

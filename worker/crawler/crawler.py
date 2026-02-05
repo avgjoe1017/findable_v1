@@ -4,6 +4,7 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from urllib.parse import urlparse
 
 import structlog
 from bs4 import BeautifulSoup
@@ -20,6 +21,41 @@ from worker.crawler.url import (
 logger = structlog.get_logger(__name__)
 
 
+def classify_surface(url: str) -> str:
+    """Classify a URL as 'docs' or 'marketing' based on path patterns.
+
+    Returns: "docs" | "marketing"
+    """
+    path = urlparse(url).path.lower()
+    hostname = urlparse(url).hostname or ""
+
+    # Subdomain detection (docs.example.com, help.example.com)
+    if hostname.startswith(
+        ("docs.", "help.", "developer.", "developers.", "support.", "guide.", "learn.")
+    ):
+        return "docs"
+
+    # Path-based detection
+    docs_patterns = (
+        "/docs",
+        "/documentation",
+        "/guide",
+        "/tutorial",
+        "/api-reference",
+        "/reference",
+        "/sdk",
+        "/manual",
+        "/getting-started",
+        "/quickstart",
+        "/how-to",
+    )
+    for pattern in docs_patterns:
+        if path.startswith(pattern):
+            return "docs"
+
+    return "marketing"
+
+
 @dataclass
 class CrawlPage:
     """A crawled page with metadata."""
@@ -34,6 +70,7 @@ class CrawlPage:
     fetch_time_ms: int
     fetched_at: datetime
     links_found: int
+    surface: str = "marketing"  # "docs" | "marketing"
 
 
 @dataclass
@@ -52,6 +89,11 @@ class CrawlResult:
     duration_seconds: float
     robots_respected: bool
     max_depth_reached: int
+
+    # Surface attribution
+    docs_pages_crawled: int = 0
+    marketing_pages_crawled: int = 0
+    docs_surface_detected: bool = False
 
     @property
     def success_rate(self) -> float:
@@ -100,6 +142,9 @@ DEFAULT_PRIORITY_PATHS = [
     "/company",
     "/team",
     "/careers",
+    "/docs",  # Documentation surface
+    "/documentation",
+    "/getting-started",
 ]
 
 
@@ -306,7 +351,7 @@ class Crawler:
             title = self._extract_title(result.html)
             links = self._extract_links(result.html, result.final_url)
 
-            # Create page record
+            # Create page record with surface classification
             page = CrawlPage(
                 url=url,
                 final_url=result.final_url,
@@ -318,6 +363,7 @@ class Crawler:
                 fetch_time_ms=result.fetch_time_ms,
                 fetched_at=result.fetched_at,
                 links_found=len(links),
+                surface=classify_surface(result.final_url),
             )
             pages.append(page)
 
@@ -357,6 +403,10 @@ class Crawler:
         completed_at = datetime.now(UTC)
         duration = (completed_at - started_at).total_seconds()
 
+        # Compute surface attribution
+        docs_count = sum(1 for p in pages if p.surface == "docs")
+        marketing_count = len(pages) - docs_count
+
         logger.info(
             "crawl_completed",
             domain=base_domain,
@@ -364,6 +414,8 @@ class Crawler:
             urls_discovered=len(seen),
             urls_failed=len(failed),
             duration_seconds=round(duration, 2),
+            docs_pages=docs_count,
+            marketing_pages=marketing_count,
         )
 
         return CrawlResult(
@@ -379,6 +431,9 @@ class Crawler:
             duration_seconds=duration,
             robots_respected=self.config.respect_robots,
             max_depth_reached=max_depth_reached,
+            docs_pages_crawled=docs_count,
+            marketing_pages_crawled=marketing_count,
+            docs_surface_detected=docs_count > 0,
         )
 
 

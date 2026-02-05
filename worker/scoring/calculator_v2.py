@@ -905,7 +905,7 @@ class FindableScoreCalculatorV2:
         if not score:
             return PillarScore(
                 name="structure",
-                display_name="Structure Quality",
+                display_name="Semantic Structure",
                 raw_score=0.0,
                 max_points=max_points,
                 points_earned=0.0,
@@ -917,15 +917,22 @@ class FindableScoreCalculatorV2:
 
         points = score.total_score / 100 * max_points
 
+        # Build H1 sub-metrics from component details (reserved for future use)
+        _h1_details = {}
+        for comp in score.components:
+            if comp.name == "Heading Hierarchy":
+                _h1_details = comp.details
+                break
+
         return PillarScore(
             name="structure",
-            display_name="Structure Quality",
+            display_name="Semantic Structure",
             raw_score=score.total_score,
             max_points=max_points,
             points_earned=points,
             weight_pct=weight_pct,
             level=score.level,
-            description="Is your content extractable?",
+            description="Is your HTML machine-readable for AI extraction?",
             components=[c.to_dict() for c in score.components],
             critical_issues=score.critical_issues[:3],
             recommendations=score.recommendations[:3],
@@ -1171,6 +1178,28 @@ class FindableScoreCalculatorV2:
 
         level = "full" if raw_score >= 70 else "partial" if raw_score >= 40 else "limited"
 
+        # Build bucket coverage components
+        entity_cov = getattr(breakdown, "entity_coverage", 0.0)
+        product_cov = getattr(breakdown, "product_coverage", 0.0)
+        components = [
+            {
+                "name": "Entity Facts Coverage",
+                "description": "Identity, contact, and trust questions",
+                "raw_score": round(entity_cov, 1),
+                "level": (
+                    "full" if entity_cov >= 70 else "partial" if entity_cov >= 40 else "limited"
+                ),
+            },
+            {
+                "name": "Product/How-To Coverage",
+                "description": "Offerings and differentiation questions",
+                "raw_score": round(product_cov, 1),
+                "level": (
+                    "full" if product_cov >= 70 else "partial" if product_cov >= 40 else "limited"
+                ),
+            },
+        ]
+
         return PillarScore(
             name="coverage",
             display_name="Answer Coverage",
@@ -1180,7 +1209,7 @@ class FindableScoreCalculatorV2:
             weight_pct=weight_pct,
             level=level,
             description="How many questions can you answer?",
-            components=[],
+            components=components,
             critical_issues=[],
             recommendations=[],
         )

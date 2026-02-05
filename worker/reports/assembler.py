@@ -27,6 +27,7 @@ from worker.reports.contract import (
     AuthorityComponent,
     AuthoritySection,
     BenchmarkSection,
+    CitableIndexSection,
     CompetitorSummary,
     CrawledPageInfo,
     CrawlSection,
@@ -166,6 +167,15 @@ class ReportAssembler:
         if comparison:
             divergence_section = self._build_divergence_section(comparison)
 
+        # Build citable index section if observation has citation depth data
+        citable_index_section = None
+        if (
+            observation
+            and hasattr(observation, "avg_citation_depth")
+            and observation.avg_citation_depth is not None
+        ):
+            citable_index_section = self._build_citable_index_section(observation)
+
         # Build crawl section if we have crawl data
         crawl_section = None
         if crawl_data:
@@ -242,6 +252,7 @@ class ReportAssembler:
             observation=observation_section,
             benchmark=benchmark_section,
             divergence=divergence_section,
+            citable_index=citable_index_section,
         )
 
     def _build_metadata(
@@ -376,6 +387,7 @@ class ReportAssembler:
                     depth=page.get("depth", 0),
                     word_count=page.get("word_count", 0),
                     chunk_count=page.get("chunk_count", 0),
+                    surface=page.get("surface", "marketing"),
                 )
             )
 
@@ -388,6 +400,9 @@ class ReportAssembler:
             max_depth_reached=crawl_data.get("max_depth_reached", 0),
             duration_seconds=crawl_data.get("duration_seconds", 0),
             pages=pages,
+            docs_pages_crawled=crawl_data.get("docs_pages_crawled", 0),
+            marketing_pages_crawled=crawl_data.get("marketing_pages_crawled", 0),
+            docs_surface_detected=crawl_data.get("docs_surface_detected", False),
         )
 
     def _build_technical_section(
@@ -623,14 +638,23 @@ class ReportAssembler:
 
         return ScoreSectionV2(
             total_score=findable_v2.total_score,
-            grade=findable_v2.grade.value,
-            grade_description=findable_v2.grade_description,
+            version=findable_v2.version,
+            level=findable_v2.level,
+            level_label=findable_v2.level_label,
+            level_summary=findable_v2.level_summary,
+            level_focus=findable_v2.level_focus,
+            next_milestone=(
+                findable_v2.next_milestone.to_dict() if findable_v2.next_milestone else None
+            ),
+            points_to_milestone=findable_v2.points_to_milestone,
+            path_forward=[p.to_dict() for p in findable_v2.path_forward],
             pillars=pillar_summaries,
             pillars_good=findable_v2.pillars_good,
             pillars_warning=findable_v2.pillars_warning,
             pillars_critical=findable_v2.pillars_critical,
             critical_issues=findable_v2.all_critical_issues[:5],
             top_recommendations=findable_v2.top_recommendations[:5],
+            strengths=findable_v2.strengths[:5],
             calculation_summary=findable_v2.calculation_summary,
             show_the_math=findable_v2.show_the_math(),
         )
@@ -874,6 +898,76 @@ class ReportAssembler:
             optimism_bias=optimism,
             pessimism_bias=pessimism,
             calibration_notes=calibration_notes,
+        )
+
+    def _build_citable_index_section(
+        self,
+        observation: ObservationRun,
+    ) -> CitableIndexSection:
+        """Build citable index section from observation citation depth data."""
+        # Extract per-result depth data
+        depths = []
+        heuristic_depths = []
+        for result in observation.results:
+            depth = getattr(result, "citation_depth", None)
+            if depth is not None:
+                depths.append(depth)
+                h_depth = getattr(result, "heuristic_depth", depth)
+                heuristic_depths.append(h_depth)
+
+        if not depths:
+            return CitableIndexSection(
+                avg_depth=observation.avg_citation_depth or 0.0,
+                pct_citable=0.0,
+                pct_strongly_sourced=0.0,
+                depth_histogram={},
+                confidence="low",
+                depth_divergence=0.0,
+                avg_competitors=0.0,
+                framing_distribution={},
+            )
+
+        n = len(depths)
+
+        # Build histogram
+        histogram: dict[int, int] = {}
+        for d in depths:
+            histogram[d] = histogram.get(d, 0) + 1
+        histogram = dict(sorted(histogram.items()))
+
+        # Citable thresholds
+        pct_citable = sum(1 for d in depths if d >= 3) / n * 100
+        pct_strongly_sourced = sum(1 for d in depths if d >= 4) / n * 100
+
+        # Divergence and confidence
+        divergence = sum(abs(d - h) for d, h in zip(depths, heuristic_depths, strict=False)) / n
+        if divergence >= 2.0:
+            confidence = "low"
+        elif divergence >= 1.0:
+            confidence = "medium"
+        else:
+            confidence = "high"
+
+        # Free-signal aggregates
+        avg_competitors = 0.0
+        framing_dist: dict[str, int] = {}
+        for result in observation.results:
+            comp = getattr(result, "competitors_mentioned", 0)
+            avg_competitors += comp
+            framing = getattr(result, "source_framing", None)
+            if framing:
+                framing_dist[framing] = framing_dist.get(framing, 0) + 1
+        avg_competitors = avg_competitors / len(observation.results) if observation.results else 0.0
+
+        return CitableIndexSection(
+            avg_depth=observation.avg_citation_depth or 0.0,
+            pct_citable=pct_citable,
+            pct_strongly_sourced=pct_strongly_sourced,
+            depth_histogram=histogram,
+            confidence=confidence,
+            depth_divergence=divergence,
+            avg_competitors=avg_competitors,
+            framing_distribution=dict(sorted(framing_dist.items(), key=lambda x: -x[1])),
         )
 
 

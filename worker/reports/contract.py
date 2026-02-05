@@ -16,11 +16,11 @@ class ReportVersion(str, Enum):
     """Report schema versions."""
 
     V1_0 = "1.0"
-    V1_1 = "1.1"  # Reserved for future
+    V1_1 = "1.1"  # Surface attribution, citable index, coverage buckets
 
 
 # Current version
-CURRENT_VERSION = ReportVersion.V1_0
+CURRENT_VERSION = ReportVersion.V1_1
 
 
 @dataclass
@@ -336,6 +336,7 @@ class CrawledPageInfo:
     depth: int
     word_count: int
     chunk_count: int
+    surface: str = "marketing"  # "docs" | "marketing"
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""
@@ -346,6 +347,7 @@ class CrawledPageInfo:
             "depth": self.depth,
             "word_count": self.word_count,
             "chunk_count": self.chunk_count,
+            "surface": self.surface,
         }
 
 
@@ -362,6 +364,11 @@ class CrawlSection:
     duration_seconds: float
     pages: list[CrawledPageInfo]
 
+    # Surface attribution (v1.1)
+    docs_pages_crawled: int = 0
+    marketing_pages_crawled: int = 0
+    docs_surface_detected: bool = False
+
     def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
@@ -373,6 +380,11 @@ class CrawlSection:
             "max_depth_reached": self.max_depth_reached,
             "duration_seconds": round(self.duration_seconds, 2),
             "pages": [p.to_dict() for p in self.pages],
+            "surface_coverage": {
+                "docs_pages": self.docs_pages_crawled,
+                "marketing_pages": self.marketing_pages_crawled,
+                "docs_surface_detected": self.docs_surface_detected,
+            },
         }
 
 
@@ -479,7 +491,7 @@ class StructureComponent:
 
 @dataclass
 class StructureSection:
-    """Structure Quality section of the report (v2 pillar)."""
+    """Semantic Structure section of the report (v2 pillar)."""
 
     total_score: float  # 0-100
     level: str  # good, warning, critical
@@ -958,6 +970,42 @@ class DivergenceSection:
 
 
 @dataclass
+class CitableIndexSection:
+    """Citable Index section — how deeply AI relies on this source.
+
+    Keyed off citation depth >= 3 (the "citable" threshold).
+    """
+
+    # Headline metric
+    avg_depth: float  # 0-5 scale
+    pct_citable: float  # % questions at depth >= 3
+    pct_strongly_sourced: float  # % questions at depth >= 4
+
+    # Depth distribution histogram
+    depth_histogram: dict[int, int]  # {0: N, 1: N, ..., 5: N}
+
+    # Confidence in the scores
+    confidence: str  # "high" | "medium" | "low"
+    depth_divergence: float  # avg |ai - heuristic|
+
+    # Free-signal aggregates
+    avg_competitors: float
+    framing_distribution: dict[str, int]
+
+    def to_dict(self) -> dict:
+        return {
+            "avg_depth": round(self.avg_depth, 2),
+            "pct_citable": round(self.pct_citable, 1),
+            "pct_strongly_sourced": round(self.pct_strongly_sourced, 1),
+            "depth_histogram": self.depth_histogram,
+            "confidence": self.confidence,
+            "depth_divergence": round(self.depth_divergence, 2),
+            "avg_competitors": round(self.avg_competitors, 2),
+            "framing_distribution": self.framing_distribution,
+        }
+
+
+@dataclass
 class FullReport:
     """Complete report combining all analysis sections."""
 
@@ -966,7 +1014,7 @@ class FullReport:
     fixes: FixSection
     crawl: CrawlSection | None = None
     technical: TechnicalSection | None = None  # v2: Technical Readiness
-    structure: StructureSection | None = None  # v2: Structure Quality
+    structure: StructureSection | None = None  # v2: Semantic Structure
     schema: SchemaSection | None = None  # v2: Schema Richness
     authority: AuthoritySection | None = None  # v2: Authority Signals
     score_v2: ScoreSectionV2 | None = None  # v2: Unified 6-pillar score
@@ -974,6 +1022,7 @@ class FullReport:
     observation: ObservationSection | None = None
     benchmark: BenchmarkSection | None = None
     divergence: DivergenceSection | None = None
+    citable_index: CitableIndexSection | None = None  # v1.1: Citation depth metrics
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
@@ -1012,6 +1061,9 @@ class FullReport:
 
         if self.divergence:
             result["divergence"] = self.divergence.to_dict()
+
+        if self.citable_index:
+            result["citable_index"] = self.citable_index.to_dict()
 
         return result
 

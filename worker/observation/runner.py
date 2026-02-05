@@ -55,6 +55,9 @@ class RunConfig:
     max_cost_per_run: float = 1.0  # USD
     model_allowlist: list[str] | None = None
 
+    # Citation depth analysis (one extra API call per site, ~$0.001)
+    citation_depth_enabled: bool = False
+
     def get_provider_config(self, provider_type: ProviderType) -> ProviderConfig:
         """Get config for a specific provider."""
         api_key = ""
@@ -293,7 +296,62 @@ class ObservationRunner:
             f"Completed: {obs_run.status.value}",
         )
 
+        # Citation depth analysis (optional, one extra API call ~$0.001)
+        if self.config.citation_depth_enabled and obs_run.questions_completed > 0:
+            await self._run_citation_depth(obs_run)
+
         return obs_run
+
+    async def _run_citation_depth(self, obs_run: ObservationRun) -> None:
+        """Run batch citation depth classification on completed results."""
+        from worker.observation.citation_depth import (
+            analyze_citation_depth,
+        )
+
+        self._report_progress(
+            obs_run.questions_completed,
+            obs_run.total_questions,
+            "Classifying citation depth...",
+        )
+
+        # Determine which API key / base URL to use
+        api_key = self.config.openrouter_api_key
+        base_url = "https://openrouter.ai/api/v1"
+        is_openai = False
+
+        if not api_key and self.config.openai_api_key:
+            api_key = self.config.openai_api_key
+            base_url = "https://api.openai.com/v1"
+            is_openai = True
+
+        if not api_key:
+            return
+
+        completed_results = [r for r in obs_run.results if r.response and r.response.success]
+
+        if not completed_results:
+            return
+
+        summary = await analyze_citation_depth(
+            company_name=obs_run.company_name,
+            domain=obs_run.domain,
+            observation_results=completed_results,
+            api_key=api_key,
+            base_url=base_url,
+            model=self.config.model,
+            is_openai=is_openai,
+        )
+
+        # Copy depth scores back onto individual results
+        for depth_result in summary.results:
+            for obs_result in obs_run.results:
+                if obs_result.question_id == depth_result.question_id:
+                    obs_result.citation_depth = depth_result.depth
+                    obs_result.citation_depth_label = depth_result.depth_label
+                    obs_result.heuristic_depth = depth_result.heuristic_depth
+                    break
+
+        obs_run.avg_citation_depth = summary.avg_depth
 
     async def _observe_with_retry(
         self,
@@ -376,6 +434,17 @@ class ObservationRunner:
         elif any(phrase in content for phrase in ["definitely", "certainly", "i can confirm"]):
             confidence = "high"
 
+        # Free text signals (zero cost)
+        from worker.observation.citation_depth import parse_text_signals
+
+        signals = parse_text_signals(
+            response.content,
+            request.company_name,
+            request.domain,
+            mentions_company=mentions_company,
+            mentions_url=mentions_url,
+        )
+
         return ObservationResult(
             question_id=request.question_id,
             question_text=request.question_text,
@@ -387,6 +456,9 @@ class ObservationRunner:
             mentions_url=mentions_url,
             cited_urls=cited_urls,
             confidence_expressed=confidence,
+            mention_position=signals.mention_position,
+            source_framing=signals.source_framing,
+            competitors_mentioned=signals.competitors_mentioned,
         )
 
 

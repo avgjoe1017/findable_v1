@@ -1,0 +1,446 @@
+{
+  "study_type": "validation_study",
+  "timestamp": "2026-02-05T08:27:08.139809+00:00",
+  "summary": {
+    "sites_validated": 10,
+    "sites_errored": 0,
+    "total_questions": 183,
+    "aggregate_accuracy": 0.907,
+    "avg_per_site_accuracy": 0.907,
+    "total_cost_usd": 0.0491,
+    "total_correct": 166,
+    "total_optimistic": 1,
+    "total_pessimistic": 16,
+    "total_unknown": 0
+  },
+  "results": [
+    {
+      "domain": "moz.com",
+      "findable_score": 52.8,
+      "level_label": "Partially Findable",
+      "sim_questions_total": 20,
+      "sim_questions_answerable": 17,
+      "sim_coverage_pct": 85.0,
+      "obs_questions_completed": 20,
+      "obs_company_mention_rate": 1.0,
+      "obs_domain_mention_rate": 0.85,
+      "obs_citation_rate": 0.85,
+      "prediction_accuracy": 0.85,
+      "correct_predictions": 17,
+      "optimistic_predictions": 0,
+      "pessimistic_predictions": 3,
+      "unknown_predictions": 0,
+      "avg_citation_depth": 1.8,
+      "depth_distribution": {
+        "2": 16,
+        "1": 4
+      },
+      "position_distribution": {
+        "opening": 20
+      },
+      "framing_distribution": {
+        "authoritative": 11,
+        "listed": 5,
+        "passing": 1,
+        "recommended": 3
+      },
+      "avg_competitors": 6.2,
+      "obs_cost_usd": 0.005,
+      "obs_latency_ms": 158831.0,
+      "depth_cost_usd": 0.001,
+      "duration_seconds": 233.8,
+      "error": null,
+      "insights": [
+        "High prediction accuracy (85%): simulation closely matches real AI behavior.",
+        "Simulation tends to be pessimistic: real AI models mention your company more often than predicted.",
+        "High citation rate: when mentioned, AI models often cite your website directly."
+      ],
+      "recommendations": []
+    },
+    {
+      "domain": "stripe.com",
+      "findable_score": 46.3,
+      "level_label": "Partially Findable",
+      "sim_questions_total": 18,
+      "sim_questions_answerable": 13,
+      "sim_coverage_pct": 72.2,
+      "obs_questions_completed": 18,
+      "obs_company_mention_rate": 1.0,
+      "obs_domain_mention_rate": 0.722,
+      "obs_citation_rate": 0.667,
+      "prediction_accuracy": 0.722,
+      "correct_predictions": 13,
+      "optimistic_predictions": 0,
+      "pessimistic_predictions": 5,
+      "unknown_predictions": 0,
+      "avg_citation_depth": 2.17,
+      "depth_distribution": {
+        "2": 10,
+        "4": 3,
+        "1": 4,
+        "3": 1
+      },
+      "position_distribution": {
+        "opening": 18
+      },
+      "framing_distribution": {
+        "listed": 5,
+        "authoritative": 12,
+        "passing": 1
+      },
+      "avg_competitors": 7.8,
+      "obs_cost_usd": 0.005,
+      "obs_latency_ms": 180160.0,
+      "depth_cost_usd": 0.001,
+      "duration_seconds": 338.7,
+      "error": null,
+      "insights": [
+        "Simulation tends to be pessimistic: real AI models mention your company more often than predicted.",
+        "Observation shows 28% higher mention rate than simulation predicted."
+      ],
+      "recommendations": []
+    },
+    {
+      "domain": "calendly.com",
+      "findable_score": 44.8,
+      "level_label": "Partially Findable",
+      "sim_questions_total": 20,
+      "sim_questions_answerable": 20,
+      "sim_coverage_pct": 100.0,
+      "obs_questions_completed": 20,
+      "obs_company_mention_rate": 0.95,
+      "obs_domain_mention_rate": 0.7,
+      "obs_citation_rate": 0.65,
+      "prediction_accuracy": 0.95,
+      "correct_predictions": 19,
+      "optimistic_predictions": 1,
+      "pessimistic_predictions": 0,
+      "unknown_predictions": 0,
+      "avg_citation_depth": 2.3,
+      "depth_distribution": {
+        "2": 13,
+        "4": 3,
+        "3": 2,
+        "1": 2
+      },
+      "position_distribution": {
+        "absent": 1,
+        "opening": 19
+      },
+      "framing_distribution": {
+        "absent": 1,
+        "authoritative": 11,
+        "listed": 7,
+        "recommended": 1
+      },
+      "avg_competitors": 7.5,
+      "obs_cost_usd": 0.0051,
+      "obs_latency_ms": 206566.0,
+      "depth_cost_usd": 0.001,
+      "duration_seconds": 156.8,
+      "error": null,
+      "insights": [
+        "High prediction accuracy (95%): simulation closely matches real AI behavior.",
+        "Simulation tends to be optimistic: real AI models mention your company less often than predicted."
+      ],
+      "recommendations": []
+    },
+    {
+      "domain": "mailchimp.com",
+      "findable_score": 53.2,
+      "level_label": "Partially Findable",
+      "sim_questions_total": 19,
+      "sim_questions_answerable": 18,
+      "sim_coverage_pct": 94.7,
+      "obs_questions_completed": 19,
+      "obs_company_mention_rate": 1.0,
+      "obs_domain_mention_rate": 0.684,
+      "obs_citation_rate": 0.684,
+      "prediction_accuracy": 0.947,
+      "correct_predictions": 18,
+      "optimistic_predictions": 0,
+      "pessimistic_predictions": 1,
+      "unknown_predictions": 0,
+      "avg_citation_depth": 3.11,
+      "depth_distribution": {
+        "4": 10,
+        "2": 8,
+        "3": 1
+      },
+      "position_distribution": {
+        "opening": 19
+      },
+      "framing_distribution": {
+        "authoritative": 13,
+        "passing": 3,
+        "listed": 1,
+        "recommended": 2
+      },
+      "avg_competitors": 8.4,
+      "obs_cost_usd": 0.006,
+      "obs_latency_ms": 211320.0,
+      "depth_cost_usd": 0.001,
+      "duration_seconds": 306.0,
+      "error": null,
+      "insights": [
+        "High prediction accuracy (95%): simulation closely matches real AI behavior.",
+        "Simulation tends to be pessimistic: real AI models mention your company more often than predicted."
+      ],
+      "recommendations": []
+    },
+    {
+      "domain": "www.bain.com",
+      "findable_score": 51.2,
+      "level_label": "Partially Findable",
+      "sim_questions_total": 19,
+      "sim_questions_answerable": 19,
+      "sim_coverage_pct": 100.0,
+      "obs_questions_completed": 19,
+      "obs_company_mention_rate": 1.0,
+      "obs_domain_mention_rate": 0.579,
+      "obs_citation_rate": 0.579,
+      "prediction_accuracy": 1.0,
+      "correct_predictions": 19,
+      "optimistic_predictions": 0,
+      "pessimistic_predictions": 0,
+      "unknown_predictions": 0,
+      "avg_citation_depth": 1.89,
+      "depth_distribution": {
+        "2": 17,
+        "1": 2
+      },
+      "position_distribution": {
+        "opening": 19
+      },
+      "framing_distribution": {
+        "authoritative": 7,
+        "passing": 5,
+        "listed": 6,
+        "recommended": 1
+      },
+      "avg_competitors": 6.7,
+      "obs_cost_usd": 0.0048,
+      "obs_latency_ms": 165553.0,
+      "depth_cost_usd": 0.001,
+      "duration_seconds": 245.1,
+      "error": null,
+      "insights": [
+        "High prediction accuracy (100%): simulation closely matches real AI behavior."
+      ],
+      "recommendations": []
+    },
+    {
+      "domain": "www.loom.com",
+      "findable_score": 47.2,
+      "level_label": "Partially Findable",
+      "sim_questions_total": 16,
+      "sim_questions_answerable": 14,
+      "sim_coverage_pct": 87.5,
+      "obs_questions_completed": 16,
+      "obs_company_mention_rate": 1.0,
+      "obs_domain_mention_rate": 0.75,
+      "obs_citation_rate": 0.75,
+      "prediction_accuracy": 0.875,
+      "correct_predictions": 14,
+      "optimistic_predictions": 0,
+      "pessimistic_predictions": 2,
+      "unknown_predictions": 0,
+      "avg_citation_depth": 2.44,
+      "depth_distribution": {
+        "2": 11,
+        "3": 3,
+        "4": 2
+      },
+      "position_distribution": {
+        "opening": 16
+      },
+      "framing_distribution": {
+        "authoritative": 15,
+        "listed": 1
+      },
+      "avg_competitors": 7.2,
+      "obs_cost_usd": 0.0041,
+      "obs_latency_ms": 149175.0,
+      "depth_cost_usd": 0.001,
+      "duration_seconds": 135.6,
+      "error": null,
+      "insights": [
+        "High prediction accuracy (88%): simulation closely matches real AI behavior.",
+        "Simulation tends to be pessimistic: real AI models mention your company more often than predicted.",
+        "High citation rate: when mentioned, AI models often cite your website directly."
+      ],
+      "recommendations": []
+    },
+    {
+      "domain": "www.typeform.com",
+      "findable_score": 49.7,
+      "level_label": "Partially Findable",
+      "sim_questions_total": 17,
+      "sim_questions_answerable": 17,
+      "sim_coverage_pct": 100.0,
+      "obs_questions_completed": 17,
+      "obs_company_mention_rate": 1.0,
+      "obs_domain_mention_rate": 0.765,
+      "obs_citation_rate": 0.765,
+      "prediction_accuracy": 1.0,
+      "correct_predictions": 17,
+      "optimistic_predictions": 0,
+      "pessimistic_predictions": 0,
+      "unknown_predictions": 0,
+      "avg_citation_depth": 2.53,
+      "depth_distribution": {
+        "4": 3,
+        "2": 9,
+        "3": 4,
+        "1": 1
+      },
+      "position_distribution": {
+        "opening": 17
+      },
+      "framing_distribution": {
+        "authoritative": 12,
+        "listed": 4,
+        "recommended": 1
+      },
+      "avg_competitors": 6.5,
+      "obs_cost_usd": 0.0048,
+      "obs_latency_ms": 175298.0,
+      "depth_cost_usd": 0.001,
+      "duration_seconds": 146.5,
+      "error": null,
+      "insights": [
+        "High prediction accuracy (100%): simulation closely matches real AI behavior.",
+        "High citation rate: when mentioned, AI models often cite your website directly."
+      ],
+      "recommendations": []
+    },
+    {
+      "domain": "docs.python.org",
+      "findable_score": 44.9,
+      "level_label": "Partially Findable",
+      "sim_questions_total": 17,
+      "sim_questions_answerable": 14,
+      "sim_coverage_pct": 82.4,
+      "obs_questions_completed": 17,
+      "obs_company_mention_rate": 1.0,
+      "obs_domain_mention_rate": 0.0,
+      "obs_citation_rate": 0.0,
+      "prediction_accuracy": 0.824,
+      "correct_predictions": 14,
+      "optimistic_predictions": 0,
+      "pessimistic_predictions": 3,
+      "unknown_predictions": 0,
+      "avg_citation_depth": 1.94,
+      "depth_distribution": {
+        "2": 16,
+        "1": 1
+      },
+      "position_distribution": {
+        "opening": 17
+      },
+      "framing_distribution": {
+        "passing": 16,
+        "listed": 1
+      },
+      "avg_competitors": 11.5,
+      "obs_cost_usd": 0.0053,
+      "obs_latency_ms": 191166.0,
+      "depth_cost_usd": 0.001,
+      "duration_seconds": 172.7,
+      "error": null,
+      "insights": [
+        "High prediction accuracy (82%): simulation closely matches real AI behavior.",
+        "Simulation tends to be pessimistic: real AI models mention your company more often than predicted.",
+        "Low citation rate: AI models mention your company but rarely cite your website directly."
+      ],
+      "recommendations": [
+        "Improve citation likelihood: add structured data, canonical URLs, and explicit 'cite this' information."
+      ]
+    },
+    {
+      "domain": "backlinko.com",
+      "findable_score": 55.0,
+      "level_label": "Findable",
+      "sim_questions_total": 20,
+      "sim_questions_answerable": 18,
+      "sim_coverage_pct": 90.0,
+      "obs_questions_completed": 20,
+      "obs_company_mention_rate": 1.0,
+      "obs_domain_mention_rate": 0.5,
+      "obs_citation_rate": 0.45,
+      "prediction_accuracy": 0.9,
+      "correct_predictions": 18,
+      "optimistic_predictions": 0,
+      "pessimistic_predictions": 2,
+      "unknown_predictions": 0,
+      "avg_citation_depth": 2.0,
+      "depth_distribution": {
+        "2": 20
+      },
+      "position_distribution": {
+        "opening": 20
+      },
+      "framing_distribution": {
+        "listed": 12,
+        "passing": 2,
+        "authoritative": 4,
+        "recommended": 2
+      },
+      "avg_competitors": 5.2,
+      "obs_cost_usd": 0.0048,
+      "obs_latency_ms": 198212.0,
+      "depth_cost_usd": 0.001,
+      "duration_seconds": 221.9,
+      "error": null,
+      "insights": [
+        "High prediction accuracy (90%): simulation closely matches real AI behavior.",
+        "Simulation tends to be pessimistic: real AI models mention your company more often than predicted."
+      ],
+      "recommendations": []
+    },
+    {
+      "domain": "ahrefs.com",
+      "findable_score": 49.1,
+      "level_label": "Partially Findable",
+      "sim_questions_total": 17,
+      "sim_questions_answerable": 17,
+      "sim_coverage_pct": 100.0,
+      "obs_questions_completed": 17,
+      "obs_company_mention_rate": 1.0,
+      "obs_domain_mention_rate": 0.706,
+      "obs_citation_rate": 0.706,
+      "prediction_accuracy": 1.0,
+      "correct_predictions": 17,
+      "optimistic_predictions": 0,
+      "pessimistic_predictions": 0,
+      "unknown_predictions": 0,
+      "avg_citation_depth": 2.18,
+      "depth_distribution": {
+        "4": 3,
+        "2": 9,
+        "1": 4,
+        "3": 1
+      },
+      "position_distribution": {
+        "opening": 17
+      },
+      "framing_distribution": {
+        "passing": 2,
+        "recommended": 9,
+        "listed": 5,
+        "authoritative": 1
+      },
+      "avg_competitors": 5.8,
+      "obs_cost_usd": 0.0042,
+      "obs_latency_ms": 148658.0,
+      "depth_cost_usd": 0.001,
+      "duration_seconds": 177.2,
+      "error": null,
+      "insights": [
+        "High prediction accuracy (100%): simulation closely matches real AI behavior.",
+        "High citation rate: when mentioned, AI models often cite your website directly."
+      ],
+      "recommendations": []
+    }
+  ]
+}

@@ -50,7 +50,12 @@ class StructureComponent:
 
 @dataclass
 class StructureQualityScore:
-    """Complete Structure Quality score with breakdown."""
+    """Complete Semantic Structure score with breakdown.
+
+    Measures H1 uniqueness, heading hierarchy, and semantic nesting.
+    Pages can look well-organized to humans while scoring low here
+    if the underlying HTML markup is poorly structured for machines.
+    """
 
     total_score: float  # 0-100
     level: str  # full, partial, limited (progress-based)
@@ -69,8 +74,15 @@ class StructureQualityScore:
     # Raw analysis for detailed inspection
     structure_analysis: StructureAnalysis | None = None
 
+    # Aggregate H1 sub-metrics (filled by aggregate_structure_scores)
+    pages_analyzed: int = 0
+    pages_missing_h1: int = 0  # H1 count == 0
+    pages_multiple_h1: int = 0  # H1 count > 1
+    avg_heading_issues: float = 0.0  # Average issues per page
+    avg_heading_score: float = 0.0  # Average raw heading score
+
     def to_dict(self) -> dict:
-        return {
+        result = {
             "total_score": round(self.total_score, 2),
             "level": self.level,
             "max_points": self.max_points,
@@ -80,12 +92,24 @@ class StructureQualityScore:
             "all_issues": self.all_issues,
             "recommendations": self.recommendations,
         }
+        # Include H1 sub-metrics when available (aggregated scores)
+        if self.pages_analyzed > 0:
+            result["h1_sub_metrics"] = {
+                "pages_analyzed": self.pages_analyzed,
+                "pages_missing_h1": self.pages_missing_h1,
+                "pct_missing_h1": round(self.pages_missing_h1 / self.pages_analyzed * 100, 1),
+                "pages_multiple_h1": self.pages_multiple_h1,
+                "pct_multiple_h1": round(self.pages_multiple_h1 / self.pages_analyzed * 100, 1),
+                "avg_heading_issues": round(self.avg_heading_issues, 1),
+                "avg_heading_score": round(self.avg_heading_score, 1),
+            }
+        return result
 
     def show_the_math(self) -> str:
         """Generate human-readable calculation breakdown."""
         lines = [
             "=" * 50,
-            "STRUCTURE QUALITY SCORE",
+            "SEMANTIC STRUCTURE SCORE",
             "=" * 50,
             "",
             f"Total Score: {self.total_score:.1f}/100 ({self.level.upper()})",
@@ -250,7 +274,11 @@ class StructureScoreCalculator:
             explanation=explanation,
             details={
                 "h1_count": analysis.headings.h1_count,
+                "h2_count": analysis.headings.h2_count,
                 "total_headings": analysis.headings.total_headings,
+                "hierarchy_valid": analysis.headings.hierarchy_valid,
+                "skip_count": analysis.headings.skip_count,
+                "duplicate_count": analysis.headings.duplicate_count,
                 "issues": len(analysis.headings.issues),
             },
         )

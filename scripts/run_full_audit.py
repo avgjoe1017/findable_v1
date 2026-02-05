@@ -3,7 +3,7 @@
 
 This script demonstrates the complete v2 analysis pipeline with ALL 6 pillars:
 1. Technical readiness (15 pts)
-2. Structure quality (20 pts)
+2. Semantic structure (20 pts)
 3. Schema richness (15 pts)
 4. Authority signals (15 pts)
 5. Retrieval quality (25 pts) - requires simulation
@@ -137,9 +137,9 @@ async def run_full_audit(url: str, max_pages: int = 10) -> dict:
         results["pillars"]["technical"]["score"] = technical_score.total_score
 
     # =========================================================
-    # PILLAR 2: Structure Quality (20 points)
+    # PILLAR 2: Semantic Structure (20 points)
     # =========================================================
-    print("\n[2/6] Structure Quality Analysis...")
+    print("\n[2/6] Semantic Structure Analysis...")
     structure_score = None
     structure_scores = []
     for i, page in enumerate(crawl_result.pages):
