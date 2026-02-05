@@ -176,7 +176,7 @@ class TopicClusterAnalyzer:
         result = TopicClusterAnalysis()
 
         if not pages:
-            result.level = "critical"
+            result.level = "limited"
             result.issues.append("No pages to analyze")
             return result
 
@@ -382,7 +382,7 @@ class TopicClusterAnalyzer:
         """Calculate cluster and link health scores."""
         total_pages = len(page_map)
         if total_pages == 0:
-            result.level = "critical"
+            result.level = "limited"
             return
 
         # Cluster score (0-100)
@@ -436,11 +436,11 @@ class TopicClusterAnalyzer:
 
         # Determine level
         if result.total_score >= 70:
-            result.level = "good"
+            result.level = "full"
         elif result.total_score >= 40:
-            result.level = "warning"
+            result.level = "partial"
         else:
-            result.level = "critical"
+            result.level = "limited"
 
     def _generate_recommendations(
         self,

@@ -293,7 +293,6 @@ class FindableScoreV2:
 
     # Overall score (always 0-100 scale, rescaled when partial)
     total_score: float  # 0-100 (effective score)
-    raw_points_earned: float = 0.0  # Sum of actual points earned
 
     # Findability Level (replaces letter grades)
     level: str  # e.g., "partially_findable"
@@ -323,6 +322,9 @@ class FindableScoreV2:
 
     # Strengths (positive findings to celebrate)
     strengths: list[str] = field(default_factory=list)
+
+    # Raw points earned (before rescaling for partial analysis)
+    raw_points_earned: float = 0.0
 
     # Partial analysis tracking
     pillars_evaluated: int = 6

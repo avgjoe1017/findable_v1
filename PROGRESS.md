@@ -1,16 +1,44 @@
 # Findable Score Analyzer - Progress Tracker
 
-Last Updated: 2026-02-04 (Session #55)
+Last Updated: 2026-02-05 (Session #56)
 
-**Current Status:** Day 30 + Findable Score v2 Complete + Calibration System + Railway Deployment Ready
+**Current Status:** Day 30 + Findable Score v2 Complete + Calibration System + Railway Deployment Ready + Rubric Calibrated
 
-### 2026-02-04 — Docker build fix (README.md in deps stage)
+### 2026-02-05 — Rubric calibration: 5 bugs fixed from 12-site lead audit
+
+**Context:** Ran 12-site lead audit (`scripts/run_lead_audits.py`) against real customer-type sites. Analysis revealed 5 scoring rubric issues.
+
+**Fixes applied:**
+
+1. **Level gap bug** (`calculator_v2.py`): `get_findability_level()` used integer range boundaries with gaps — a score of 54.78 fell between `max_score: 54` and `min_score: 55`, defaulting to "Not Yet Findable". Fixed by switching to threshold-based `>=` comparisons. Also fixed `_get_level_for_score()` in `show_the_math`.
+
+2. **Score rescaling to 0-100** (`calculator_v2.py`): When pillars are missing (partial analysis), `total_score` was raw points (max ~87 when entity recognition missing) but displayed as if /100. Fixed: `total_score = (raw_points / max_evaluated_points) * 100` when partial. Added `raw_points_earned` field to preserve original value.
+
+3. **Blocked/Uncrawlable status** (`e2e_test_sites.py`): Sites returning 0 crawled pages now get distinct `outcome="blocked"` with label "Blocked / Uncrawlable" instead of scoring 0 and lumping with "Not Yet Findable".
+
+4. **Extraction failure flagging** (`e2e_test_sites.py`): When `total_chunks < pages_crawled * 0.5`, the result gets `outcome="extraction_weak"` with a warning showing the ratio.
+
+5. **Three-tier outcome reporting** (`e2e_test_sites.py`, `run_lead_audits.py`): Results now separate into scored / extraction_weak / blocked / error tiers with statistics per tier.
+
+**Test cascade:** Fixes triggered 23 test failures from stale level names ("critical"/"warning"/"good" → "limited"/"partial"/"full") across 7 production files and 9 test files. All fixed. Also fixed `test_perfect_score` fixture (missing `EntityReinforcementSignals` in "perfect" entity recognition fixture).
+
+**Result:** 224 rubric-related tests passing, 0 failures from these changes.
+
+### 2026-02-05 — Railway Settings ValidationError (missing env vars)
 **Decision:** In the Dockerfile `deps` stage we only copied `pyproject.toml` before running `pip install -e .`. Hatchling reads `readme = "README.md"` from pyproject.toml and requires that file to exist when generating package metadata; the build was failing with `OSError: Readme file does not exist: README.md`.
 **Change:** Added `COPY README.md ./` in the deps stage before the pip install step so the editable install can complete. This keeps the deps layer cacheable while satisfying the build backend.
 
 ### 2026-02-04 — Railway startCommand fix (scripts module missing)
 **Decision:** Railway runs `startCommand = "python -m scripts.start"` but was using the last stage of the Dockerfile as the deployed image. The last stage was `migrate`, which only copies `api/`, `migrations/`, and `alembic.ini`—no `scripts/`—so the container raised `ModuleNotFoundError: No module named 'scripts'`.
 **Change:** Reordered the Dockerfile so the **api** stage is the final stage (Stage 6). That stage copies `api/`, `migrations/`, `web/`, `scripts/`, and `alembic.ini`. Railway’s default “build last stage” behavior now produces an image that includes the scripts module, so `python -m scripts.start` runs correctly.
+
+### 2026-02-05 — Railway Settings ValidationError (missing env vars)
+**Decision:** Logs showed ValidationError for Settings: database_url, redis_url, jwt_secret required but missing (input_value empty). The container had no env vars because they were not set or linked for the API service on Railway.
+**Change:** Documented the fix in DEPLOYMENT.md (new troubleshooting subsection) and added PRODUCTION_INSTRUCTIONS.md. Required: link PostgreSQL and Redis to the API service so Railway injects DATABASE_URL and REDIS_URL; set JWT_SECRET in the API service Variables; redeploy. No code change.
+
+### 2026-02-05 — Railway deploy: worker module missing + migrations psycopg2
+**Decision:** After env vars were set, deploy failed with (1) ModuleNotFoundError: No module named 'worker' — api.services.job_service imports worker.queue at module load, but the API stage did not copy worker/; (2) migrations step tried to use psycopg2 (sync) while only asyncpg is installed; migration continued but never ran.
+**Change:** (1) Dockerfile API stage: added `COPY worker/ ./worker/` and `ENV PYTHONPATH=/app` so the worker package is present and importable. (2) migrations/env.py: normalize DATABASE_URL to `postgresql+asyncpg://` when it is plain `postgresql://` so the async engine uses asyncpg; pass the url into the config dict for `async_engine_from_config` (get_section only returns [alembic] from ini and did not include sqlalchemy.url).
 
 ## Overall Status
 
@@ -28,6 +56,7 @@ Last Updated: 2026-02-04 (Session #55)
 | **Real-World Test Runner** | Complete | Sessions #35-38 |
 | **7-Pillar Scoring** | Complete | All pillars implemented |
 | **Railway Deployment** | Ready | Infrastructure complete |
+| **Rubric Calibration** | Complete | 5 bugs fixed, 224 tests passing |
 
 ---
 

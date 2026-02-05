@@ -34,13 +34,17 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Get database URL from settings
+# Get database URL from settings and ensure async driver (asyncpg) is used
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", str(settings.database_url))
+_raw_url = str(settings.database_url)
+# Use asyncpg so we don't require psycopg2 in the image
+if _raw_url.startswith("postgresql://") and "asyncpg" not in _raw_url:
+    _raw_url = _raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+config.set_main_option("sqlalchemy.url", _raw_url)
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode."""
+    """Run migrations in 'offline' mode (generates SQL only; uses same url as online)."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -63,8 +67,11 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode with async engine."""
+    # Pass url explicitly; get_section() only returns [alembic] from ini, not sqlalchemy.url
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["url"] = config.get_main_option("sqlalchemy.url")
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

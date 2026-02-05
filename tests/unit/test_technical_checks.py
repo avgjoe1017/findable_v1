@@ -288,7 +288,7 @@ class TestTechnicalScore:
         )
 
         assert score.total_score == 100.0
-        assert score.level == "good"
+        assert score.level == "full"
         assert len(score.critical_issues) == 0
 
     def test_blocked_crawlers_critical(self):
@@ -305,7 +305,7 @@ class TestTechnicalScore:
 
         assert len(score.critical_issues) > 0
         assert any("GPTBot" in issue for issue in score.critical_issues)
-        assert score.level in ["warning", "critical"]
+        assert score.level in ["partial", "limited"]
 
     def test_show_the_math_output(self):
         """show_the_math should produce readable output."""

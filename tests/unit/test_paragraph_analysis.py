@@ -17,7 +17,7 @@ class TestParagraphAnalyzer:
         result = analyze_paragraphs(html)
 
         assert result.total_paragraphs == 0
-        assert result.level == "warning"
+        assert result.level == "partial"
 
     def test_optimal_paragraphs(self):
         """Paragraphs with 2-4 sentences should be marked optimal."""
@@ -38,7 +38,7 @@ class TestParagraphAnalyzer:
         assert result.optimal_paragraphs == 3
         assert result.long_paragraphs == 0
         assert result.score >= 90
-        assert result.level == "good"
+        assert result.level == "full"
 
     def test_long_paragraphs_detected(self):
         """Paragraphs with more than 4 sentences should be flagged."""
@@ -147,7 +147,7 @@ class TestParagraphAnalyzer:
         result = analyze_paragraphs(html)
 
         assert result.score >= 80
-        assert result.level == "good"
+        assert result.level == "full"
 
     def test_score_calculation_poor(self):
         """Test that long paragraphs score poorly."""
@@ -272,7 +272,7 @@ class TestParagraphAnalyzer:
             <p>Good short paragraph. Two sentences.</p>
         </main></body></html>
         """
-        assert analyze_paragraphs(html_good).level == "good"
+        assert analyze_paragraphs(html_good).level == "full"
 
         # Warning level - some long paragraphs
         html_warning = """
@@ -282,7 +282,7 @@ class TestParagraphAnalyzer:
         </main></body></html>
         """
         result_warning = analyze_paragraphs(html_warning)
-        assert result_warning.level in ["warning", "good"]
+        assert result_warning.level in ["partial", "full"]
 
     def test_exclamation_and_question_marks(self):
         """Test sentence counting with ! and ? terminators."""

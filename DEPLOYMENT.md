@@ -337,6 +337,29 @@ railway logs
 
 ## Troubleshooting
 
+### Settings validation errors (database_url, redis_url, jwt_secret required)
+
+If the container fails on startup with:
+
+```
+pydantic_core._pydantic_core.ValidationError: 3 validation errors for Settings
+database_url - Field required
+redis_url - Field required
+jwt_secret - Field required
+```
+
+the API service is running **without the required environment variables**. Fix it as follows:
+
+1. **Link PostgreSQL and Redis to the API service**
+   - In the Railway project, open your **API service** (the one built from the repo).
+   - In the service’s **Variables** tab, use “Add variable” → “Add reference” (or “Connect” to the Postgres and Redis services).
+   - That injects `DATABASE_URL` and `REDIS_URL` into the API service. If you created Postgres/Redis in the same project, linking them is required for those vars to appear.
+
+2. **Set `JWT_SECRET` manually**
+   - In the API service Variables tab, add: `JWT_SECRET` = a long random string (e.g. 32+ hex chars: `openssl rand -hex 32`).
+
+3. **Redeploy** after saving variables so the new container gets them.
+
 ### Database Connection Issues
 
 ```bash

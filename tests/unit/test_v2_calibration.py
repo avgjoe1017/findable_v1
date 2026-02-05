@@ -35,7 +35,7 @@ class SiteProfiles:
         return {
             "technical": TechnicalReadinessScore(
                 total_score=95.0,
-                level="excellent",
+                level="full",
                 max_points=15.0,
                 components=[
                     TechnicalComponent(
@@ -43,7 +43,7 @@ class SiteProfiles:
                         raw_score=100.0,
                         weight=0.35,
                         weighted_score=35.0,
-                        level="good",
+                        level="full",
                         explanation="All AI bots allowed",
                     ),
                     TechnicalComponent(
@@ -51,7 +51,7 @@ class SiteProfiles:
                         raw_score=95.0,
                         weight=0.30,
                         weighted_score=28.5,
-                        level="good",
+                        level="full",
                         explanation="TTFB: 180ms",
                     ),
                     TechnicalComponent(
@@ -59,7 +59,7 @@ class SiteProfiles:
                         raw_score=100.0,
                         weight=0.15,
                         weighted_score=15.0,
-                        level="good",
+                        level="full",
                         explanation="llms.txt present and valid",
                     ),
                     TechnicalComponent(
@@ -67,7 +67,7 @@ class SiteProfiles:
                         raw_score=85.0,
                         weight=0.10,
                         weighted_score=8.5,
-                        level="good",
+                        level="full",
                         explanation="SSR enabled",
                     ),
                     TechnicalComponent(
@@ -75,7 +75,7 @@ class SiteProfiles:
                         raw_score=100.0,
                         weight=0.10,
                         weighted_score=10.0,
-                        level="good",
+                        level="full",
                         explanation="HTTPS enabled",
                     ),
                 ],
@@ -84,7 +84,7 @@ class SiteProfiles:
             ),
             "structure": StructureQualityScore(
                 total_score=90.0,
-                level="excellent",
+                level="full",
                 max_points=20.0,
                 components=[
                     StructureComponent(
@@ -92,7 +92,7 @@ class SiteProfiles:
                         raw_score=95.0,
                         weight=0.25,
                         weighted_score=23.75,
-                        level="good",
+                        level="full",
                         explanation="Valid H1→H2→H3 hierarchy",
                     ),
                     StructureComponent(
@@ -100,7 +100,7 @@ class SiteProfiles:
                         raw_score=90.0,
                         weight=0.25,
                         weighted_score=22.5,
-                        level="good",
+                        level="full",
                         explanation="Answers in first paragraph",
                     ),
                     StructureComponent(
@@ -108,7 +108,7 @@ class SiteProfiles:
                         raw_score=85.0,
                         weight=0.20,
                         weighted_score=17.0,
-                        level="good",
+                        level="full",
                         explanation="Multiple FAQ sections",
                     ),
                     StructureComponent(
@@ -116,7 +116,7 @@ class SiteProfiles:
                         raw_score=88.0,
                         weight=0.15,
                         weighted_score=13.2,
-                        level="good",
+                        level="full",
                         explanation="Good internal linking",
                     ),
                     StructureComponent(
@@ -124,7 +124,7 @@ class SiteProfiles:
                         raw_score=92.0,
                         weight=0.15,
                         weighted_score=13.8,
-                        level="good",
+                        level="full",
                         explanation="Tables and lists present",
                     ),
                 ],
@@ -133,7 +133,7 @@ class SiteProfiles:
             ),
             "schema": SchemaRichnessScore(
                 total_score=92.0,
-                level="excellent",
+                level="full",
                 max_points=15.0,
                 components=[
                     SchemaComponent(
@@ -141,7 +141,7 @@ class SiteProfiles:
                         raw_score=100.0,
                         weight=0.27,
                         weighted_score=27.0,
-                        level="good",
+                        level="full",
                         explanation="FAQPage schema present",
                     ),
                     SchemaComponent(
@@ -149,7 +149,7 @@ class SiteProfiles:
                         raw_score=95.0,
                         weight=0.20,
                         weighted_score=19.0,
-                        level="good",
+                        level="full",
                         explanation="Article with author",
                     ),
                     SchemaComponent(
@@ -157,7 +157,7 @@ class SiteProfiles:
                         raw_score=90.0,
                         weight=0.20,
                         weighted_score=18.0,
-                        level="good",
+                        level="full",
                         explanation="dateModified present",
                     ),
                     SchemaComponent(
@@ -165,7 +165,7 @@ class SiteProfiles:
                         raw_score=100.0,
                         weight=0.13,
                         weighted_score=13.0,
-                        level="good",
+                        level="full",
                         explanation="Organization schema present",
                     ),
                     SchemaComponent(
@@ -173,7 +173,7 @@ class SiteProfiles:
                         raw_score=80.0,
                         weight=0.13,
                         weighted_score=10.4,
-                        level="good",
+                        level="full",
                         explanation="HowTo on relevant pages",
                     ),
                     SchemaComponent(
@@ -181,7 +181,7 @@ class SiteProfiles:
                         raw_score=95.0,
                         weight=0.07,
                         weighted_score=6.65,
-                        level="good",
+                        level="full",
                         explanation="Minor validation warnings",
                     ),
                 ],
@@ -190,7 +190,7 @@ class SiteProfiles:
             ),
             "authority": AuthoritySignalsScore(
                 total_score=88.0,
-                level="excellent",
+                level="full",
                 max_points=15.0,
                 components=[
                     AuthorityComponent(
@@ -198,7 +198,7 @@ class SiteProfiles:
                         raw_score=95.0,
                         weight=0.27,
                         weighted_score=25.65,
-                        level="good",
+                        level="full",
                         explanation="Authors on all articles",
                     ),
                     AuthorityComponent(
@@ -206,7 +206,7 @@ class SiteProfiles:
                         raw_score=90.0,
                         weight=0.20,
                         weighted_score=18.0,
-                        level="good",
+                        level="full",
                         explanation="Credentials displayed",
                     ),
                     AuthorityComponent(
@@ -214,7 +214,7 @@ class SiteProfiles:
                         raw_score=80.0,
                         weight=0.20,
                         weighted_score=16.0,
-                        level="good",
+                        level="full",
                         explanation="Good citation density",
                     ),
                     AuthorityComponent(
@@ -222,7 +222,7 @@ class SiteProfiles:
                         raw_score=85.0,
                         weight=0.20,
                         weighted_score=17.0,
-                        level="good",
+                        level="full",
                         explanation="Content updated recently",
                     ),
                     AuthorityComponent(
@@ -230,7 +230,7 @@ class SiteProfiles:
                         raw_score=85.0,
                         weight=0.13,
                         weighted_score=11.05,
-                        level="good",
+                        level="full",
                         explanation="Original research present",
                     ),
                 ],
@@ -261,7 +261,7 @@ class SiteProfiles:
         return {
             "technical": TechnicalReadinessScore(
                 total_score=25.0,
-                level="critical",
+                level="limited",
                 max_points=15.0,
                 components=[
                     TechnicalComponent(
@@ -269,7 +269,7 @@ class SiteProfiles:
                         raw_score=30.0,
                         weight=0.35,
                         weighted_score=10.5,
-                        level="critical",
+                        level="limited",
                         explanation="GPTBot blocked",
                     ),
                     TechnicalComponent(
@@ -277,7 +277,7 @@ class SiteProfiles:
                         raw_score=40.0,
                         weight=0.30,
                         weighted_score=12.0,
-                        level="warning",
+                        level="partial",
                         explanation="TTFB: 1800ms",
                     ),
                     TechnicalComponent(
@@ -285,7 +285,7 @@ class SiteProfiles:
                         raw_score=0.0,
                         weight=0.15,
                         weighted_score=0.0,
-                        level="critical",
+                        level="limited",
                         explanation="No llms.txt",
                     ),
                     TechnicalComponent(
@@ -293,7 +293,7 @@ class SiteProfiles:
                         raw_score=10.0,
                         weight=0.10,
                         weighted_score=1.0,
-                        level="critical",
+                        level="limited",
                         explanation="Fully JS-dependent",
                     ),
                     TechnicalComponent(
@@ -301,7 +301,7 @@ class SiteProfiles:
                         raw_score=100.0,
                         weight=0.10,
                         weighted_score=10.0,
-                        level="good",
+                        level="full",
                         explanation="HTTPS enabled",
                     ),
                 ],
@@ -310,7 +310,7 @@ class SiteProfiles:
             ),
             "structure": StructureQualityScore(
                 total_score=30.0,
-                level="critical",
+                level="limited",
                 max_points=20.0,
                 components=[
                     StructureComponent(
@@ -318,7 +318,7 @@ class SiteProfiles:
                         raw_score=20.0,
                         weight=0.25,
                         weighted_score=5.0,
-                        level="critical",
+                        level="limited",
                         explanation="No semantic headings",
                     ),
                     StructureComponent(
@@ -326,7 +326,7 @@ class SiteProfiles:
                         raw_score=25.0,
                         weight=0.25,
                         weighted_score=6.25,
-                        level="critical",
+                        level="limited",
                         explanation="Answers buried in content",
                     ),
                     StructureComponent(
@@ -334,7 +334,7 @@ class SiteProfiles:
                         raw_score=0.0,
                         weight=0.20,
                         weighted_score=0.0,
-                        level="critical",
+                        level="limited",
                         explanation="No FAQ sections",
                     ),
                     StructureComponent(
@@ -342,7 +342,7 @@ class SiteProfiles:
                         raw_score=60.0,
                         weight=0.15,
                         weighted_score=9.0,
-                        level="warning",
+                        level="partial",
                         explanation="Minimal internal links",
                     ),
                     StructureComponent(
@@ -350,7 +350,7 @@ class SiteProfiles:
                         raw_score=40.0,
                         weight=0.15,
                         weighted_score=6.0,
-                        level="warning",
+                        level="partial",
                         explanation="Few extractable elements",
                     ),
                 ],
@@ -359,7 +359,7 @@ class SiteProfiles:
             ),
             "schema": SchemaRichnessScore(
                 total_score=15.0,
-                level="critical",
+                level="limited",
                 max_points=15.0,
                 components=[
                     SchemaComponent(
@@ -367,7 +367,7 @@ class SiteProfiles:
                         raw_score=0.0,
                         weight=0.27,
                         weighted_score=0.0,
-                        level="critical",
+                        level="limited",
                         explanation="No FAQPage schema",
                     ),
                     SchemaComponent(
@@ -375,7 +375,7 @@ class SiteProfiles:
                         raw_score=20.0,
                         weight=0.20,
                         weighted_score=4.0,
-                        level="critical",
+                        level="limited",
                         explanation="Basic Article, no author",
                     ),
                     SchemaComponent(
@@ -383,7 +383,7 @@ class SiteProfiles:
                         raw_score=0.0,
                         weight=0.20,
                         weighted_score=0.0,
-                        level="critical",
+                        level="limited",
                         explanation="No dateModified",
                     ),
                     SchemaComponent(
@@ -391,7 +391,7 @@ class SiteProfiles:
                         raw_score=50.0,
                         weight=0.13,
                         weighted_score=6.5,
-                        level="warning",
+                        level="partial",
                         explanation="Basic Organization",
                     ),
                     SchemaComponent(
@@ -399,7 +399,7 @@ class SiteProfiles:
                         raw_score=0.0,
                         weight=0.13,
                         weighted_score=0.0,
-                        level="critical",
+                        level="limited",
                         explanation="No HowTo schema",
                     ),
                     SchemaComponent(
@@ -407,7 +407,7 @@ class SiteProfiles:
                         raw_score=30.0,
                         weight=0.07,
                         weighted_score=2.1,
-                        level="critical",
+                        level="limited",
                         explanation="Multiple validation errors",
                     ),
                 ],
@@ -416,7 +416,7 @@ class SiteProfiles:
             ),
             "authority": AuthoritySignalsScore(
                 total_score=20.0,
-                level="critical",
+                level="limited",
                 max_points=15.0,
                 components=[
                     AuthorityComponent(
@@ -424,7 +424,7 @@ class SiteProfiles:
                         raw_score=10.0,
                         weight=0.27,
                         weighted_score=2.7,
-                        level="critical",
+                        level="limited",
                         explanation="No author bylines",
                     ),
                     AuthorityComponent(
@@ -432,7 +432,7 @@ class SiteProfiles:
                         raw_score=0.0,
                         weight=0.20,
                         weighted_score=0.0,
-                        level="critical",
+                        level="limited",
                         explanation="No credentials shown",
                     ),
                     AuthorityComponent(
@@ -440,7 +440,7 @@ class SiteProfiles:
                         raw_score=20.0,
                         weight=0.20,
                         weighted_score=4.0,
-                        level="critical",
+                        level="limited",
                         explanation="Few citations",
                     ),
                     AuthorityComponent(
@@ -448,7 +448,7 @@ class SiteProfiles:
                         raw_score=40.0,
                         weight=0.20,
                         weighted_score=8.0,
-                        level="warning",
+                        level="partial",
                         explanation="Content 2 years old",
                     ),
                     AuthorityComponent(
@@ -456,7 +456,7 @@ class SiteProfiles:
                         raw_score=15.0,
                         weight=0.13,
                         weighted_score=1.95,
-                        level="critical",
+                        level="limited",
                         explanation="No original data",
                     ),
                 ],
@@ -487,7 +487,7 @@ class SiteProfiles:
         return {
             "technical": TechnicalReadinessScore(
                 total_score=70.0,
-                level="good",
+                level="full",
                 max_points=15.0,
                 components=[
                     TechnicalComponent(
@@ -495,7 +495,7 @@ class SiteProfiles:
                         raw_score=80.0,
                         weight=0.35,
                         weighted_score=28.0,
-                        level="good",
+                        level="full",
                         explanation="Most AI bots allowed",
                     ),
                     TechnicalComponent(
@@ -503,7 +503,7 @@ class SiteProfiles:
                         raw_score=70.0,
                         weight=0.30,
                         weighted_score=21.0,
-                        level="good",
+                        level="full",
                         explanation="TTFB: 600ms",
                     ),
                     TechnicalComponent(
@@ -511,7 +511,7 @@ class SiteProfiles:
                         raw_score=0.0,
                         weight=0.15,
                         weighted_score=0.0,
-                        level="critical",
+                        level="limited",
                         explanation="No llms.txt",
                     ),
                     TechnicalComponent(
@@ -519,7 +519,7 @@ class SiteProfiles:
                         raw_score=90.0,
                         weight=0.10,
                         weighted_score=9.0,
-                        level="good",
+                        level="full",
                         explanation="Static HTML",
                     ),
                     TechnicalComponent(
@@ -527,7 +527,7 @@ class SiteProfiles:
                         raw_score=100.0,
                         weight=0.10,
                         weighted_score=10.0,
-                        level="good",
+                        level="full",
                         explanation="HTTPS enabled",
                     ),
                 ],
@@ -536,7 +536,7 @@ class SiteProfiles:
             ),
             "structure": StructureQualityScore(
                 total_score=65.0,
-                level="warning",
+                level="partial",
                 max_points=20.0,
                 components=[
                     StructureComponent(
@@ -544,7 +544,7 @@ class SiteProfiles:
                         raw_score=75.0,
                         weight=0.25,
                         weighted_score=18.75,
-                        level="good",
+                        level="full",
                         explanation="Mostly valid headings",
                     ),
                     StructureComponent(
@@ -552,7 +552,7 @@ class SiteProfiles:
                         raw_score=55.0,
                         weight=0.25,
                         weighted_score=13.75,
-                        level="warning",
+                        level="partial",
                         explanation="Answers sometimes buried",
                     ),
                     StructureComponent(
@@ -560,7 +560,7 @@ class SiteProfiles:
                         raw_score=40.0,
                         weight=0.20,
                         weighted_score=8.0,
-                        level="warning",
+                        level="partial",
                         explanation="Few FAQ sections",
                     ),
                     StructureComponent(
@@ -568,7 +568,7 @@ class SiteProfiles:
                         raw_score=80.0,
                         weight=0.15,
                         weighted_score=12.0,
-                        level="good",
+                        level="full",
                         explanation="Good internal linking",
                     ),
                     StructureComponent(
@@ -576,7 +576,7 @@ class SiteProfiles:
                         raw_score=70.0,
                         weight=0.15,
                         weighted_score=10.5,
-                        level="good",
+                        level="full",
                         explanation="Some tables and lists",
                     ),
                 ],
@@ -585,7 +585,7 @@ class SiteProfiles:
             ),
             "schema": SchemaRichnessScore(
                 total_score=55.0,
-                level="warning",
+                level="partial",
                 max_points=15.0,
                 components=[
                     SchemaComponent(
@@ -593,7 +593,7 @@ class SiteProfiles:
                         raw_score=0.0,
                         weight=0.27,
                         weighted_score=0.0,
-                        level="critical",
+                        level="limited",
                         explanation="No FAQPage schema",
                     ),
                     SchemaComponent(
@@ -601,7 +601,7 @@ class SiteProfiles:
                         raw_score=70.0,
                         weight=0.20,
                         weighted_score=14.0,
-                        level="good",
+                        level="full",
                         explanation="Article with basic author",
                     ),
                     SchemaComponent(
@@ -609,7 +609,7 @@ class SiteProfiles:
                         raw_score=80.0,
                         weight=0.20,
                         weighted_score=16.0,
-                        level="good",
+                        level="full",
                         explanation="dateModified present",
                     ),
                     SchemaComponent(
@@ -617,7 +617,7 @@ class SiteProfiles:
                         raw_score=75.0,
                         weight=0.13,
                         weighted_score=9.75,
-                        level="good",
+                        level="full",
                         explanation="Organization schema present",
                     ),
                     SchemaComponent(
@@ -625,7 +625,7 @@ class SiteProfiles:
                         raw_score=0.0,
                         weight=0.13,
                         weighted_score=0.0,
-                        level="critical",
+                        level="limited",
                         explanation="No HowTo schema",
                     ),
                     SchemaComponent(
@@ -633,7 +633,7 @@ class SiteProfiles:
                         raw_score=90.0,
                         weight=0.07,
                         weighted_score=6.3,
-                        level="good",
+                        level="full",
                         explanation="Valid schemas",
                     ),
                 ],
@@ -642,7 +642,7 @@ class SiteProfiles:
             ),
             "authority": AuthoritySignalsScore(
                 total_score=60.0,
-                level="warning",
+                level="partial",
                 max_points=15.0,
                 components=[
                     AuthorityComponent(
@@ -650,7 +650,7 @@ class SiteProfiles:
                         raw_score=70.0,
                         weight=0.27,
                         weighted_score=18.9,
-                        level="good",
+                        level="full",
                         explanation="Authors on most posts",
                     ),
                     AuthorityComponent(
@@ -658,7 +658,7 @@ class SiteProfiles:
                         raw_score=40.0,
                         weight=0.20,
                         weighted_score=8.0,
-                        level="warning",
+                        level="partial",
                         explanation="Basic bio only",
                     ),
                     AuthorityComponent(
@@ -666,7 +666,7 @@ class SiteProfiles:
                         raw_score=50.0,
                         weight=0.20,
                         weighted_score=10.0,
-                        level="warning",
+                        level="partial",
                         explanation="Some citations",
                     ),
                     AuthorityComponent(
@@ -674,7 +674,7 @@ class SiteProfiles:
                         raw_score=75.0,
                         weight=0.20,
                         weighted_score=15.0,
-                        level="good",
+                        level="full",
                         explanation="Updated quarterly",
                     ),
                     AuthorityComponent(
@@ -682,7 +682,7 @@ class SiteProfiles:
                         raw_score=40.0,
                         weight=0.13,
                         weighted_score=5.2,
-                        level="warning",
+                        level="partial",
                         explanation="Occasional original data",
                     ),
                 ],

@@ -15,7 +15,7 @@ class TestTopicClusterAnalyzer:
         result = analyze_topic_clusters([])
 
         assert result.cluster_count == 0
-        assert result.level == "critical"
+        assert result.level == "limited"
         assert "No pages" in result.issues[0]
 
     def test_single_page(self):
@@ -319,7 +319,7 @@ class TestTopicClusterAnalyzer:
 
         assert result.cluster_count >= 1
         assert result.total_score >= 50
-        assert result.level in ["good", "warning"]
+        assert result.level in ["full", "partial"]
 
     def test_scoring_poor_structure(self):
         """Test that poor structure scores low."""

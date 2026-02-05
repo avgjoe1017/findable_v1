@@ -96,12 +96,16 @@ CMD ["alembic", "upgrade", "head"]
 # -----------------------------------------------------------------------------
 FROM deps as api
 
-# Copy application code
+# Copy application code (worker/ required for api.services.job_service imports)
 COPY api/ ./api/
+COPY worker/ ./worker/
 COPY migrations/ ./migrations/
 COPY web/ ./web/
 COPY scripts/ ./scripts/
 COPY alembic.ini ./
+
+# Ensure worker package is importable from /app
+ENV PYTHONPATH=/app
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser && \

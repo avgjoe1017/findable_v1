@@ -323,7 +323,7 @@ class TestSchemaScoreCalculator:
         score = calculate_schema_score(analysis)
 
         assert score.total_score >= 80
-        assert score.level == "good"
+        assert score.level == "full"
 
     def test_no_schema_score(self):
         """Test scoring of page with no schema."""
@@ -332,7 +332,7 @@ class TestSchemaScoreCalculator:
         score = calculate_schema_score(analysis)
 
         assert score.total_score < 30
-        assert score.level == "critical"
+        assert score.level == "limited"
 
     def test_partial_schema_score(self):
         """Test scoring of page with some schema elements."""
@@ -439,7 +439,7 @@ class TestSchemaTaskRunner:
         result = aggregate_schema_scores([])
 
         assert result.total_score == 0
-        assert result.level == "critical"
+        assert result.level == "limited"
 
     def test_aggregate_schema_scores_single(self):
         """Test aggregation with single score."""

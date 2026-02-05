@@ -325,11 +325,11 @@ class StructureAnalyzer:
 
         # Determine level
         if result.total_score >= 80:
-            result.level = "good"
+            result.level = "full"
         elif result.total_score >= 50:
-            result.level = "warning"
+            result.level = "partial"
         else:
-            result.level = "critical"
+            result.level = "limited"
 
         # Compile issues and recommendations
         result.issues, result.recommendations = self._compile_issues(result)

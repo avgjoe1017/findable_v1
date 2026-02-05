@@ -24,7 +24,7 @@ def create_pillar(
     name: str, raw_score: float, max_points: float, evaluated: bool = True
 ) -> PillarScore:
     """Helper to create a pillar score."""
-    level = "good" if raw_score >= 70 else "warning" if raw_score >= 40 else "critical"
+    level = "full" if raw_score >= 70 else "partial" if raw_score >= 40 else "limited"
     return PillarScore(
         name=name,
         display_name=name.title().replace("_", " "),
@@ -94,9 +94,9 @@ def create_score_v2(
         points_to_milestone=points_to_milestone,
         pillars=pillars,
         pillar_breakdown={p.name: p for p in pillars},
-        pillars_good=sum(1 for p in pillars if p.level == "good"),
-        pillars_warning=sum(1 for p in pillars if p.level == "warning"),
-        pillars_critical=sum(1 for p in pillars if p.level == "critical"),
+        pillars_good=sum(1 for p in pillars if p.level == "full"),
+        pillars_warning=sum(1 for p in pillars if p.level == "partial"),
+        pillars_critical=sum(1 for p in pillars if p.level == "limited"),
         all_critical_issues=[],
         top_recommendations=[],
     )
@@ -203,21 +203,21 @@ class TestScoreDeltaCalculator:
 
     def test_level_changes(self):
         """Test pillar level change tracking."""
-        prev = create_score_v2(technical=35, structure=75)  # critical, good
-        curr = create_score_v2(technical=75, structure=35)  # good, critical
+        prev = create_score_v2(technical=35, structure=75)  # limited, full
+        curr = create_score_v2(technical=75, structure=35)  # full, limited
 
         calculator = ScoreDeltaCalculator()
         delta = calculator.calculate(prev, curr)
 
         tech_delta = next(d for d in delta.pillar_deltas if d.pillar_name == "technical")
         assert tech_delta.level_improved is True
-        assert tech_delta.previous_level == "critical"
-        assert tech_delta.current_level == "good"
+        assert tech_delta.previous_level == "limited"
+        assert tech_delta.current_level == "full"
 
         struct_delta = next(d for d in delta.pillar_deltas if d.pillar_name == "structure")
         assert struct_delta.level_declined is True
-        assert struct_delta.previous_level == "good"
-        assert struct_delta.current_level == "critical"
+        assert struct_delta.previous_level == "full"
+        assert struct_delta.current_level == "limited"
 
     def test_significance_levels(self):
         """Test change significance classification."""
@@ -325,10 +325,10 @@ class TestPillarDelta:
             display_name="Technical Readiness",
             previous_score=50,
             previous_points=7.5,
-            previous_level="warning",
+            previous_level="partial",
             current_score=70,
             current_points=10.5,
-            current_level="good",
+            current_level="full",
             score_delta=20,
             points_delta=3,
             direction=ChangeDirection.IMPROVED,
@@ -347,10 +347,10 @@ class TestPillarDelta:
             display_name="Structure Quality",
             previous_score=80,
             previous_points=16,
-            previous_level="good",
+            previous_level="full",
             current_score=60,
             current_points=12,
-            current_level="warning",
+            current_level="partial",
             score_delta=-20,
             points_delta=-4,
             direction=ChangeDirection.DECLINED,
@@ -369,10 +369,10 @@ class TestPillarDelta:
             display_name="Schema Richness",
             previous_score=70,
             previous_points=10.5,
-            previous_level="good",
+            previous_level="full",
             current_score=70.3,
             current_points=10.545,
-            current_level="good",
+            current_level="full",
             score_delta=0.3,
             points_delta=0.045,
             direction=ChangeDirection.UNCHANGED,

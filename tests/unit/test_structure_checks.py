@@ -301,7 +301,7 @@ class TestStructureAnalysis:
         result = analyze_structure(html, "https://example.com")
 
         assert result.total_score > 0
-        assert result.level in ["good", "warning", "critical"]
+        assert result.level in ["full", "partial", "limited"]
 
 
 class TestStructureScoring:
@@ -336,7 +336,7 @@ class TestStructureScoring:
         score = calculate_structure_score(analysis)
 
         assert score.total_score >= 50
-        assert score.level in ["good", "warning"]
+        assert score.level in ["full", "partial"]
 
     def test_poor_structure_scores_low(self):
         """Poorly structured page should score low."""
@@ -398,7 +398,7 @@ class TestStructureChecks:
 
         assert isinstance(result, StructureQualityScore)
         assert result.total_score >= 0
-        assert result.level in ["good", "warning", "critical"]
+        assert result.level in ["full", "partial", "limited"]
 
     def test_aggregate_structure_scores(self):
         """Aggregating multiple page scores should work."""
@@ -418,7 +418,7 @@ class TestStructureChecks:
         aggregated = aggregate_structure_scores([])
 
         assert aggregated.total_score == 0
-        assert aggregated.level == "critical"
+        assert aggregated.level == "limited"
 
 
 class TestStructureFixGeneration:

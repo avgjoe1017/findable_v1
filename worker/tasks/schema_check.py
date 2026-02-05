@@ -78,7 +78,7 @@ def aggregate_schema_scores(
     if not page_scores:
         return SchemaRichnessScore(
             total_score=0.0,
-            level="critical",
+            level="limited",
             critical_issues=["No pages analyzed"],
         )
 
@@ -127,7 +127,7 @@ def aggregate_schema_scores(
                     raw_score=avg_raw,
                     weight=comp.weight,
                     weighted_score=avg_raw * comp.weight,
-                    level="good" if avg_raw >= 70 else "warning" if avg_raw >= 40 else "critical",
+                    level="full" if avg_raw >= 70 else "partial" if avg_raw >= 40 else "limited",
                     explanation=comp.explanation,
                     details=comp.details,
                 )
@@ -135,11 +135,11 @@ def aggregate_schema_scores(
 
     # Determine level
     if avg_score >= 70:
-        level = "good"
+        level = "full"
     elif avg_score >= 40:
-        level = "warning"
+        level = "partial"
     else:
-        level = "critical"
+        level = "limited"
 
     return SchemaRichnessScore(
         total_score=avg_score,

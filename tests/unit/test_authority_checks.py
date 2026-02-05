@@ -263,7 +263,7 @@ class TestAuthorityScoreCalculator:
         score = calculate_authority_score(analysis)
 
         assert score.total_score >= 60  # Slightly lower threshold
-        assert score.level in ["good", "warning"]
+        assert score.level in ["full", "partial"]
 
     def test_no_authority_score(self):
         """Test scoring of page with no authority signals."""
@@ -272,7 +272,7 @@ class TestAuthorityScoreCalculator:
         score = calculate_authority_score(analysis)
 
         assert score.total_score < 40
-        assert score.level in ["warning", "critical"]
+        assert score.level in ["partial", "limited"]
 
     def test_partial_authority_score(self):
         """Test scoring with some authority signals."""
@@ -363,7 +363,7 @@ class TestAuthorityTaskRunner:
         result = aggregate_authority_scores([])
 
         assert result.total_score == 0
-        assert result.level == "critical"
+        assert result.level == "limited"
 
     def test_aggregate_authority_scores_single(self):
         """Test aggregation with single score."""

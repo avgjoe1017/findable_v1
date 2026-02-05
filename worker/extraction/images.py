@@ -160,7 +160,7 @@ class ImageAnalyzer:
 
         if not images:
             result.score = 100  # No images = no issues
-            result.level = "good"
+            result.level = "full"
             return result
 
         for img in images:
@@ -193,11 +193,11 @@ class ImageAnalyzer:
 
         # Determine level
         if result.score >= 80:
-            result.level = "good"
+            result.level = "full"
         elif result.score >= 50:
-            result.level = "warning"
+            result.level = "partial"
         else:
-            result.level = "critical"
+            result.level = "limited"
 
         # Generate issues and recommendations
         self._generate_recommendations(result)

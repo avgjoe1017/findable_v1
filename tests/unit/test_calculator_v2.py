@@ -5,6 +5,7 @@ import pytest
 from worker.extraction.entity_recognition import (
     DomainSignals,
     EntityRecognitionResult,
+    EntityReinforcementSignals,
     WebPresenceSignals,
     WikidataSignals,
     WikipediaSignals,
@@ -35,7 +36,7 @@ def make_technical_score(score: float = 80.0) -> TechnicalReadinessScore:
     """Create a TechnicalReadinessScore for testing."""
     return TechnicalReadinessScore(
         total_score=score,
-        level="good" if score >= 70 else "warning" if score >= 40 else "critical",
+        level="full" if score >= 70 else "partial" if score >= 40 else "limited",
         max_points=15.0,
         components=[
             TechnicalComponent(
@@ -43,7 +44,7 @@ def make_technical_score(score: float = 80.0) -> TechnicalReadinessScore:
                 raw_score=score,
                 weight=0.35,
                 weighted_score=score * 0.35,
-                level="good",
+                level="full",
                 explanation="AI bots allowed",
             ),
             TechnicalComponent(
@@ -51,7 +52,7 @@ def make_technical_score(score: float = 80.0) -> TechnicalReadinessScore:
                 raw_score=score,
                 weight=0.30,
                 weighted_score=score * 0.30,
-                level="good",
+                level="full",
                 explanation="Fast response",
             ),
         ],
@@ -64,7 +65,7 @@ def make_structure_score(score: float = 75.0) -> StructureQualityScore:
     """Create a StructureQualityScore for testing."""
     return StructureQualityScore(
         total_score=score,
-        level="good" if score >= 70 else "warning" if score >= 40 else "critical",
+        level="full" if score >= 70 else "partial" if score >= 40 else "limited",
         max_points=20.0,
         components=[
             StructureComponent(
@@ -72,7 +73,7 @@ def make_structure_score(score: float = 75.0) -> StructureQualityScore:
                 raw_score=score,
                 weight=0.25,
                 weighted_score=score * 0.25,
-                level="good",
+                level="full",
                 explanation="Valid hierarchy",
             ),
         ],
@@ -85,7 +86,7 @@ def make_schema_score(score: float = 70.0) -> SchemaRichnessScore:
     """Create a SchemaRichnessScore for testing."""
     return SchemaRichnessScore(
         total_score=score,
-        level="good" if score >= 70 else "warning" if score >= 40 else "critical",
+        level="full" if score >= 70 else "partial" if score >= 40 else "limited",
         max_points=15.0,
         components=[
             SchemaComponent(
@@ -93,7 +94,7 @@ def make_schema_score(score: float = 70.0) -> SchemaRichnessScore:
                 raw_score=score,
                 weight=0.27,
                 weighted_score=score * 0.27,
-                level="good",
+                level="full",
                 explanation="FAQPage found",
             ),
         ],
@@ -106,7 +107,7 @@ def make_authority_score(score: float = 65.0) -> AuthoritySignalsScore:
     """Create an AuthoritySignalsScore for testing."""
     return AuthoritySignalsScore(
         total_score=score,
-        level="good" if score >= 70 else "warning" if score >= 40 else "critical",
+        level="full" if score >= 70 else "partial" if score >= 40 else "limited",
         max_points=15.0,
         components=[
             AuthorityComponent(
@@ -114,7 +115,7 @@ def make_authority_score(score: float = 65.0) -> AuthoritySignalsScore:
                 raw_score=score,
                 weight=0.27,
                 weighted_score=score * 0.27,
-                level="good" if score >= 70 else "warning",
+                level="full" if score >= 70 else "partial",
                 explanation="Authors found",
             ),
         ],
@@ -185,6 +186,21 @@ def make_entity_recognition_result(score: float = 60.0) -> EntityRecognitionResu
                 news_mentions_30d=200,  # Max (+10)
                 news_sources=["nytimes.com", "bbc.com", "reuters.com"],  # Max (+5)
                 twitter_followers=1_000_000,  # Bonus
+            ),
+            reinforcement=EntityReinforcementSignals(
+                brand_name="Test Brand",
+                total_mentions=20,
+                mentions_in_headings=3,
+                mentions_in_first_para=2,
+                mentions_per_500_words=3.0,  # Max (+5)
+                in_h1=True,  # +3
+                in_h2=True,
+                in_first_100_words=True,  # +2
+                in_meta_title=True,  # +2
+                in_meta_description=True,  # +1
+                consistent_casing=True,  # +2
+                related_entities=["Product A", "Product B", "Product C"],  # +2
+                name_variations_found=[],
             ),
         )
         result.calculate_total_score()
@@ -290,7 +306,7 @@ class TestPillarScore:
             max_points=15.0,
             points_earned=12.0,
             weight_pct=15.0,
-            level="good",
+            level="full",
             description="Can AI access your site?",
         )
         assert pillar.name == "technical"
@@ -307,13 +323,13 @@ class TestPillarScore:
             max_points=20.0,
             points_earned=15.0,
             weight_pct=20.0,
-            level="good",
+            level="full",
             description="Is your content extractable?",
         )
         data = pillar.to_dict()
         assert data["name"] == "structure"
         assert data["raw_score"] == 75.0
-        assert data["level"] == "good"
+        assert data["level"] == "full"
 
 
 # ============================================================================
@@ -372,7 +388,7 @@ class TestFindableScoreV2:
             max_points=15.0,
             points_earned=12.0,
             weight_pct=15.0,
-            level="good",
+            level="full",
             description="Test",
         )
 
@@ -413,7 +429,7 @@ class TestFindableScoreV2:
             max_points=15.0,
             points_earned=12.0,
             weight_pct=15.0,
-            level="good",
+            level="full",
             description="Test",
         )
 
@@ -478,7 +494,7 @@ class TestFindableScoreCalculatorV2:
         assert isinstance(result, FindableScoreV2)
         # Missing pillars should be critical with 0 points
         assert result.pillar_breakdown["schema"].raw_score == 0.0
-        assert result.pillar_breakdown["schema"].level == "critical"
+        assert result.pillar_breakdown["schema"].level == "limited"
 
     def test_calculate_with_no_pillars(self):
         """Calculate v2 score with no pillar scores."""
@@ -519,34 +535,34 @@ class TestFindableScoreCalculatorV2:
         assert result.level == "optimized"
 
     def test_pillar_levels_good(self):
-        """Good level for scores >= 70."""
+        """Full level for scores >= 70."""
         calculator = FindableScoreCalculatorV2()
 
         result = calculator.calculate(
             technical_score=make_technical_score(80.0),
         )
 
-        assert result.pillar_breakdown["technical"].level == "good"
+        assert result.pillar_breakdown["technical"].level == "full"
 
     def test_pillar_levels_warning(self):
-        """Warning level for scores 40-69."""
+        """Partial level for scores 40-69."""
         calculator = FindableScoreCalculatorV2()
 
         result = calculator.calculate(
             technical_score=make_technical_score(50.0),
         )
 
-        assert result.pillar_breakdown["technical"].level == "warning"
+        assert result.pillar_breakdown["technical"].level == "partial"
 
     def test_pillar_levels_critical(self):
-        """Critical level for scores < 40."""
+        """Limited level for scores < 40."""
         calculator = FindableScoreCalculatorV2()
 
         result = calculator.calculate(
             technical_score=make_technical_score(30.0),
         )
 
-        assert result.pillar_breakdown["technical"].level == "critical"
+        assert result.pillar_breakdown["technical"].level == "limited"
 
     def test_pillar_counts(self):
         """Pillar level counts are accurate."""
@@ -809,7 +825,7 @@ class TestPillarBuilders:
         pillar = calculator._build_technical_pillar(None)
 
         assert pillar.raw_score == 0.0
-        assert pillar.level == "critical"
+        assert pillar.level == "limited"
 
     def test_build_structure_pillar(self):
         """Structure pillar built correctly."""

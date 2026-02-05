@@ -18,7 +18,7 @@ class TestImageAnalyzer:
 
         assert result.total_images == 0
         assert result.score == 100.0
-        assert result.level == "good"
+        assert result.level == "full"
 
     def test_image_with_good_alt(self):
         """Image with descriptive alt text should be marked good."""
@@ -303,7 +303,7 @@ class TestImageAnalyzer:
             <img src="a.jpg" alt="Good descriptive alt text">
         </main></body></html>
         """
-        assert analyze_images(html_good).level == "good"
+        assert analyze_images(html_good).level == "full"
 
         # Warning - medium score
         html_warning = """
@@ -314,7 +314,7 @@ class TestImageAnalyzer:
         </main></body></html>
         """
         result_warning = analyze_images(html_warning)
-        assert result_warning.level in ["warning", "critical"]
+        assert result_warning.level in ["partial", "limited"]
 
     def test_data_src_handling(self):
         """Test handling of lazy-loaded images with data-src."""

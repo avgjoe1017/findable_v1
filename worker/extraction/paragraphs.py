@@ -121,14 +121,14 @@ class ParagraphAnalyzer:
         main = soup.find("main") or soup.find("article") or soup.find(id="content") or soup.body
 
         if not main:
-            result.level = "warning"
+            result.level = "partial"
             result.issues.append("No content area found")
             return result
 
         paragraphs = main.find_all("p")
 
         if not paragraphs:
-            result.level = "warning"
+            result.level = "partial"
             result.issues.append("No paragraphs found in content")
             return result
 
@@ -165,11 +165,11 @@ class ParagraphAnalyzer:
 
         # Determine level
         if result.score >= 80:
-            result.level = "good"
+            result.level = "full"
         elif result.score >= 50:
-            result.level = "warning"
+            result.level = "partial"
         else:
-            result.level = "critical"
+            result.level = "limited"
 
         # Generate recommendations
         self._generate_recommendations(result)

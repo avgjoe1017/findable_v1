@@ -97,7 +97,7 @@ def aggregate_structure_scores(
     if not page_scores:
         return StructureQualityScore(
             total_score=0.0,
-            level="critical",
+            level="limited",
             critical_issues=["No pages analyzed"],
         )
 
@@ -146,7 +146,7 @@ def aggregate_structure_scores(
                     raw_score=avg_raw,
                     weight=comp.weight,
                     weighted_score=avg_raw * comp.weight,
-                    level="good" if avg_raw >= 80 else "warning" if avg_raw >= 50 else "critical",
+                    level="full" if avg_raw >= 80 else "partial" if avg_raw >= 50 else "limited",
                     explanation=comp.explanation,
                     details=comp.details,
                 )
@@ -154,11 +154,11 @@ def aggregate_structure_scores(
 
     # Determine level
     if avg_score >= 80:
-        level = "good"
+        level = "full"
     elif avg_score >= 50:
-        level = "warning"
+        level = "partial"
     else:
-        level = "critical"
+        level = "limited"
 
     return StructureQualityScore(
         total_score=avg_score,
