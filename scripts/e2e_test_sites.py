@@ -49,6 +49,10 @@ class SiteResult(NamedTuple):
     total_chunks: int
     duration_seconds: float
     error: str | None = None
+    # Outcome tier: "scored" | "blocked" | "extraction_weak" | "error"
+    outcome: str = "scored"
+    # Data quality warnings
+    warnings: tuple[str, ...] = ()
 
 
 async def audit_site(url: str, max_pages: int = 50) -> SiteResult:
@@ -125,7 +129,29 @@ async def audit_site(url: str, max_pages: int = 50) -> SiteResult:
         )
 
         if not crawl_result.pages:
-            raise ValueError("No pages crawled")
+            end_time = datetime.now(UTC)
+            duration = (end_time - start_time).total_seconds()
+            logger.warning(
+                "site_blocked", domain=domain, urls_discovered=crawl_result.urls_discovered
+            )
+            return SiteResult(
+                domain=domain,
+                total_score=0,
+                level="blocked",
+                level_label="Blocked / Uncrawlable",
+                technical_score=technical_score.total_score if technical_score else 0,
+                structure_score=0,
+                schema_score=0,
+                authority_score=0,
+                retrieval_score=0,
+                coverage_score=0,
+                pages_crawled=0,
+                total_chunks=0,
+                duration_seconds=duration,
+                error="No pages crawled - site may block bots or require JS rendering",
+                outcome="blocked",
+                warnings=("Site blocked crawling or returned no parseable pages",),
+            )
 
         # =========================================================
         # Step 3: Extract Content
@@ -251,6 +277,23 @@ async def audit_site(url: str, max_pages: int = 50) -> SiteResult:
 
         logger.info("chunking_done", chunks=total_chunks)
 
+        # Data quality: detect extraction failures (pages >> chunks)
+        data_warnings: list[str] = []
+        pages_crawled_count = len(crawl_result.pages)
+        if pages_crawled_count > 5 and total_chunks < pages_crawled_count * 0.5:
+            ratio = total_chunks / pages_crawled_count if pages_crawled_count > 0 else 0
+            data_warnings.append(
+                f"Low extraction yield: {total_chunks} chunks from {pages_crawled_count} pages "
+                f"(ratio: {ratio:.1f}). Content may be JS-rendered, behind auth, or heavily templated."
+            )
+            logger.warning(
+                "low_extraction_yield",
+                domain=domain,
+                pages=pages_crawled_count,
+                chunks=total_chunks,
+                ratio=ratio,
+            )
+
         # =========================================================
         # Step 8: Embedding
         # =========================================================
@@ -368,6 +411,11 @@ async def audit_site(url: str, max_pages: int = 50) -> SiteResult:
         # Print the full breakdown
         print("\n" + v2_score.show_the_math())
 
+        # Determine outcome tier
+        outcome = "scored"
+        if data_warnings:
+            outcome = "extraction_weak"
+
         return SiteResult(
             domain=domain,
             total_score=v2_score.total_score,
@@ -382,6 +430,8 @@ async def audit_site(url: str, max_pages: int = 50) -> SiteResult:
             pages_crawled=len(crawl_result.pages),
             total_chunks=total_chunks,
             duration_seconds=duration,
+            outcome=outcome,
+            warnings=tuple(data_warnings),
         )
 
     except Exception as e:
@@ -393,8 +443,8 @@ async def audit_site(url: str, max_pages: int = 50) -> SiteResult:
         return SiteResult(
             domain=domain,
             total_score=0,
-            level="not_yet_findable",
-            level_label="Not Yet Findable",
+            level="error",
+            level_label="Error",
             technical_score=0,
             structure_score=0,
             schema_score=0,
@@ -405,6 +455,7 @@ async def audit_site(url: str, max_pages: int = 50) -> SiteResult:
             total_chunks=0,
             duration_seconds=duration,
             error=str(e),
+            outcome="error",
         )
 
 
@@ -445,32 +496,55 @@ async def main():
             await asyncio.sleep(2)
 
     # Print summary table
-    print("\n\n" + "=" * 130)
+    print("\n\n" + "=" * 140)
     print("FINAL RESULTS SUMMARY")
-    print("=" * 130)
+    print("=" * 140)
     print(
-        f"{'Domain':<25} {'Score':>8} {'Level':<20} {'Tech':>6} {'Struct':>7} {'Schema':>7} {'Auth':>6} {'Retr':>6} {'Cov':>6} {'Pages':>6} {'Time':>8}"
+        f"{'Domain':<25} {'Score':>8} {'Level':<22} {'Outcome':<16} "
+        f"{'Tech':>6} {'Struct':>7} {'Schema':>7} {'Auth':>6} {'Retr':>6} {'Cov':>6} "
+        f"{'Pg/Ch':>8} {'Time':>8}"
     )
-    print("-" * 130)
+    print("-" * 140)
 
     for r in sorted(results, key=lambda x: x.total_score, reverse=True):
-        if r.error:
+        if r.outcome in ("blocked", "error"):
             print(
-                f"{r.domain:<25} {'ERROR':<8} {'-':<20} {'-':<6} {'-':<7} {'-':<7} {'-':<6} {'-':<6} {'-':<6} {'-':<6} {r.duration_seconds:>7.1f}s"
+                f"{r.domain:<25} {'--':>8} {r.level_label:<22} {r.outcome.upper():<16} "
+                f"{'-':>6} {'-':>7} {'-':>7} {'-':>6} {'-':>6} {'-':>6} "
+                f"{'-':>8} {r.duration_seconds:>7.1f}s"
             )
-            print(f"  Error: {r.error[:80]}")
+            if r.error:
+                print(f"  >> {r.error[:90]}")
         else:
+            warn_flag = " *" if r.outcome == "extraction_weak" else ""
+            pg_ch = f"{r.pages_crawled}/{r.total_chunks}"
             print(
-                f"{r.domain:<25} {r.total_score:>7.1f} {r.level_label:<20} "
+                f"{r.domain:<25} {r.total_score:>7.1f} {r.level_label:<22} "
+                f"{r.outcome:<16} "
                 f"{r.technical_score:>6.0f} {r.structure_score:>7.0f} {r.schema_score:>7.0f} "
                 f"{r.authority_score:>6.0f} {r.retrieval_score:>6.0f} {r.coverage_score:>6.0f} "
-                f"{r.pages_crawled:>6} {r.duration_seconds:>7.1f}s"
+                f"{pg_ch:>8} {r.duration_seconds:>7.1f}s{warn_flag}"
             )
+            if r.warnings:
+                for w in r.warnings:
+                    print(f"  >> WARNING: {w}")
 
-    print("-" * 130)
+    print("-" * 140)
 
-    # Calculate averages for successful runs
-    successful = [r for r in results if not r.error]
+    # Three-tier outcome breakdown
+    scored = [r for r in results if r.outcome == "scored"]
+    extraction_weak = [r for r in results if r.outcome == "extraction_weak"]
+    blocked = [r for r in results if r.outcome == "blocked"]
+    errored = [r for r in results if r.outcome == "error"]
+
+    print("\nOUTCOME TIERS:")
+    print(f"  Scored (clean):        {len(scored)} sites")
+    print(f"  Scored (weak extract): {len(extraction_weak)} sites  * scores may be unreliable")
+    print(f"  Blocked / Uncrawlable: {len(blocked)} sites")
+    print(f"  Errors:                {len(errored)} sites")
+
+    # Calculate averages for scored sites
+    successful = scored + extraction_weak
     if successful:
         avg_score = sum(r.total_score for r in successful) / len(successful)
         avg_tech = sum(r.technical_score for r in successful) / len(successful)
@@ -481,16 +555,22 @@ async def main():
         avg_cov = sum(r.coverage_score for r in successful) / len(successful)
         avg_time = sum(r.duration_seconds for r in successful) / len(successful)
 
+        print("\nAVERAGES (scored sites only):")
         print(
-            f"{'AVERAGE':<25} {avg_score:>7.1f} {'--':<20} "
-            f"{avg_tech:>6.0f} {avg_struct:>7.0f} {avg_schema:>7.0f} "
-            f"{avg_auth:>6.0f} {avg_retr:>6.0f} {avg_cov:>6.0f} "
-            f"{'--':>6} {avg_time:>7.1f}s"
+            f"  Score: {avg_score:.1f}  |  Tech: {avg_tech:.0f}  Struct: {avg_struct:.0f}  "
+            f"Schema: {avg_schema:.0f}  Auth: {avg_auth:.0f}  Retr: {avg_retr:.0f}  "
+            f"Cov: {avg_cov:.0f}  |  Avg time: {avg_time:.1f}s"
         )
 
-    print("=" * 130)
-    print(f"\nCompleted: {len(successful)}/{len(results)} sites")
-    print(f"Failed: {len(results) - len(successful)} sites")
+        # Level distribution
+        levels: dict[str, int] = {}
+        for r in successful:
+            levels[r.level_label] = levels.get(r.level_label, 0) + 1
+        print("\nLEVEL DISTRIBUTION:")
+        for level, count in sorted(levels.items(), key=lambda x: -x[1]):
+            print(f"  {level}: {count}")
+
+    print("\n" + "=" * 140)
 
 
 if __name__ == "__main__":

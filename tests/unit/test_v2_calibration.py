@@ -732,9 +732,10 @@ class TestScoreCalibration:
             simulation_breakdown=profile["simulation"],
         )
 
-        # With entity_recognition unevaluated, max is 87 points (100 - 13)
+        # With entity_recognition unevaluated, raw max is 87 points (100 - 13)
+        # total_score is rescaled to 0-100 from evaluated pillars
         # Excellent site should score very high on evaluated pillars
-        assert result.total_score >= 75.0  # ~87% of 87 available points
+        assert result.total_score >= 75.0  # Rescaled: ~87%+ of evaluated pillars
         assert result.level in ["optimized", "highly_findable"]
         # Entity recognition not evaluated doesn't count as critical
         assert result.pillars_critical == 0
@@ -939,9 +940,10 @@ class TestV1ToV2Migration:
 
         result = calculate_findable_score_v2(simulation_breakdown=breakdown)
 
-        # With only retrieval (22pts) and coverage (10pts) = 32% max
-        # At 70% raw = ~22.4 points max possible
-        assert result.total_score < 30.0  # Max ~22.4 from two pillars at 70%
+        # With only retrieval (22pts) and coverage (10pts) = 32pts max
+        # At 70% raw = ~22.4 raw points, rescaled to 0-100: (22.4/32)*100 = 70.0
+        assert 65.0 <= result.total_score <= 75.0  # Rescaled: 70% of evaluated pillars
+        assert result.raw_points_earned < 25.0  # Raw points still ~22.4
         # Unevaluated pillars tracked separately (tech, struct, schema, auth, entity_recognition)
         assert result.pillars_not_evaluated == 5  # 5 pillars not run in 7-pillar system
         assert result.pillars_evaluated == 2  # Only retrieval and coverage evaluated
@@ -975,7 +977,7 @@ class TestV1ToV2Migration:
         result = calculate_findable_score_v2(simulation_breakdown=breakdown)
 
         # Expected: retrieval = 80 * 0.22 = 17.6 pts, coverage = 90 * 0.10 = 9 pts
-        # Total from v1 = 26.6 pts out of 100
+        # Raw from v1 = 26.6 pts out of 32 max; rescaled = (26.6/32)*100 = 83.1/100
         expected_retrieval_pts = v1_score / 100 * 22  # 22% weight in 7-pillar system
         expected_coverage_pts = v1_coverage / 100 * 10
 

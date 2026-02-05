@@ -39,7 +39,60 @@ COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir -e .
 
 # -----------------------------------------------------------------------------
-# Stage 3: Production API image
+# Stage 3: Worker image (with Playwright for rendering)
+# -----------------------------------------------------------------------------
+FROM deps as worker
+
+# Install Playwright and its dependencies
+RUN pip install playwright && \
+    playwright install chromium --with-deps
+
+# Copy application code
+COPY api/ ./api/
+COPY worker/ ./worker/
+COPY scripts/ ./scripts/
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Start command
+CMD ["python", "-m", "worker.main"]
+
+# -----------------------------------------------------------------------------
+# Stage 4: Scheduler image (for rq-scheduler)
+# -----------------------------------------------------------------------------
+FROM deps as scheduler
+
+# Copy application code
+COPY api/ ./api/
+COPY worker/ ./worker/
+COPY scripts/ ./scripts/
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Start command
+CMD ["python", "-m", "worker.scheduler"]
+
+# -----------------------------------------------------------------------------
+# Stage 5: Migration image (for database migrations)
+# -----------------------------------------------------------------------------
+FROM deps as migrate
+
+# Copy migration files
+COPY api/ ./api/
+COPY migrations/ ./migrations/
+COPY alembic.ini ./
+
+# Run migrations
+CMD ["alembic", "upgrade", "head"]
+
+# -----------------------------------------------------------------------------
+# Stage 6: Production API image (default target for Railway / docker build)
 # -----------------------------------------------------------------------------
 FROM deps as api
 
@@ -62,58 +115,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
 
-# Start command
+# Start command (overridden by railway.toml startCommand when using scripts.start)
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
-
-# -----------------------------------------------------------------------------
-# Stage 4: Worker image (with Playwright for rendering)
-# -----------------------------------------------------------------------------
-FROM deps as worker
-
-# Install Playwright and its dependencies
-RUN pip install playwright && \
-    playwright install chromium --with-deps
-
-# Copy application code
-COPY api/ ./api/
-COPY worker/ ./worker/
-COPY scripts/ ./scripts/
-
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash appuser && \
-    chown -R appuser:appuser /app
-USER appuser
-
-# Start command
-CMD ["python", "-m", "worker.main"]
-
-# -----------------------------------------------------------------------------
-# Stage 5: Scheduler image (for rq-scheduler)
-# -----------------------------------------------------------------------------
-FROM deps as scheduler
-
-# Copy application code
-COPY api/ ./api/
-COPY worker/ ./worker/
-COPY scripts/ ./scripts/
-
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash appuser && \
-    chown -R appuser:appuser /app
-USER appuser
-
-# Start command
-CMD ["python", "-m", "worker.scheduler"]
-
-# -----------------------------------------------------------------------------
-# Stage 6: Migration image (for database migrations)
-# -----------------------------------------------------------------------------
-FROM deps as migrate
-
-# Copy migration files
-COPY api/ ./api/
-COPY migrations/ ./migrations/
-COPY alembic.ini ./
-
-# Run migrations
-CMD ["alembic", "upgrade", "head"]

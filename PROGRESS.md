@@ -8,6 +8,10 @@ Last Updated: 2026-02-04 (Session #55)
 **Decision:** In the Dockerfile `deps` stage we only copied `pyproject.toml` before running `pip install -e .`. Hatchling reads `readme = "README.md"` from pyproject.toml and requires that file to exist when generating package metadata; the build was failing with `OSError: Readme file does not exist: README.md`.
 **Change:** Added `COPY README.md ./` in the deps stage before the pip install step so the editable install can complete. This keeps the deps layer cacheable while satisfying the build backend.
 
+### 2026-02-04 — Railway startCommand fix (scripts module missing)
+**Decision:** Railway runs `startCommand = "python -m scripts.start"` but was using the last stage of the Dockerfile as the deployed image. The last stage was `migrate`, which only copies `api/`, `migrations/`, and `alembic.ini`—no `scripts/`—so the container raised `ModuleNotFoundError: No module named 'scripts'`.
+**Change:** Reordered the Dockerfile so the **api** stage is the final stage (Stage 6). That stage copies `api/`, `migrations/`, `web/`, `scripts/`, and `alembic.ini`. Railway’s default “build last stage” behavior now produces an image that includes the scripts module, so `python -m scripts.start` runs correctly.
+
 ## Overall Status
 
 | Phase | Status | Progress |

@@ -291,8 +291,9 @@ class PathAction:
 class FindableScoreV2:
     """Complete Findable Score v2 with all pillar breakdowns."""
 
-    # Overall score
-    total_score: float  # 0-100
+    # Overall score (always 0-100 scale, rescaled when partial)
+    total_score: float  # 0-100 (effective score)
+    raw_points_earned: float = 0.0  # Sum of actual points earned
 
     # Findability Level (replaces letter grades)
     level: str  # e.g., "partially_findable"
@@ -335,15 +336,18 @@ class FindableScoreV2:
 
     @property
     def evaluated_score_pct(self) -> float:
-        """Score as percentage of evaluated pillars only."""
-        if self.max_evaluated_points <= 0:
-            return 0.0
-        return (self.total_score / self.max_evaluated_points) * 100
+        """Score as percentage of evaluated pillars only.
+
+        Note: With the rescaling fix, total_score IS already the effective
+        0-100 score, so this returns total_score directly.
+        """
+        return self.total_score
 
     def to_dict(self) -> dict:
         return {
             "version": self.version,
             "total_score": round(self.total_score, 2),
+            "raw_points_earned": round(self.raw_points_earned, 2),
             # Findability Level
             "level": self.level,
             "level_label": self.level_label,
@@ -456,7 +460,9 @@ class FindableScoreV2:
             lines.extend(
                 [
                     "",
-                    f"NOTE: {self.pillars_not_evaluated} pillar(s) not evaluated - partial analysis",
+                    f"NOTE: {self.pillars_not_evaluated} pillar(s) not evaluated - "
+                    f"score rescaled from {self.raw_points_earned:.1f}/{self.max_evaluated_points:.0f} pts "
+                    f"to {self.total_score:.0f}/100",
                 ]
             )
 
@@ -465,10 +471,16 @@ class FindableScoreV2:
 
     def _get_level_for_score(self, score: float) -> str:
         """Get level label for a given score."""
-        for _level_id, level_data in FINDABILITY_LEVELS.items():
-            if level_data["min_score"] <= score <= level_data["max_score"]:
-                return level_data["label"]
-        return "Unknown"
+        if score >= 85:
+            return "Optimized"
+        elif score >= 70:
+            return "Highly Findable"
+        elif score >= 55:
+            return "Findable"
+        elif score >= 40:
+            return "Partially Findable"
+        else:
+            return "Not Yet Findable"
 
 
 class FindableScoreCalculatorV2:
@@ -629,8 +641,8 @@ class FindableScoreCalculatorV2:
             f"{coverage_pillar.points_earned:.1f} pts"
         )
 
-        # Calculate total
-        total_score = sum(p.points_earned for p in pillars)
+        # Calculate total raw points
+        raw_points = sum(p.points_earned for p in pillars)
 
         # Track partial analysis
         total_pillars = len(pillars)  # Now 7 pillars
@@ -639,33 +651,34 @@ class FindableScoreCalculatorV2:
         max_evaluated_points = sum(p.max_points for p in pillars if p.evaluated)
         is_partial = pillars_not_evaluated > 0
 
+        # total_score is ALWAYS on a 0-100 scale.
+        # When partial, rescale so the number and level always agree.
+        if is_partial and max_evaluated_points > 0:
+            total_score = (raw_points / max_evaluated_points) * 100
+        else:
+            total_score = raw_points
+
         calculation_steps.append("")
         if is_partial:
             calculation_steps.append(
-                f"Total: {total_score:.1f}/{max_evaluated_points:.0f} evaluated points "
+                f"Raw points: {raw_points:.1f}/{max_evaluated_points:.0f} evaluated points "
                 f"({pillars_not_evaluated} pillar{'s' if pillars_not_evaluated != 1 else ''} not run)"
             )
+            calculation_steps.append(f"Effective score: {total_score:.1f}/100 (rescaled to 0-100)")
         else:
             calculation_steps.append(f"Total: {total_score:.1f}/100 points")
 
-        # Determine findability level based on evaluated score percentage when partial
-        if is_partial and max_evaluated_points > 0:
-            effective_score = (total_score / max_evaluated_points) * 100
-            calculation_steps.append(f"Adjusted score: {effective_score:.1f}% of evaluated pillars")
-        else:
-            effective_score = total_score
-
-        level_info = self.get_findability_level(effective_score)
+        level_info = self.get_findability_level(total_score)
 
         # Get next milestone
-        next_milestone = self.get_next_milestone(effective_score)
+        next_milestone = self.get_next_milestone(total_score)
         points_to_milestone = next_milestone.points_needed if next_milestone else 0
 
         # Build path forward if fixes are provided
         path_forward = []
         if fixes and next_milestone:
             path_forward = self.get_path_forward(
-                score=effective_score,
+                score=total_score,
                 fixes=fixes,
                 milestone_target=next_milestone.score,
             )
@@ -704,6 +717,7 @@ class FindableScoreCalculatorV2:
 
         result = FindableScoreV2(
             total_score=total_score,
+            raw_points_earned=raw_points,
             # Findability Level
             level=level_info["id"],
             level_label=level_info["label"],
@@ -750,18 +764,27 @@ class FindableScoreCalculatorV2:
         """
         Return the findability level dict for a given score.
 
+        Uses threshold-based comparison (>=) to avoid floating-point gaps
+        between integer boundaries.
+
         Args:
             score: Score 0-100
 
         Returns:
             Dict with id, label, summary, focus, min_score, max_score
         """
-        for level_id, level_data in FINDABILITY_LEVELS.items():
-            if level_data["min_score"] <= score <= level_data["max_score"]:
-                return {"id": level_id, **level_data}
+        if score >= 85:
+            level_id = "optimized"
+        elif score >= 70:
+            level_id = "highly_findable"
+        elif score >= 55:
+            level_id = "findable"
+        elif score >= 40:
+            level_id = "partially_findable"
+        else:
+            level_id = "not_yet_findable"
 
-        # Default to lowest level if score is out of range
-        return {"id": "not_yet_findable", **FINDABILITY_LEVELS["not_yet_findable"]}
+        return {"id": level_id, **FINDABILITY_LEVELS[level_id]}
 
     def get_next_milestone(self, score: float) -> MilestoneInfo | None:
         """

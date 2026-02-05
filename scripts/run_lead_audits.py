@@ -86,43 +86,63 @@ def print_results_summary(results: list[SiteResult]) -> None:
     """Print formatted results summary."""
     print("\n\n" + "=" * 120)
     print("LEAD AUDIT RESULTS SUMMARY")
-    print("=" * 120)
+    print("=" * 130)
     print(
-        f"{'Domain':<30} {'Score':>8} {'Level':<18} {'Tech':>6} {'Struct':>7} {'Schema':>7} {'Auth':>6}"
+        f"{'Domain':<30} {'Score':>8} {'Level':<22} {'Outcome':<16} "
+        f"{'Tech':>6} {'Struct':>7} {'Schema':>7} {'Auth':>6}"
     )
-    print("-" * 120)
+    print("-" * 130)
 
     for r in sorted(results, key=lambda x: x.total_score, reverse=True):
-        if r.error:
-            print(f"{r.domain:<30} {'ERROR':<8} {'-':<18} {'-':<6} {'-':<7} {'-':<7} {'-':<6}")
-            print(f"  Error: {r.error[:60]}")
+        if r.outcome in ("blocked", "error"):
+            print(
+                f"{r.domain:<30} {'--':>8} {r.level_label:<22} {r.outcome.upper():<16} "
+                f"{'-':>6} {'-':>7} {'-':>7} {'-':>6}"
+            )
+            if r.error:
+                print(f"  >> {r.error[:80]}")
         else:
             print(
-                f"{r.domain:<30} {r.total_score:>7.1f} {r.level_label:<18} "
+                f"{r.domain:<30} {r.total_score:>7.1f} {r.level_label:<22} "
+                f"{r.outcome:<16} "
                 f"{r.technical_score:>6.0f} {r.structure_score:>7.0f} "
                 f"{r.schema_score:>7.0f} {r.authority_score:>6.0f}"
             )
+            if r.warnings:
+                for w in r.warnings:
+                    print(f"  >> WARNING: {w}")
 
-    print("-" * 120)
+    print("-" * 130)
 
-    # Statistics
-    successful = [r for r in results if not r.error]
+    # Three-tier outcome breakdown
+    scored = [r for r in results if r.outcome == "scored"]
+    extraction_weak = [r for r in results if r.outcome == "extraction_weak"]
+    blocked = [r for r in results if r.outcome == "blocked"]
+    errored = [r for r in results if r.outcome == "error"]
+
+    print("\nOUTCOME TIERS:")
+    print(f"  Scored (clean):        {len(scored)} sites")
+    print(f"  Scored (weak extract): {len(extraction_weak)} sites")
+    print(f"  Blocked / Uncrawlable: {len(blocked)} sites")
+    print(f"  Errors:                {len(errored)} sites")
+
+    # Statistics for scored sites
+    successful = scored + extraction_weak
     if successful:
         avg_score = sum(r.total_score for r in successful) / len(successful)
 
         # Level distribution
-        levels = {}
+        levels: dict[str, int] = {}
         for r in successful:
-            levels[r.level] = levels.get(r.level, 0) + 1
+            levels[r.level_label] = levels.get(r.level_label, 0) + 1
 
-        print("\nSTATISTICS:")
-        print(f"  Successful audits: {len(successful)}/{len(results)}")
+        print("\nSTATISTICS (scored sites):")
         print(f"  Average score: {avg_score:.1f}/100")
         print("  Level distribution:")
-        for level, count in sorted(levels.items()):
+        for level, count in sorted(levels.items(), key=lambda x: -x[1]):
             print(f"    {level}: {count} sites")
 
-    print("=" * 120)
+    print("=" * 130)
 
 
 def save_results(results: list[SiteResult], output_path: Path) -> None:
@@ -130,13 +150,19 @@ def save_results(results: list[SiteResult], output_path: Path) -> None:
     data = {
         "timestamp": datetime.now(UTC).isoformat(),
         "total_sites": len(results),
-        "successful": len([r for r in results if not r.error]),
+        "outcome_tiers": {
+            "scored": len([r for r in results if r.outcome == "scored"]),
+            "extraction_weak": len([r for r in results if r.outcome == "extraction_weak"]),
+            "blocked": len([r for r in results if r.outcome == "blocked"]),
+            "error": len([r for r in results if r.outcome == "error"]),
+        },
         "results": [
             {
                 "domain": r.domain,
                 "total_score": r.total_score,
                 "level": r.level,
                 "level_label": r.level_label,
+                "outcome": r.outcome,
                 "technical_score": r.technical_score,
                 "structure_score": r.structure_score,
                 "schema_score": r.schema_score,
@@ -147,6 +173,7 @@ def save_results(results: list[SiteResult], output_path: Path) -> None:
                 "total_chunks": r.total_chunks,
                 "duration_seconds": r.duration_seconds,
                 "error": r.error,
+                "warnings": list(r.warnings),
             }
             for r in results
         ],
