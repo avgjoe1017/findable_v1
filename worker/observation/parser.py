@@ -2,10 +2,10 @@
 
 import re
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class MentionType(str, Enum):
+class MentionType(StrEnum):
     """Type of mention detected."""
 
     EXACT = "exact"  # Exact company name match
@@ -15,7 +15,7 @@ class MentionType(str, Enum):
     BRANDED = "branded"  # Branded term (e.g., product name)
 
 
-class CitationType(str, Enum):
+class CitationType(StrEnum):
     """Type of citation pattern."""
 
     DIRECT_QUOTE = "direct_quote"  # "According to X..."
@@ -25,7 +25,7 @@ class CitationType(str, Enum):
     IMPLICIT = "implicit"  # Mentions without explicit citation
 
 
-class Sentiment(str, Enum):
+class Sentiment(StrEnum):
     """Sentiment of the mention."""
 
     POSITIVE = "positive"
@@ -34,7 +34,7 @@ class Sentiment(str, Enum):
     MIXED = "mixed"
 
 
-class ConfidenceLevel(str, Enum):
+class ConfidenceLevel(StrEnum):
     """Confidence level expressed in response."""
 
     HIGH = "high"

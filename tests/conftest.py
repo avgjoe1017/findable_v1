@@ -8,7 +8,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-# Set test environment before importing app
+# Set test environment before any app code runs (CI must use same credentials)
 os.environ["ENV"] = "test"
 os.environ["JWT_SECRET"] = "test-secret-key"
 os.environ["DATABASE_URL"] = "postgresql+asyncpg://test:test@localhost:5432/findable_test"
@@ -19,6 +19,8 @@ os.environ["REDIS_URL"] = "redis://localhost:6379/0"
 async def setup_database() -> AsyncGenerator[None, None]:
     """Set up test database with all tables."""
     from api.config import get_settings
+
+    get_settings.cache_clear()  # Use test env/DB, not stale or .env values
     from api.database import Base
     from api.models.alert import Alert, AlertConfig  # noqa: F401
     from api.models.billing import (  # noqa: F401

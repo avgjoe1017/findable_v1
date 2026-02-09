@@ -356,7 +356,7 @@ class TestReportAssembler:
 
         assert report.metadata.site_id == site_id
         assert report.metadata.run_id == run_id
-        assert report.metadata.version == ReportVersion.V1_0
+        assert report.metadata.version == ReportVersion.V1_1
         assert report.metadata.domain == "test.com"
 
     def test_assemble_calculates_run_duration(self) -> None:

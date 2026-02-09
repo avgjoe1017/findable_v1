@@ -6,13 +6,13 @@ per pillar and generating actionable insights about progress.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from worker.scoring.calculator_v2 import FindableScoreV2, PillarScore
 
 
-class ChangeDirection(str, Enum):
+class ChangeDirection(StrEnum):
     """Direction of score change."""
 
     IMPROVED = "improved"
@@ -20,7 +20,7 @@ class ChangeDirection(str, Enum):
     UNCHANGED = "unchanged"
 
 
-class ChangeSignificance(str, Enum):
+class ChangeSignificance(StrEnum):
     """Significance level of a score change."""
 
     MAJOR = "major"  # >= 10 points

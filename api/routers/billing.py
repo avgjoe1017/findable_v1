@@ -253,12 +253,12 @@ async def create_checkout_session(
             success_url=(
                 str(request.success_url)
                 if request.success_url
-                else f"{settings.api_host}/billing/success"
+                else f"{settings.frontend_url}/billing?success=true"
             ),
             cancel_url=(
                 str(request.cancel_url)
                 if request.cancel_url
-                else f"{settings.api_host}/billing/cancel"
+                else f"{settings.frontend_url}/billing?cancelled=true"
             ),
             metadata={"user_id": str(current_user.id)},
             subscription_data={"metadata": {"user_id": str(current_user.id)}},

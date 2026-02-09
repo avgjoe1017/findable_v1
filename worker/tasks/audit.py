@@ -20,9 +20,9 @@ from worker.extraction.entity_recognition import (
     EntityRecognitionResult,
 )
 from worker.extraction.extractor import ContentExtractor
+from worker.extraction.site_type import SiteType, SiteTypeResult, detect_site_type
 from worker.fixes.generator import FixGenerator
 from worker.observation.comparison import compare_simulation_observation
-from worker.observation.models import ObservationRequest
 from worker.observation.runner import ObservationRunner, RunConfig
 from worker.questions.generator import QuestionGenerator, SiteContext
 from worker.reports.assembler import assemble_report
@@ -360,6 +360,37 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
                     )
                 except Exception as e:
                     logger.warning("js_detection_failed", error=str(e))
+
+        # =========================================================
+        # Step 2.6: Site Content Type Classification
+        # =========================================================
+        site_type_result: SiteTypeResult | None = None
+
+        try:
+            page_urls = [page.url for page in crawl_result.pages]
+            page_htmls = [page.html for page in crawl_result.pages]
+
+            site_type_result = detect_site_type(
+                domain=domain,
+                page_urls=page_urls,
+                page_htmls=page_htmls,
+            )
+
+            logger.info(
+                "site_type_detected",
+                domain=domain,
+                site_type=site_type_result.site_type.value,
+                confidence=site_type_result.confidence,
+                citation_baseline=site_type_result.citation_baseline,
+            )
+
+        except Exception as e:
+            logger.warning(
+                "site_type_detection_failed",
+                domain=domain,
+                error=str(e),
+            )
+            # Continue with audit even if site type detection fails
 
         # =========================================================
         # Step 2.75: Semantic Structure Analysis (v2)
@@ -784,24 +815,18 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
             logger.info("observation_starting", questions=len(questions))
 
             try:
-                # Create observation requests from questions
-                observation_requests = [
-                    ObservationRequest(
-                        question_id=q.id,
-                        question_text=q.text,
-                        company_name=company_name,
-                        domain=domain,
-                    )
-                    for q in questions
-                ]
+                # Create questions list for observation (question_id, question_text tuples)
+                observation_questions = [(str(q.id), q.text) for q in questions]
 
                 # Run observations
                 run_config = RunConfig.from_settings()
                 observation_runner = ObservationRunner(config=run_config)
-                observation_run = await observation_runner.run(
+                observation_run = await observation_runner.run_observation(
                     site_id=site_id,
                     run_id=run_id,
-                    requests=observation_requests,
+                    company_name=company_name,
+                    domain=domain,
+                    questions=observation_questions,
                 )
 
                 logger.info(
@@ -810,7 +835,9 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
                     mention_rate=observation_run.company_mention_rate,
                     citation_rate=observation_run.citation_rate,
                     total_cost=(
-                        observation_run.total_usage.cost if observation_run.total_usage else 0
+                        observation_run.total_usage.estimated_cost_usd
+                        if observation_run.total_usage
+                        else 0
                     ),
                 )
 
@@ -849,11 +876,36 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
                             ),
                         }
 
+                        # Add source primacy score (0-100 scale) for optimizer
+                        try:
+                            from worker.extraction.source_primacy import analyze_source_primacy
+
+                            primacy_result = analyze_source_primacy(
+                                domain=domain,
+                                site_type=(
+                                    site_type_result.site_type
+                                    if site_type_result
+                                    else SiteType.MIXED
+                                ),
+                                page_urls=page_urls if page_urls else [],
+                                brand_name=company_name,
+                            )
+                            # Store as 0-100 to match pillar score scale
+                            pillar_scores_snapshot["source_primacy"] = round(
+                                primacy_result.primacy_score * 100, 1
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                "source_primacy_for_calibration_failed",
+                                error=str(e),
+                            )
+
                     samples_collected = await collect_calibration_samples(
                         run_id=run_id,
                         simulation_result=simulation_result,
                         observation_run=observation_run,
                         pillar_scores=pillar_scores_snapshot,
+                        site_type=(site_type_result.site_type.value if site_type_result else None),
                     )
 
                     logger.info(
@@ -1042,6 +1094,7 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
             schema_score=schema_score,
             authority_score=authority_score,
             entity_recognition_result=entity_recognition_result,
+            site_type_result=site_type_result,
         )
 
         logger.info("report_assembly_completed", report_id=str(full_report.metadata.report_id))

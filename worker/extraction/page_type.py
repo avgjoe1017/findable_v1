@@ -6,13 +6,13 @@ context-appropriate expectations and recommendations.
 
 import re
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 
 
-class PageType(str, Enum):
+class PageType(StrEnum):
     """Types of web pages with different scoring expectations."""
 
     HOMEPAGE = "homepage"

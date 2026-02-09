@@ -658,6 +658,541 @@
   .delay-4 { animation-delay: 0.4s; }
   .delay-5 { animation-delay: 0.5s; }
   .delay-6 { animation-delay: 0.6s; }
+  .delay-7 { animation-delay: 0.7s; }
+  .delay-8 { animation-delay: 0.8s; }
+
+  /* Citation Context Section */
+  .citation-section {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .citation-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2rem;
+    align-items: start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--slate-800);
+  }
+
+  .citation-headline {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .site-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 1rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(20, 184, 166, 0.12);
+    color: var(--accent-teal);
+    border: 1px solid rgba(20, 184, 166, 0.25);
+  }
+
+  .likelihood-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 1rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .likelihood-high {
+    background: rgba(74, 222, 128, 0.12);
+    color: var(--signal-good);
+    border: 1px solid rgba(74, 222, 128, 0.25);
+  }
+
+  .likelihood-moderate {
+    background: rgba(251, 191, 36, 0.12);
+    color: var(--signal-fair);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+  }
+
+  .likelihood-low {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--signal-poor);
+    border: 1px solid rgba(248, 113, 113, 0.25);
+  }
+
+  .citation-baseline {
+    text-align: right;
+  }
+
+  .baseline-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--slate-100);
+    line-height: 1;
+  }
+
+  .baseline-label {
+    font-size: 0.75rem;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+  }
+
+  .citation-description {
+    font-size: 0.9375rem;
+    color: var(--slate-400);
+    line-height: 1.6;
+    max-width: 600px;
+  }
+
+  .citation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 1.5rem;
+  }
+
+  .category-predictions {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .prediction-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 90px;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    background: var(--slate-800);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .prediction-row:hover {
+    background: var(--slate-700);
+  }
+
+  .prediction-category {
+    font-weight: 500;
+    color: var(--slate-200);
+    text-transform: capitalize;
+    font-size: 0.875rem;
+  }
+
+  .prediction-bar-container {
+    height: 6px;
+    background: var(--slate-700);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .prediction-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0;
+  }
+
+  .prediction-bar.animated {
+    width: var(--bar-width);
+  }
+
+  .prediction-rate {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-align: right;
+  }
+
+  .primacy-card {
+    background: var(--slate-800);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .primacy-level {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.75rem;
+    color: var(--slate-100);
+    text-transform: capitalize;
+    margin-bottom: 0.5rem;
+  }
+
+  .primacy-meter {
+    height: 8px;
+    background: var(--slate-700);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 1rem 0;
+  }
+
+  .primacy-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .citation-recs {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--slate-800);
+  }
+
+  .rec-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    font-size: 0.875rem;
+    color: var(--slate-300);
+    line-height: 1.5;
+  }
+
+  .rec-bullet {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+    flex-shrink: 0;
+    margin-top: 0.5rem;
+  }
+
+  @media (max-width: 1024px) {
+    .citation-grid {
+      grid-template-columns: 1fr;
+    }
+    .citation-header {
+      grid-template-columns: 1fr;
+    }
+    .citation-baseline {
+      text-align: left;
+    }
+  }
+
+  /* Observation Section */
+  .observation-section {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .obs-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2rem;
+    align-items: start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--slate-800);
+  }
+
+  .obs-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .obs-stat-card {
+    background: var(--slate-800);
+    border-radius: 16px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+
+  .obs-stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 0.375rem;
+  }
+
+  .obs-stat-label {
+    font-size: 0.75rem;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .obs-results-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+  }
+
+  .obs-results-table th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 1rem 0.5rem;
+    text-align: left;
+  }
+
+  .obs-results-table th:last-child {
+    text-align: center;
+  }
+
+  .obs-results-table td {
+    padding: 0.875rem 1rem;
+    background: var(--slate-800);
+    font-size: 0.875rem;
+  }
+
+  .obs-results-table tr td:first-child {
+    border-radius: 12px 0 0 12px;
+  }
+
+  .obs-results-table tr td:last-child {
+    border-radius: 0 12px 12px 0;
+    text-align: center;
+  }
+
+  .obs-question-text {
+    color: var(--slate-200);
+    max-width: 400px;
+    line-height: 1.4;
+  }
+
+  .obs-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .obs-badge-yes {
+    background: rgba(74, 222, 128, 0.12);
+    color: var(--signal-good);
+    border: 1px solid rgba(74, 222, 128, 0.25);
+  }
+
+  .obs-badge-no {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--signal-poor);
+    border: 1px solid rgba(248, 113, 113, 0.25);
+  }
+
+  .obs-depth-bar {
+    display: inline-flex;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .obs-depth-pip {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--slate-700);
+  }
+
+  .obs-depth-pip.active {
+    background: var(--accent-teal);
+  }
+
+  .obs-model-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 1rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--slate-300);
+    background: var(--slate-800);
+    border: 1px solid var(--slate-700);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  @media (max-width: 1024px) {
+    .obs-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .obs-header {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .obs-stats-grid {
+      grid-template-columns: 1fr;
+    }
+    .obs-results-table {
+      font-size: 0.8125rem;
+    }
+    .obs-question-text {
+      max-width: 200px;
+    }
+  }
+
+  /* Divergence Section */
+  .divergence-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .divergence-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .divergence-level-none {
+    background: rgba(52, 211, 153, 0.15);
+    color: var(--signal-good);
+  }
+  .divergence-level-low {
+    background: rgba(52, 211, 153, 0.12);
+    color: var(--signal-good);
+  }
+  .divergence-level-medium {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--signal-moderate);
+  }
+  .divergence-level-high {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--signal-poor);
+  }
+
+  .divergence-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .divergence-metric {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .divergence-metric-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--slate-100);
+    margin-bottom: 0.25rem;
+  }
+
+  .divergence-metric-label {
+    font-size: 0.75rem;
+    color: var(--slate-400);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .divergence-bias-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  .divergence-bias-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .divergence-bias-fill {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .divergence-bias-fill-optimistic {
+    right: 50%;
+    background: var(--signal-poor);
+  }
+
+  .divergence-bias-fill-pessimistic {
+    left: 50%;
+    background: var(--signal-good);
+  }
+
+  .divergence-notes {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+  }
+
+  .divergence-notes li {
+    padding: 0.5rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+    font-size: 0.875rem;
+    color: var(--slate-300);
+    line-height: 1.5;
+  }
+
+  .divergence-notes li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.85rem;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--slate-500);
+  }
+
+  .divergence-refresh-banner {
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin-top: 1.25rem;
+    font-size: 0.875rem;
+    color: var(--signal-moderate);
+    line-height: 1.5;
+  }
+
+  @media (max-width: 768px) {
+    .divergence-metrics {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .divergence-metrics {
+      grid-template-columns: 1fr;
+    }
+  }
 
   /* Responsive */
   @media (max-width: 1024px) {
@@ -1112,6 +1647,391 @@
     {% endif %}
   </section>
 
+  <!-- Citation Context -->
+  {% if citation_context %}
+  <section class="citation-section animate-in delay-7">
+    <h2 class="section-title">Citation Context</h2>
+
+    <div class="citation-header">
+      <div>
+        <div class="citation-headline">
+          <span class="site-type-badge">{{ citation_context.site_type | default('mixed') | replace('_', ' ') }}</span>
+          <span class="likelihood-badge likelihood-{{ citation_context.overall_likelihood | default('low') }}">
+            {{ citation_context.overall_likelihood | default('low') }} likelihood
+          </span>
+        </div>
+        <p class="citation-description">{{ citation_context.citation_description | default('') }}</p>
+      </div>
+      <div class="citation-baseline">
+        <div class="baseline-value">{{ (citation_context.citation_baseline | default(0) * 100) | round(0) | int }}%</div>
+        <div class="baseline-label">Citation Baseline</div>
+        {% if citation_context.citation_range %}
+        <div style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.25rem; font-family: 'JetBrains Mono', monospace;">
+          {{ (citation_context.citation_range[0] * 100) | round(0) | int }}-{{ (citation_context.citation_range[1] * 100) | round(0) | int }}% range
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="citation-grid">
+      <!-- Per-Category Predictions -->
+      <div>
+        <h3 class="math-card-title">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 8h12M2 4h12M2 12h12" />
+          </svg>
+          Per-Category Citation Likelihood
+        </h3>
+        <div class="category-predictions">
+          {% for pred in citation_context.category_predictions | default([]) %}
+          <div class="prediction-row">
+            <span class="prediction-category">{{ pred.category }}</span>
+            <div class="prediction-bar-container">
+              <div class="prediction-bar"
+                   style="--bar-width: {{ (pred.predicted_rate * 100) | round(0) }}%;
+                          background: linear-gradient(90deg,
+                            {% if pred.likelihood == 'high' %}var(--signal-good), var(--accent-teal){% elif pred.likelihood == 'moderate' %}var(--signal-fair), var(--accent-amber){% else %}var(--signal-poor), var(--accent-coral){% endif %});">
+              </div>
+            </div>
+            <span class="prediction-rate" style="color: {% if pred.likelihood == 'high' %}var(--signal-good){% elif pred.likelihood == 'moderate' %}var(--signal-fair){% else %}var(--signal-poor){% endif %}">
+              {{ (pred.predicted_rate * 100) | round(0) | int }}%
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        {% if citation_context.best_category %}
+        <div style="margin-top: 0.75rem; font-size: 0.8125rem; color: var(--slate-400); display: flex; gap: 1.5rem;">
+          <span>Best: <span style="color: var(--signal-good); text-transform: capitalize;">{{ citation_context.best_category }}</span></span>
+          {% if citation_context.worst_category %}
+          <span>Weakest: <span style="color: var(--signal-poor); text-transform: capitalize;">{{ citation_context.worst_category }}</span></span>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Source Primacy + Context -->
+      <div>
+        {% if source_primacy %}
+        <h3 class="math-card-title">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="8" cy="8" r="6" />
+            <path d="M8 5l2 3H6l2-3z" />
+          </svg>
+          Source Primacy
+        </h3>
+        <div class="primacy-card">
+          <div class="primacy-level">{{ source_primacy.primacy_level | default('unknown') | replace('_', ' ') }}</div>
+          <div style="font-size: 0.875rem; color: var(--slate-400);">
+            {% if source_primacy.primacy_level == 'primary' %}
+            Your site is THE canonical source for its content. AI models strongly prefer citing primary sources.
+            {% elif source_primacy.primacy_level == 'authoritative' %}
+            Your site is a recognized authority. AI models will cite you when your content is the best match.
+            {% else %}
+            Your content overlaps with many other sources. AI models have alternatives and may not choose you.
+            {% endif %}
+          </div>
+          <div class="primacy-meter">
+            <div class="primacy-fill" style="width: {{ (source_primacy.primacy_score | default(0) * 100) | round(0) }}%;
+                        background: linear-gradient(90deg,
+                          {% if source_primacy.primacy_level == 'primary' %}var(--signal-good), var(--accent-teal){% elif source_primacy.primacy_level == 'authoritative' %}var(--signal-fair), var(--accent-amber){% else %}var(--signal-poor), var(--accent-coral){% endif %});">
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--slate-500);">
+            <span>Derivative</span>
+            <span style="font-family: 'JetBrains Mono', monospace;">{{ (source_primacy.primacy_score | default(0) * 100) | round(0) | int }}%</span>
+            <span>Primary</span>
+          </div>
+          {% if source_primacy.expected_citation_rate is defined %}
+          <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--slate-700); font-size: 0.8125rem; color: var(--slate-400);">
+            Expected citation rate from primacy: <span style="font-family: 'JetBrains Mono', monospace; color: var(--slate-200);">{{ (source_primacy.expected_citation_rate * 100) | round(0) | int }}%</span>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if citation_context.recommendations %}
+        <div class="citation-recs">
+          <h3 class="math-card-title">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M8 2v12M2 8h12" />
+            </svg>
+            How to Improve Citation Rate
+          </h3>
+          {% for rec in citation_context.recommendations[:4] %}
+          <div class="rec-item">
+            <span class="rec-bullet"></span>
+            <span>{{ rec }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Observation Results -->
+  {% if observation %}
+  <section class="observation-section animate-in delay-8">
+    <h2 class="section-title">AI Observation</h2>
+
+    <div class="obs-header">
+      <div>
+        <p style="font-size: 0.9375rem; color: var(--slate-400); line-height: 1.6; max-width: 600px;">
+          Real responses from AI models. We asked {{ observation.total_questions | default(0) }} questions and checked whether <strong style="color: var(--slate-200);">{{ company_name }}</strong> was mentioned or cited.
+        </p>
+      </div>
+      <div>
+        <span class="obs-model-badge">{{ observation.model | default('gpt-4o-mini') }}</span>
+      </div>
+    </div>
+
+    <!-- Aggregate Stats -->
+    <div class="obs-stats-grid">
+      <div class="obs-stat-card">
+        <div class="obs-stat-value" style="color: {% if (observation.company_mention_rate | default(0)) >= 0.7 %}var(--signal-good){% elif (observation.company_mention_rate | default(0)) >= 0.4 %}var(--signal-fair){% else %}var(--signal-poor){% endif %}">
+          {{ (observation.company_mention_rate | default(0) * 100) | round(0) | int }}%
+        </div>
+        <div class="obs-stat-label">Mention Rate</div>
+      </div>
+      <div class="obs-stat-card">
+        <div class="obs-stat-value" style="color: {% if (observation.citation_rate | default(0)) >= 0.5 %}var(--signal-good){% elif (observation.citation_rate | default(0)) >= 0.25 %}var(--signal-fair){% else %}var(--signal-poor){% endif %}">
+          {{ (observation.citation_rate | default(0) * 100) | round(0) | int }}%
+        </div>
+        <div class="obs-stat-label">Citation Rate</div>
+      </div>
+      <div class="obs-stat-card">
+        <div class="obs-stat-value" style="color: var(--slate-100);">
+          {{ observation.questions_completed | default(0) }}
+        </div>
+        <div class="obs-stat-label">Questions Tested</div>
+      </div>
+      <div class="obs-stat-card">
+        <div class="obs-stat-value" style="color: {% if (observation.avg_citation_depth | default(0)) >= 3.0 %}var(--signal-good){% elif (observation.avg_citation_depth | default(0)) >= 1.5 %}var(--signal-fair){% else %}var(--signal-poor){% endif %}">
+          {{ observation.avg_citation_depth | default(0) | round(1) }}
+        </div>
+        <div class="obs-stat-label">Avg Citation Depth (0-5)</div>
+      </div>
+    </div>
+
+    <!-- Per-Question Results -->
+    {% if observation.results %}
+    <div style="overflow-x: auto;">
+      <table class="obs-results-table">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Mentioned</th>
+            <th>URL Cited</th>
+            <th>Depth</th>
+            <th>Framing</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in observation.results[:20] %}
+          <tr>
+            <td>
+              <div class="obs-question-text">{{ r.question_text | truncate(80) }}</div>
+            </td>
+            <td>
+              {% if r.mentions_company %}
+                <span class="obs-badge obs-badge-yes">yes</span>
+              {% else %}
+                <span class="obs-badge obs-badge-no">no</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if r.mentions_url %}
+                <span class="obs-badge obs-badge-yes">cited</span>
+              {% else %}
+                <span class="obs-badge obs-badge-no">no</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="obs-depth-bar" title="Citation depth: {{ r.citation_depth | default(0) }}/5">
+                {% for i in range(5) %}
+                <div class="obs-depth-pip {% if i < (r.citation_depth | default(0)) %}active{% endif %}"></div>
+                {% endfor %}
+              </div>
+            </td>
+            <td>
+              <span style="font-size: 0.8125rem; color: var(--slate-400); text-transform: capitalize;">
+                {{ r.source_framing | default('absent') }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if observation.results | length > 20 %}
+      <div style="text-align: center; padding: 1rem; font-size: 0.8125rem; color: var(--slate-500);">
+        Showing 20 of {{ observation.results | length }} results
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <!-- Divergence: Simulation vs Observation -->
+  {% if divergence %}
+  <section class="divergence-section animate-in delay-8">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+      <h2 class="section-title" style="margin-bottom: 0;">Simulation vs Observation</h2>
+      <span class="divergence-level divergence-level-{{ divergence.level | default('none') }}">
+        {{ divergence.level | default('none') | upper }} divergence
+      </span>
+    </div>
+
+    <p style="font-size: 0.9375rem; color: var(--slate-400); line-height: 1.6; margin-bottom: 1.5rem;">
+      How closely the simulated findability score predicted actual AI behavior.
+    </p>
+
+    <div class="divergence-metrics">
+      <div class="divergence-metric">
+        <div class="divergence-metric-value">
+          {{ (divergence.prediction_accuracy | default(0) * 100) | round(0) | int }}%
+        </div>
+        <div class="divergence-metric-label">Prediction Accuracy</div>
+      </div>
+      <div class="divergence-metric">
+        <div class="divergence-metric-value" style="color: {% if divergence.mention_rate_delta | default(0) > 0 %}var(--signal-good){% elif divergence.mention_rate_delta | default(0) < 0 %}var(--signal-poor){% else %}var(--slate-200){% endif %};">
+          {% if divergence.mention_rate_delta | default(0) > 0 %}+{% endif %}{{ (divergence.mention_rate_delta | default(0) * 100) | round(1) }}pp
+        </div>
+        <div class="divergence-metric-label">Mention Rate Delta</div>
+      </div>
+      <div class="divergence-metric">
+        <div class="divergence-metric-value" style="color: {% if divergence.optimism_bias | default(0) > 0.1 %}var(--signal-poor){% else %}var(--slate-200){% endif %};">
+          {{ (divergence.optimism_bias | default(0) * 100) | round(0) | int }}%
+        </div>
+        <div class="divergence-metric-label">Optimism Bias</div>
+      </div>
+      <div class="divergence-metric">
+        <div class="divergence-metric-value" style="color: {% if divergence.pessimism_bias | default(0) > 0.1 %}var(--signal-moderate){% else %}var(--slate-200){% endif %};">
+          {{ (divergence.pessimism_bias | default(0) * 100) | round(0) | int }}%
+        </div>
+        <div class="divergence-metric-label">Pessimism Bias</div>
+      </div>
+    </div>
+
+    <!-- Bias visualization -->
+    <div style="margin: 1.5rem 0;">
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--slate-500); margin-bottom: 0.5rem;">
+        <span>Sim overestimates</span>
+        <span>Balanced</span>
+        <span>Sim underestimates</span>
+      </div>
+      <div class="divergence-bias-track">
+        {% set opt_pct = (divergence.optimism_bias | default(0) * 100) | round(0) %}
+        {% set pes_pct = (divergence.pessimism_bias | default(0) * 100) | round(0) %}
+        {% if opt_pct > 0 %}
+        <div class="divergence-bias-fill divergence-bias-fill-optimistic" style="width: {{ [opt_pct, 50] | min }}%;"></div>
+        {% endif %}
+        {% if pes_pct > 0 %}
+        <div class="divergence-bias-fill divergence-bias-fill-pessimistic" style="width: {{ [pes_pct, 50] | min }}%;"></div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if divergence.calibration_notes %}
+    <h3 style="font-size: 0.875rem; color: var(--slate-300); font-weight: 600; margin-bottom: 0.5rem;">Calibration Notes</h3>
+    <ul class="divergence-notes">
+      {% for note in divergence.calibration_notes %}
+      <li>{{ note }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if divergence.should_refresh %}
+    <div class="divergence-refresh-banner">
+      <strong>Re-run recommended.</strong>
+      {% for reason in divergence.refresh_reasons %}
+        {{ reason }}{% if not loop.last %} {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <!-- Benchmark Comparison -->
+  {% if benchmark %}
+  <section class="observation-section animate-in delay-8">
+    <h2 class="section-title">Competitive Benchmark</h2>
+
+    <p style="font-size: 0.9375rem; color: var(--slate-400); line-height: 1.6; margin-bottom: 1.5rem;">
+      How your site compares to competitors for the same questions.
+    </p>
+
+    {% if benchmark.competitors %}
+    <div style="overflow-x: auto;">
+      <table class="obs-results-table">
+        <thead>
+          <tr>
+            <th>Competitor</th>
+            <th>Mention Rate</th>
+            <th>Citation Rate</th>
+            <th>Score</th>
+            <th>vs You</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Your site first -->
+          <tr style="border-left: 3px solid var(--accent-teal);">
+            <td><strong style="color: var(--accent-teal);">{{ company_name }} (you)</strong></td>
+            <td>
+              <span style="font-family: 'JetBrains Mono', monospace; color: var(--slate-200);">
+                {{ (observation.company_mention_rate | default(0) * 100) | round(0) | int }}%
+              </span>
+            </td>
+            <td>
+              <span style="font-family: 'JetBrains Mono', monospace; color: var(--slate-200);">
+                {{ (observation.citation_rate | default(0) * 100) | round(0) | int }}%
+              </span>
+            </td>
+            <td>
+              <span style="font-family: 'JetBrains Mono', monospace; color: var(--accent-teal);">
+                {{ typical_score }}
+              </span>
+            </td>
+            <td>--</td>
+          </tr>
+          {% for comp in benchmark.competitors %}
+          <tr>
+            <td style="color: var(--slate-200);">{{ comp.name | default(comp.domain | default('Unknown')) }}</td>
+            <td>
+              <span style="font-family: 'JetBrains Mono', monospace;">
+                {{ (comp.mention_rate | default(0) * 100) | round(0) | int }}%
+              </span>
+            </td>
+            <td>
+              <span style="font-family: 'JetBrains Mono', monospace;">
+                {{ (comp.citation_rate | default(0) * 100) | round(0) | int }}%
+              </span>
+            </td>
+            <td>
+              <span style="font-family: 'JetBrains Mono', monospace;">
+                {{ comp.score | default('--') }}
+              </span>
+            </td>
+            <td>
+              {% if comp.citation_rate is defined and observation %}
+                {% set diff = ((observation.citation_rate | default(0)) - (comp.citation_rate | default(0))) * 100 %}
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8125rem; color: {% if diff > 0 %}var(--signal-good){% elif diff < 0 %}var(--signal-poor){% else %}var(--slate-400){% endif %};">
+                  {% if diff > 0 %}+{% endif %}{{ diff | round(0) | int }}pp
+                </span>
+              {% else %}
+                --
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
   <!-- Footer -->
   <footer class="report-footer">
     <p>Generated by <a href="/">Findable Score Analyzer</a> &mdash; Measuring AI Sourceability</p>
@@ -1132,6 +2052,11 @@
 
       // Animate category bars
       document.querySelectorAll('.category-bar').forEach(bar => {
+        bar.classList.add('animated');
+      });
+
+      // Animate prediction bars
+      document.querySelectorAll('.prediction-bar').forEach(bar => {
         bar.classList.add('animated');
       });
     }, 300);

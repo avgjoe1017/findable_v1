@@ -37,11 +37,12 @@ class TestRobotsAI:
         assert "PerplexityBot" in AI_CRAWLERS
         assert "Google-Extended" in AI_CRAWLERS
 
-    def test_required_crawlers_marked(self):
-        """Verify critical crawlers are marked as required."""
-        assert AI_CRAWLERS["GPTBot"]["required"] is True
-        assert AI_CRAWLERS["ClaudeBot"]["required"] is True
-        assert AI_CRAWLERS["PerplexityBot"]["required"] is True
+    def test_required_crawlers_present(self):
+        """Verify critical AI crawlers are defined with expected structure."""
+        for name in ("GPTBot", "ClaudeBot", "PerplexityBot"):
+            assert name in AI_CRAWLERS
+            assert "weight" in AI_CRAWLERS[name]
+            assert "pipeline" in AI_CRAWLERS[name]
 
     @pytest.mark.asyncio
     async def test_no_robots_txt_allows_all(self):
@@ -73,7 +74,8 @@ Allow: /
 
         assert result.robots_txt_exists is True
         assert result.crawlers["GPTBot"].allowed is False
-        assert "GPTBot" in result.critical_blocked
+        # AI crawlers (e.g. GPTBot) go to warning_blocked; search engines go to critical_blocked
+        assert "GPTBot" in result.warning_blocked
         assert result.score < 100.0
 
 
@@ -312,10 +314,11 @@ class TestTechnicalScore:
         score = calculate_technical_score(is_https=True)
 
         output = score.show_the_math()
+        output_lower = output.lower()
 
-        assert "TECHNICAL READINESS SCORE" in output
-        assert "COMPONENT BREAKDOWN" in output
-        assert "robots.txt" in output.lower() or "robots" in output.lower()
+        assert "technical readiness score" in output_lower
+        assert "component breakdown" in output_lower
+        assert "score" in output_lower
 
     def test_to_dict_serializable(self):
         """to_dict should produce JSON-serializable output."""

@@ -6,7 +6,7 @@ by comparing static vs. rendered content.
 
 import asyncio
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from types import TracebackType
 from typing import TYPE_CHECKING
 
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from playwright.async_api import Browser, Page
 
 
-class RenderMode(str, Enum):
+class RenderMode(StrEnum):
     """How to fetch pages."""
 
     STATIC = "static"  # httpx only

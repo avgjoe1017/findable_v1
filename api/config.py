@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_workers: int = 1
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    frontend_url: str = "http://localhost:3000"  # Production: https://getfindable.online
     rate_limit_enabled: bool = True  # Set to False to disable rate limiting in dev
 
     # Database

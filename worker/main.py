@@ -66,6 +66,21 @@ def run_worker() -> None:
 
     redis_conn = get_redis_connection_bytes()
 
+    # Load active calibration config for dynamic weights/thresholds
+    if settings.calibration_enabled:
+        try:
+            import asyncio
+
+            from worker.scoring.calculator_v2 import load_active_calibration_weights
+
+            weights = asyncio.run(load_active_calibration_weights())
+            logging.info(
+                "Calibration config loaded",
+                extra={"weights": weights},
+            )
+        except Exception as e:
+            logging.warning(f"Failed to load calibration config, using defaults: {e}")
+
     # Initialize calibration schedules (drift detection)
     try:
         from worker.scheduler import ensure_calibration_schedules

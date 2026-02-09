@@ -15,12 +15,21 @@ Usage:
 
 import asyncio
 import json
+import os
 import sys
 import uuid
 from datetime import datetime
 
 # Add project root to path
 sys.path.insert(0, ".")
+
+# Load .env file if present
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, rely on system env vars
 
 
 async def run_full_audit(url: str, max_pages: int = 10) -> dict:
@@ -31,10 +40,14 @@ async def run_full_audit(url: str, max_pages: int = 10) -> dict:
     from worker.crawler.crawler import crawl_site
     from worker.embeddings.embedder import Embedder
     from worker.extraction.extractor import ContentExtractor
+    from worker.extraction.site_type import detect_site_type
+    from worker.observation.models import ProviderType
+    from worker.observation.runner import ObservationRunner, RunConfig
     from worker.questions.generator import QuestionGenerator, SiteContext
     from worker.retrieval.retriever import HybridRetriever
     from worker.scoring.calculator import ScoreCalculator
     from worker.scoring.calculator_v2 import FindableScoreCalculatorV2
+    from worker.scoring.citation_context import generate_citation_context
     from worker.simulation.runner import SimulationRunner
     from worker.tasks.authority_check import aggregate_authority_scores, run_authority_checks_sync
     from worker.tasks.schema_check import aggregate_schema_scores, run_schema_checks_sync
@@ -135,6 +148,36 @@ async def run_full_audit(url: str, max_pages: int = 10) -> dict:
         print(f"      JS-dependent: {'Yes' if js_result.likely_js_dependent else 'No'}")
         results["pillars"]["technical"]["js_dependent"] = js_result.likely_js_dependent
         results["pillars"]["technical"]["score"] = technical_score.total_score
+
+    # =========================================================
+    # SITE TYPE: Content Type Classification
+    # =========================================================
+    print("\n[SITE TYPE] Detecting site content type...")
+    site_type_result = None
+    citation_context = None
+    try:
+        page_urls = [page.url for page in crawl_result.pages]
+        page_htmls = [page.html for page in crawl_result.pages]
+
+        site_type_result = detect_site_type(
+            domain=domain,
+            page_urls=page_urls,
+            page_htmls=page_htmls,
+        )
+
+        print(f"      Type: {site_type_result.site_type.value}")
+        print(f"      Confidence: {site_type_result.confidence:.0%}")
+        print(f"      Citation Baseline: {site_type_result.citation_baseline:.0%}")
+        print(f"      Signals: {', '.join(site_type_result.signals[:3])}")
+
+        # Generate citation context
+        citation_context = generate_citation_context(site_type_result)
+
+        results["site_type"] = site_type_result.to_dict()
+        results["citation_context"] = citation_context.to_dict()
+
+    except Exception as e:
+        print(f"      Error: {e}")
 
     # =========================================================
     # PILLAR 2: Semantic Structure (20 points)
@@ -434,7 +477,371 @@ async def run_full_audit(url: str, max_pages: int = 10) -> dict:
         "pillars_warning": v2_score.pillars_warning,
         "pillars_critical": v2_score.pillars_critical,
         "strengths": v2_score.strengths,
+        "pillars": [p.to_dict() for p in v2_score.pillars],
     }
+
+    # =========================================================
+    # OBSERVATION: Live AI Citation Depth (Citable Index)
+    # =========================================================
+    print("\n[OBSERVATION] Running live AI observations...")
+
+    # Check for API keys
+    openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
+    openai_key = os.environ.get("OPENAI_API_KEY", "")
+
+    observation_run = None
+    citable_index = None
+
+    if openrouter_key or openai_key:
+        # Configure observation
+        if openrouter_key:
+            primary = ProviderType.OPENROUTER
+            fallback = ProviderType.OPENAI if openai_key else ProviderType.MOCK
+        else:
+            primary = ProviderType.OPENAI
+            fallback = ProviderType.MOCK
+
+        obs_config = RunConfig(
+            primary_provider=primary,
+            fallback_provider=fallback,
+            model="openai/gpt-4o-mini",
+            openrouter_api_key=openrouter_key,
+            openai_api_key=openai_key,
+            max_questions=20,  # Limit for testing
+            max_cost_per_run=0.50,  # Cost cap
+            citation_depth_enabled=True,  # Enable citation depth analysis
+            concurrent_requests=3,
+        )
+
+        # Prepare questions as (id, text) tuples
+        obs_questions = [(q.id, q.text) for q in questions[:20]]
+
+        def progress_cb(done: int, total: int, status: str) -> None:
+            print(f"      [{done}/{total}] {status}")
+
+        obs_runner = ObservationRunner(config=obs_config, progress_callback=progress_cb)
+
+        observation_run = await obs_runner.run_observation(
+            site_id=site_id,
+            run_id=run_id,
+            company_name=company_name,
+            domain=domain,
+            questions=obs_questions,
+        )
+
+        print(f"      Status: {observation_run.status.value}")
+        print(f"      Questions completed: {observation_run.questions_completed}")
+        print(f"      Company mention rate: {observation_run.company_mention_rate:.1%}")
+        print(f"      Domain mention rate: {observation_run.domain_mention_rate:.1%}")
+        print(f"      Citation rate: {observation_run.citation_rate:.1%}")
+        print(f"      Avg citation depth: {observation_run.avg_citation_depth:.2f}")
+        print(f"      Total cost: ${observation_run.total_usage.estimated_cost_usd:.4f}")
+
+        # Calculate Citable Index metrics
+        completed_results = [
+            r for r in observation_run.results if r.response and r.response.success
+        ]
+        if completed_results:
+            n = len(completed_results)
+            pct_citable = sum(1 for r in completed_results if r.citation_depth >= 3) / n * 100
+            pct_strongly_sourced = (
+                sum(1 for r in completed_results if r.citation_depth >= 4) / n * 100
+            )
+
+            # Track URL-floor rule usage (transparency metric)
+            # Floored = mentions_url but heuristic_depth < 3 (floor raised it to 3)
+            floored_count = sum(
+                1
+                for r in completed_results
+                if r.mentions_url and getattr(r, "heuristic_depth", 0) < 3 and r.citation_depth >= 3
+            )
+            pct_floored = floored_count / n * 100 if n else 0.0
+
+            # Determine bands
+            citable_band = "low" if pct_citable < 10 else ("mid" if pct_citable < 25 else "high")
+            strongly_band = (
+                "low"
+                if pct_strongly_sourced < 5
+                else ("mid" if pct_strongly_sourced < 15 else "high")
+            )
+
+            # Top wins (depth >= 4) and misses (depth <= 1)
+            top_wins = sorted(
+                [r for r in completed_results if r.citation_depth >= 4],
+                key=lambda r: -r.citation_depth,
+            )[:3]
+            top_misses = sorted(
+                [r for r in completed_results if r.citation_depth <= 1],
+                key=lambda r: r.citation_depth,
+            )[:3]
+
+            # Build miss reason for each miss
+            def get_miss_reason(r):
+                if not r.mentions_company:
+                    return "not mentioned"
+                elif not r.mentions_url:
+                    return "no URL"
+                else:
+                    return "listed only"
+
+            citable_index = {
+                "avg_depth": round(observation_run.avg_citation_depth, 2),
+                "pct_citable": round(pct_citable, 1),
+                "pct_strongly_sourced": round(pct_strongly_sourced, 1),
+                "pct_floored": round(pct_floored, 1),  # % boosted by URL-floor rule
+                "citable_band": citable_band,
+                "strongly_sourced_band": strongly_band,
+                "questions_observed": n,
+                "company_mention_rate": round(observation_run.company_mention_rate * 100, 1),
+                "citation_rate": round(observation_run.citation_rate * 100, 1),
+                "top_wins": [
+                    {
+                        "question": r.question_text[:60],
+                        "depth": r.citation_depth,
+                        "label": r.citation_depth_label,
+                    }
+                    for r in top_wins
+                ],
+                "top_misses": [
+                    {
+                        "question": r.question_text[:60],
+                        "depth": r.citation_depth,
+                        "reason": get_miss_reason(r),
+                    }
+                    for r in top_misses
+                ],
+            }
+
+            results["citable_index"] = citable_index
+
+            # Store observation results
+            results["observation"] = {
+                "status": observation_run.status.value,
+                "questions_completed": observation_run.questions_completed,
+                "questions_failed": observation_run.questions_failed,
+                "company_mention_rate": round(observation_run.company_mention_rate, 3),
+                "domain_mention_rate": round(observation_run.domain_mention_rate, 3),
+                "citation_rate": round(observation_run.citation_rate, 3),
+                "avg_citation_depth": round(observation_run.avg_citation_depth, 2),
+                "total_cost_usd": round(observation_run.total_usage.estimated_cost_usd, 4),
+            }
+
+            print()
+            print(f"      CITABLE INDEX: {pct_citable:.1f}% citable ({citable_band})")
+            print(f"      Strongly sourced: {pct_strongly_sourced:.1f}% ({strongly_band})")
+    else:
+        print("      Skipped: No OPENROUTER_API_KEY or OPENAI_API_KEY found")
+        print("      Set one of these environment variables to enable observation")
+
+    # Build headline (2-axis model)
+    if citable_index:
+        pct_cit = citable_index["pct_citable"]
+        pct_strong = citable_index["pct_strongly_sourced"]
+        # More accurate wording: depth 3 = "citable" (URL included), depth 4+ = "strongly sourced"
+        if pct_strong > 0:
+            headline_summary = (
+                f"Your site scores {v2_score.total_score:.0f}/100 ({v2_score.level_label}). "
+                f"{pct_cit:.0f}% of AI answers include your URL (citable), "
+                f"{pct_strong:.0f}% treat you as authoritative."
+            )
+        else:
+            headline_summary = (
+                f"Your site scores {v2_score.total_score:.0f}/100 ({v2_score.level_label}). "
+                f"{pct_cit:.0f}% of AI answers include your URL, but 0% treat you as the authority."
+            )
+        results["headline"] = {
+            "findable_score": round(v2_score.total_score, 1),
+            "findable_level": v2_score.level,
+            "findable_level_label": v2_score.level_label,
+            "pct_citable": citable_index["pct_citable"],
+            "pct_strongly_sourced": citable_index["pct_strongly_sourced"],
+            "avg_depth": citable_index["avg_depth"],
+            "citable_band": citable_index["citable_band"],
+            "strongly_sourced_band": citable_index["strongly_sourced_band"],
+            "pct_floored": citable_index.get("pct_floored", 0),
+            "summary": headline_summary,
+        }
+    else:
+        results["headline"] = {
+            "findable_score": round(v2_score.total_score, 1),
+            "findable_level": v2_score.level,
+            "findable_level_label": v2_score.level_label,
+            "pct_citable": None,
+            "citable_band": None,
+            "summary": (
+                f"Your site scores {v2_score.total_score:.0f}/100 ({v2_score.level_label}). "
+                "Run observation to measure live citation depth."
+            ),
+        }
+
+    # Build top 3 causes from weakest pillars + observation
+    pillar_cause_map = {
+        "technical": {
+            "cause": "AI crawlers can't access your content",
+            "fix": "Fix robots.txt blocks, improve page speed, and ensure HTTPS.",
+        },
+        "structure": {
+            "cause": "Content isn't structured for AI extraction",
+            "fix": "Fix heading hierarchy, lead with answers, and add FAQ sections.",
+        },
+        "schema": {
+            "cause": "Missing structured data markup",
+            "fix": "Add FAQPage, HowTo, Article, and Organization schema.",
+        },
+        "authority": {
+            "cause": "Weak trust and authority signals",
+            "fix": "Add author attribution, credentials, citations, and visible dates.",
+        },
+        "entity_recognition": {
+            "cause": "AI doesn't recognize your brand as an entity",
+            "fix": "Build external brand presence (Wikipedia, Wikidata, domain authority).",
+        },
+        "retrieval": {
+            "cause": "Content doesn't surface in AI retrieval",
+            "fix": "Improve content depth, reduce boilerplate, and add quotable statements.",
+        },
+        "coverage": {
+            "cause": "Missing answers to common questions about your domain",
+            "fix": "Create content covering entity facts and product/how-to questions.",
+        },
+    }
+
+    evaluated_pillars = [p for p in v2_score.pillars if p.evaluated]
+    weakest = sorted(evaluated_pillars, key=lambda p: p.raw_score)[:2]
+
+    top_causes = []
+    for pillar in weakest:
+        cause_info = pillar_cause_map.get(
+            pillar.name,
+            {
+                "cause": f"Low {pillar.display_name} score",
+                "fix": "Review and improve this area.",
+            },
+        )
+        proof_parts = [f"{pillar.display_name} score: {pillar.raw_score:.0f}/100"]
+        if pillar.critical_issues:
+            proof_parts.append(pillar.critical_issues[0])
+        top_causes.append(
+            {
+                "cause": cause_info["cause"],
+                "proof": "; ".join(proof_parts),
+                "fix": cause_info["fix"],
+                "source": "pillar",
+                "pillar_name": pillar.name,
+            }
+        )
+
+    # Add observation-based cause (identify gaps, not positives)
+    if citable_index:
+        pct_cit = citable_index["pct_citable"]
+        pct_strong = citable_index["pct_strongly_sourced"]
+        pct_floor = citable_index.get("pct_floored", 0)
+
+        if pct_cit < 25:
+            # Low citation rate is a real problem
+            top_causes.append(
+                {
+                    "cause": "AI rarely includes your URLs in answers",
+                    "proof": f"Only {pct_cit:.0f}% of responses include a {domain} URL (citable threshold)",
+                    "fix": "Add unique data, quotable statistics, and explicit source attribution.",
+                    "source": "observation",
+                    "pillar_name": None,
+                }
+            )
+        elif pct_strong < 5 and pct_cit >= 25:
+            # High URL presence but no authority framing — the real gap
+            top_causes.append(
+                {
+                    "cause": "URLs included but rarely treated as authoritative",
+                    "proof": (
+                        f"{pct_cit:.0f}% include a URL (citable), but {pct_strong:.0f}% strongly sourced. "
+                        f"Floored by URL rule: {pct_floor:.0f}%."
+                    ),
+                    "fix": "Create primary-source pages with unique research, definitions, and expert commentary.",
+                    "source": "observation",
+                    "pillar_name": None,
+                }
+            )
+        elif pct_floor > 50:
+            # Most citable % is from floor rule, not earned
+            top_causes.append(
+                {
+                    "cause": "Citation depth inflated by URL presence",
+                    "proof": f"{pct_floor:.0f}% of citable scores came from URL-floor rule, not organic authority.",
+                    "fix": "Build content that earns depth 3+ without relying on URL links.",
+                    "source": "observation",
+                    "pillar_name": None,
+                }
+            )
+        else:
+            # Strong observation — don't put in causes, note as strength
+            # But we need a 3rd cause, so use a minor gap if available
+            if pct_strong < 15:
+                top_causes.append(
+                    {
+                        "cause": "Room to grow from citable to authoritative",
+                        "proof": f"{pct_cit:.0f}% citable but only {pct_strong:.0f}% strongly sourced (depth 4+).",
+                        "fix": "Add original research, expert quotes, and explicit source attribution.",
+                        "source": "observation",
+                        "pillar_name": None,
+                    }
+                )
+    else:
+        top_causes.append(
+            {
+                "cause": "Citation depth unknown",
+                "proof": "Observation not run — no live AI responses analyzed.",
+                "fix": "Run observation to measure how deeply AI cites your content.",
+                "source": "observation",
+                "pillar_name": None,
+            }
+        )
+
+    results["top_causes"] = {"causes": top_causes[:3]}
+
+    # Print headline and top causes
+    print()
+    print("=" * 70)
+    print("HEADLINE (2-AXIS MODEL)")
+    print("=" * 70)
+
+    # All 4 numbers in a tight block
+    print(f"  Findable Score:    {v2_score.total_score:.0f}/100 ({v2_score.level_label})")
+    if citable_index:
+        print(
+            f"  Citable:           {citable_index['pct_citable']:.0f}% of answers include your URL"
+        )
+        print(
+            f"  Strongly Sourced:  {citable_index['pct_strongly_sourced']:.0f}% treat you as authoritative"
+        )
+        print(f"  Avg Depth:         {citable_index['avg_depth']:.1f}/5")
+        if citable_index.get("pct_floored", 0) > 0:
+            print(f"  (Floored by URL:   {citable_index['pct_floored']:.0f}%)")
+
+        if citable_index.get("top_wins"):
+            print()
+            print("  Top Wins (depth 4+):")
+            for win in citable_index["top_wins"][:2]:
+                print(f"    + {win['question'][:50]}... [depth {win['depth']}]")
+        if citable_index.get("top_misses"):
+            print()
+            print("  Top Misses (depth 0-1):")
+            for miss in citable_index["top_misses"][:2]:
+                print(f"    - {miss['question'][:50]}... [depth {miss['depth']}: {miss['reason']}]")
+    else:
+        print("AXIS 2 - Citable Index: [Observation not run]")
+    print()
+    print("TOP 3 CAUSES:")
+    for i, cause in enumerate(top_causes[:3], 1):
+        print(f"  {i}. {cause['cause']}")
+        print(f"     Proof: {cause['proof']}")
+        print(f"     Fix: {cause['fix']}")
+
+    # Print citation context if available
+    if citation_context:
+        print()
+        print(citation_context.show_citation_context())
+
     results["completed_at"] = datetime.now().isoformat()
 
     print(f"\n{'='*70}")

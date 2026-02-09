@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from api.models.user import User
 
 
-class AlertType(str, Enum):
+class AlertType(StrEnum):
     """Types of alerts that can be triggered."""
 
     SCORE_DROP = "score_drop"  # Score decreased by threshold
@@ -31,7 +31,7 @@ class AlertType(str, Enum):
     SNAPSHOT_COMPLETE = "snapshot_complete"  # Snapshot completed (optional)
 
 
-class AlertSeverity(str, Enum):
+class AlertSeverity(StrEnum):
     """Severity levels for alerts."""
 
     CRITICAL = "critical"  # Immediate attention needed
@@ -39,7 +39,7 @@ class AlertSeverity(str, Enum):
     INFO = "info"  # Informational only
 
 
-class AlertChannel(str, Enum):
+class AlertChannel(StrEnum):
     """Notification delivery channels."""
 
     EMAIL = "email"
@@ -47,7 +47,7 @@ class AlertChannel(str, Enum):
     IN_APP = "in_app"
 
 
-class AlertStatus(str, Enum):
+class AlertStatus(StrEnum):
     """Status of an alert."""
 
     PENDING = "pending"  # Not yet sent

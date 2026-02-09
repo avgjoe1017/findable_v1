@@ -125,7 +125,7 @@ class TestCalculateWeightedAccuracy:
 
     def test_perfect_accuracy_when_all_correct(self):
         """Returns 1.0 when all predictions are correct."""
-        # Create mock samples where high pillar scores = mentioned
+        # Create mock samples where high pillar scores = cited
         samples = []
         for _ in range(10):
             sample = MagicMock()
@@ -138,7 +138,7 @@ class TestCalculateWeightedAccuracy:
                 "retrieval": 80.0,
                 "coverage": 80.0,
             }
-            sample.obs_mentioned = True  # High score -> should be mentioned
+            sample.obs_cited = True  # High score -> should be cited
             samples.append(sample)
 
         accuracy = _calculate_weighted_accuracy(samples, DEFAULT_WEIGHTS)
@@ -146,7 +146,7 @@ class TestCalculateWeightedAccuracy:
 
     def test_zero_accuracy_when_all_wrong(self):
         """Returns 0.0 when all predictions are wrong."""
-        # Create mock samples where high pillar scores but NOT mentioned
+        # Create mock samples where high pillar scores but NOT cited
         samples = []
         for _ in range(10):
             sample = MagicMock()
@@ -159,7 +159,7 @@ class TestCalculateWeightedAccuracy:
                 "retrieval": 80.0,
                 "coverage": 80.0,
             }
-            sample.obs_mentioned = False  # Prediction wrong: high score but not mentioned
+            sample.obs_cited = False  # Prediction wrong: high score but not cited
             samples.append(sample)
 
         accuracy = _calculate_weighted_accuracy(samples, DEFAULT_WEIGHTS)
@@ -168,8 +168,8 @@ class TestCalculateWeightedAccuracy:
     def test_skips_samples_without_pillar_scores(self):
         """Samples without pillar_scores are skipped."""
         samples = [
-            MagicMock(pillar_scores=None, obs_mentioned=True),
-            MagicMock(pillar_scores=None, obs_mentioned=False),
+            MagicMock(pillar_scores=None, obs_cited=True),
+            MagicMock(pillar_scores=None, obs_cited=False),
         ]
 
         accuracy = _calculate_weighted_accuracy(samples, DEFAULT_WEIGHTS)
@@ -274,7 +274,8 @@ class TestOptimizePillarWeightsAsync:
         result = await optimize_pillar_weights(min_samples=100)
 
         assert len(result.errors) > 0
-        assert "Insufficient samples" in result.errors[0]
+        assert "Insufficient" in result.errors[0]
+        assert "samples" in result.errors[0]
         assert result.best_weights is None
 
 

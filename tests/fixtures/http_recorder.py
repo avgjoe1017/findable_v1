@@ -11,7 +11,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -19,7 +19,7 @@ from unittest.mock import AsyncMock, patch
 from tests.fixtures.determinism import request_hash
 
 
-class RecordMode(str, Enum):
+class RecordMode(StrEnum):
     """Recording mode for HTTP interactions."""
 
     # Only replay from cassette, fail if no match

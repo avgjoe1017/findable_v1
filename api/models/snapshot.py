@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from api.models.site import Site
 
 
-class SnapshotTrigger(str, Enum):
+class SnapshotTrigger(StrEnum):
     """How the snapshot was triggered."""
 
     SCHEDULED_WEEKLY = "scheduled_weekly"

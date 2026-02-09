@@ -1,24 +1,24 @@
 {
   "url": "https://httpbin.org",
-  "started_at": "2026-02-01T18:46:16.386188",
+  "started_at": "2026-02-08T14:12:12.092112",
   "pillars": {
     "technical": {
-      "score": 63.864,
-      "level": "warning",
+      "score": 57.555,
+      "level": "partial",
       "js_dependent": true
     },
     "structure": {
       "score": 51.96666666666667,
-      "level": "warning"
+      "level": "partial"
     },
     "schema": {
       "score": 6.5,
-      "level": "critical",
+      "level": "limited",
       "types": []
     },
     "authority": {
       "score": 11.866666666666667,
-      "level": "critical"
+      "level": "limited"
     },
     "retrieval": {
       "score": 43.3107513920428,
@@ -31,12 +31,88 @@
   },
   "crawl": {
     "pages_crawled": 2,
-    "urls_discovered": 21,
-    "duration_seconds": 15.233989
+    "urls_discovered": 24,
+    "duration_seconds": 20.107339
   },
   "extraction": {
     "pages": 2,
     "words": 39
+  },
+  "site_type": {
+    "site_type": "reference",
+    "confidence": 0.95,
+    "signals": [
+      "Domain pattern matches reference",
+      "50% pages are homepage (1/2)"
+    ],
+    "page_type_counts": {
+      "homepage": 1,
+      "unknown": 1
+    },
+    "total_pages_analyzed": 2,
+    "citation_baseline": 0.85,
+    "citation_range": [
+      0.75,
+      0.95
+    ],
+    "citation_description": "Reference sites provide unique answers not available elsewhere.",
+    "category_predictions": {
+      "identity": 0.75,
+      "differentiation": 0.9,
+      "expertise": 0.9,
+      "comparison": 0.65,
+      "offerings": 0.8
+    }
+  },
+  "citation_context": {
+    "site_type": "reference",
+    "site_type_confidence": 0.95,
+    "citation_baseline": 0.85,
+    "citation_range": [
+      0.75,
+      0.95
+    ],
+    "citation_description": "Reference sites provide unique answers not available elsewhere.",
+    "overall_likelihood": "high",
+    "category_predictions": [
+      {
+        "category": "identity",
+        "likelihood": "high",
+        "predicted_rate": 0.75,
+        "reason": "Well-known reference sites are recognized but rarely cited for identity queries."
+      },
+      {
+        "category": "differentiation",
+        "likelihood": "high",
+        "predicted_rate": 0.9,
+        "reason": "Reference content is the gold standard  - AI cites it heavily."
+      },
+      {
+        "category": "expertise",
+        "likelihood": "high",
+        "predicted_rate": 0.9,
+        "reason": "Unique, authoritative answers drive most citations."
+      },
+      {
+        "category": "comparison",
+        "likelihood": "moderate",
+        "predicted_rate": 0.65,
+        "reason": "Side-by-side reference data gets cited when available."
+      },
+      {
+        "category": "offerings",
+        "likelihood": "high",
+        "predicted_rate": 0.8,
+        "reason": "Feature documentation of reference tools gets good citation rates."
+      }
+    ],
+    "recommendations": [
+      "Keep reference content comprehensive and up-to-date.",
+      "Add structured data for easy AI extraction (definitions, code examples, tables).",
+      "Ensure content hierarchy is clear so AI can find specific answers quickly."
+    ],
+    "best_category": "differentiation",
+    "worst_category": "comparison"
   },
   "chunking": {
     "total_chunks": 2
@@ -54,17 +130,490 @@
     "overall_score": 41.36852785767414
   },
   "v2_score": {
-    "total": 36.2222878480107,
-    "grade": "F",
-    "grade_description": "Critical - Immediate action required",
+    "total": 35.3156689343863,
+    "level": "not_yet_findable",
+    "level_label": "Not Yet Findable",
+    "level_summary": "AI crawlers can't effectively access or cite your content yet.",
+    "level_focus": "Fix critical technical barriers first.",
+    "next_milestone": {
+      "score": 40,
+      "name": "Partially Findable",
+      "description": "Basic AI accessibility achieved",
+      "points_needed": 4.7
+    },
+    "points_to_milestone": 4.7,
     "pillars_evaluated": 6,
-    "pillars_not_evaluated": 0,
-    "max_evaluated_points": 100,
-    "is_partial": false,
-    "evaluated_score_pct": 36.2222878480107,
+    "pillars_not_evaluated": 1,
+    "max_evaluated_points": 87,
+    "is_partial": true,
+    "evaluated_score_pct": 35.3156689343863,
     "pillars_good": 0,
     "pillars_warning": 3,
-    "pillars_critical": 3
+    "pillars_critical": 3,
+    "strengths": [
+      "robots.txt allows all AI crawlers",
+      "HTTPS enabled (secure connection)"
+    ],
+    "pillars": [
+      {
+        "name": "technical",
+        "display_name": "Technical Readiness",
+        "raw_score": 57.55,
+        "max_points": 12,
+        "points_earned": 6.91,
+        "weight_pct": 12,
+        "level": "partial",
+        "description": "Can AI access your site?",
+        "evaluated": true,
+        "components": [
+          {
+            "name": "Crawler Access",
+            "raw_score": 100.0,
+            "weight": 0.35,
+            "weighted_score": 35.0,
+            "level": "full",
+            "explanation": "All crawlers allowed. Full visibility via both search indexes and direct AI access.",
+            "details": {
+              "crawlers": {
+                "Googlebot": true,
+                "Bingbot": true,
+                "Applebot": true,
+                "OAI-SearchBot": true,
+                "GPTBot": true,
+                "ChatGPT-User": true,
+                "Claude-SearchBot": true,
+                "ClaudeBot": true,
+                "Claude-User": true,
+                "PerplexityBot": true,
+                "Google-Extended": true,
+                "CCBot": true,
+                "facebookexternalhit": true,
+                "Facebot": true,
+                "Twitterbot": true,
+                "LinkedInBot": true,
+                "Slackbot": true
+              },
+              "search_indexed_score": 100.0,
+              "direct_crawl_score": 100.0,
+              "critical_blocked": [],
+              "warning_blocked": [],
+              "pipeline_summary": "Search-indexed: visible, Direct-crawl: visible, Social: visible"
+            }
+          },
+          {
+            "name": "TTFB Performance",
+            "raw_score": 31.85,
+            "weight": 0.3,
+            "weighted_score": 9.55,
+            "level": "limited",
+            "explanation": "TTFB too slow: 1363ms (AI crawlers may timeout)",
+            "details": {
+              "ttfb_ms": 1363
+            }
+          },
+          {
+            "name": "llms.txt",
+            "raw_score": 0.0,
+            "weight": 0.15,
+            "weighted_score": 0.0,
+            "level": "limited",
+            "explanation": "Not found (recommend creating for AI visibility)",
+            "details": {}
+          },
+          {
+            "name": "JS Accessibility",
+            "raw_score": 30.0,
+            "weight": 0.1,
+            "weighted_score": 3.0,
+            "level": "limited",
+            "explanation": "Likely requires JS to render (React)",
+            "details": {
+              "framework": "React",
+              "main_content_length": 275,
+              "is_empty_shell": false,
+              "severity": "degraded"
+            }
+          },
+          {
+            "name": "HTTPS",
+            "raw_score": 100.0,
+            "weight": 0.1,
+            "weighted_score": 10.0,
+            "level": "full",
+            "explanation": "Site uses HTTPS",
+            "details": {}
+          }
+        ],
+        "critical_issues": [
+          "Site requires JavaScript to render content (React). AI crawlers like GPTBot and ClaudeBot cannot execute JS. Enable SSR/prerendering for AI visibility."
+        ],
+        "recommendations": []
+      },
+      {
+        "name": "structure",
+        "display_name": "Semantic Structure",
+        "raw_score": 51.97,
+        "max_points": 18,
+        "points_earned": 9.35,
+        "weight_pct": 18,
+        "level": "partial",
+        "description": "Is your HTML machine-readable for AI extraction?",
+        "evaluated": true,
+        "components": [
+          {
+            "name": "Heading Hierarchy",
+            "raw_score": 40.0,
+            "weight": 0.25,
+            "weighted_score": 10.0,
+            "level": "limited",
+            "explanation": "Valid heading hierarchy (0 H1, 2 H2)",
+            "details": {
+              "h1_count": 0,
+              "h2_count": 2,
+              "total_headings": 2,
+              "hierarchy_valid": false,
+              "skip_count": 0,
+              "duplicate_count": 0,
+              "issues": 1
+            }
+          },
+          {
+            "name": "Answer-First Content",
+            "raw_score": 67.5,
+            "weight": 0.25,
+            "weighted_score": 16.88,
+            "level": "partial",
+            "explanation": "Content leads with answer/definition",
+            "details": {
+              "answer_in_first_paragraph": true,
+              "has_definition": false,
+              "has_number": true
+            }
+          },
+          {
+            "name": "FAQ Sections",
+            "raw_score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "level": "limited",
+            "explanation": "No FAQ section found",
+            "details": {
+              "has_faq": false,
+              "faq_count": 0,
+              "has_schema": false
+            }
+          },
+          {
+            "name": "Internal Linking",
+            "raw_score": 80.0,
+            "weight": 0.15,
+            "weighted_score": 12.0,
+            "level": "full",
+            "explanation": "Good internal linking (1 links)",
+            "details": {
+              "internal_links": 1,
+              "density_level": "low",
+              "good_anchors": 4
+            }
+          },
+          {
+            "name": "Extractable Formats",
+            "raw_score": 52.75,
+            "weight": 0.15,
+            "weighted_score": 7.91,
+            "level": "partial",
+            "explanation": "Some extractable formats: 1 list items, 3 code blocks",
+            "details": {
+              "tables": 0,
+              "lists": 1,
+              "code_blocks": 3
+            }
+          }
+        ],
+        "critical_issues": [
+          "Missing H1 heading"
+        ],
+        "recommendations": [
+          "Add an H1 heading to the page",
+          "Add more internal links. Current: 1, target: 5-15 per page",
+          "Add an FAQ section with 3-5 common questions about your topic"
+        ]
+      },
+      {
+        "name": "schema",
+        "display_name": "Schema Richness",
+        "raw_score": 6.5,
+        "max_points": 13,
+        "points_earned": 0.84,
+        "weight_pct": 13,
+        "level": "limited",
+        "description": "Is your content machine-readable?",
+        "evaluated": true,
+        "components": [
+          {
+            "name": "FAQPage Schema",
+            "raw_score": 0.0,
+            "weight": 0.27,
+            "weighted_score": 0.0,
+            "level": "limited",
+            "explanation": "No FAQPage schema found",
+            "details": {}
+          },
+          {
+            "name": "Article + Author",
+            "raw_score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "level": "limited",
+            "explanation": "No Article schema found",
+            "details": {}
+          },
+          {
+            "name": "Content Freshness",
+            "raw_score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "level": "limited",
+            "explanation": "No date information in schema",
+            "details": {}
+          },
+          {
+            "name": "Organization Schema",
+            "raw_score": 0.0,
+            "weight": 0.13,
+            "weighted_score": 0.0,
+            "level": "limited",
+            "explanation": "No Organization schema found",
+            "details": {}
+          },
+          {
+            "name": "HowTo Schema",
+            "raw_score": 50.0,
+            "weight": 0.13,
+            "weighted_score": 6.5,
+            "level": "partial",
+            "explanation": "No HowTo schema (optional for non-procedural content)",
+            "details": {}
+          },
+          {
+            "name": "Schema Validation",
+            "raw_score": 0.0,
+            "weight": 0.07,
+            "weighted_score": 0.0,
+            "level": "limited",
+            "explanation": "No schemas to validate",
+            "details": {}
+          }
+        ],
+        "critical_issues": [],
+        "recommendations": [
+          "Add FAQPage schema to your FAQ content (35-40% citation lift)",
+          "Add dateModified to schema for freshness signals",
+          "Add Organization schema for entity recognition"
+        ]
+      },
+      {
+        "name": "authority",
+        "display_name": "Authority Signals",
+        "raw_score": 11.87,
+        "max_points": 12,
+        "points_earned": 1.42,
+        "weight_pct": 12,
+        "level": "limited",
+        "description": "Does AI trust your content?",
+        "evaluated": true,
+        "components": [
+          {
+            "name": "Author Attribution",
+            "raw_score": 0.0,
+            "weight": 0.27,
+            "weighted_score": 0.0,
+            "level": "limited",
+            "explanation": "No author byline found",
+            "details": {}
+          },
+          {
+            "name": "Author Credentials",
+            "raw_score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "level": "limited",
+            "explanation": "No author to evaluate credentials",
+            "details": {}
+          },
+          {
+            "name": "Primary Citations",
+            "raw_score": 25.0,
+            "weight": 0.2,
+            "weighted_score": 5.0,
+            "level": "limited",
+            "explanation": "1 authoritative citation(s), add more primary sources",
+            "details": {
+              "total_citations": 2,
+              "authoritative_citations": 1
+            }
+          },
+          {
+            "name": "Content Freshness",
+            "raw_score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "level": "limited",
+            "explanation": "No visible date found",
+            "details": {}
+          },
+          {
+            "name": "Original Data",
+            "raw_score": 40.0,
+            "weight": 0.13,
+            "weighted_score": 5.2,
+            "level": "partial",
+            "explanation": "No original research markers found (optional)",
+            "details": {}
+          }
+        ],
+        "critical_issues": [
+          "Author bylines not detected in crawled pages",
+          "No citations to authoritative sources. AI models strongly prefer content backed by primary sources (research papers, .gov, .edu, official docs)."
+        ],
+        "recommendations": [
+          "Add author byline to content",
+          "Add visible publication and update dates",
+          "Add original research, data, or unique insights"
+        ]
+      },
+      {
+        "name": "entity_recognition",
+        "display_name": "Entity Recognition",
+        "raw_score": 0.0,
+        "max_points": 13,
+        "points_earned": 0.0,
+        "weight_pct": 13,
+        "level": "limited",
+        "description": "Not analyzed",
+        "evaluated": false,
+        "components": [],
+        "critical_issues": [],
+        "recommendations": []
+      },
+      {
+        "name": "retrieval",
+        "display_name": "Retrieval Quality",
+        "raw_score": 43.31,
+        "max_points": 22,
+        "points_earned": 9.53,
+        "weight_pct": 22,
+        "level": "partial",
+        "description": "Can AI find relevant content?",
+        "evaluated": true,
+        "components": [],
+        "critical_issues": [],
+        "recommendations": []
+      },
+      {
+        "name": "coverage",
+        "display_name": "Answer Coverage",
+        "raw_score": 26.67,
+        "max_points": 10,
+        "points_earned": 2.67,
+        "weight_pct": 10,
+        "level": "limited",
+        "description": "How many questions can you answer?",
+        "evaluated": true,
+        "components": [
+          {
+            "name": "Entity Facts Coverage",
+            "description": "Identity, contact, and trust questions",
+            "raw_score": 50.0,
+            "level": "partial"
+          },
+          {
+            "name": "Product/How-To Coverage",
+            "description": "Offerings and differentiation questions",
+            "raw_score": 42.9,
+            "level": "partial"
+          }
+        ],
+        "critical_issues": [],
+        "recommendations": []
+      }
+    ]
   },
-  "completed_at": "2026-02-01T18:46:36.042672"
+  "citable_index": {
+    "avg_depth": 3.2,
+    "pct_citable": 93.3,
+    "pct_strongly_sourced": 26.7,
+    "pct_floored": 86.7,
+    "citable_band": "high",
+    "strongly_sourced_band": "high",
+    "questions_observed": 15,
+    "company_mention_rate": 100.0,
+    "citation_rate": 93.3,
+    "top_wins": [
+      {
+        "question": "What does Httpbin do?",
+        "depth": 4,
+        "label": "FEATURED"
+      },
+      {
+        "question": "Who founded Httpbin and when was it established?",
+        "depth": 4,
+        "label": "FEATURED"
+      },
+      {
+        "question": "What products or services does Httpbin offer?",
+        "depth": 4,
+        "label": "FEATURED"
+      }
+    ],
+    "top_misses": []
+  },
+  "observation": {
+    "status": "completed",
+    "questions_completed": 15,
+    "questions_failed": 0,
+    "company_mention_rate": 1.0,
+    "domain_mention_rate": 0.933,
+    "citation_rate": 0.933,
+    "avg_citation_depth": 3.2,
+    "total_cost_usd": 0.0041
+  },
+  "headline": {
+    "findable_score": 35.3,
+    "findable_level": "not_yet_findable",
+    "findable_level_label": "Not Yet Findable",
+    "pct_citable": 93.3,
+    "pct_strongly_sourced": 26.7,
+    "avg_depth": 3.2,
+    "citable_band": "high",
+    "strongly_sourced_band": "high",
+    "pct_floored": 86.7,
+    "summary": "Your site scores 35/100 (Not Yet Findable). 93% of AI answers include your URL (citable), 27% treat you as authoritative."
+  },
+  "top_causes": {
+    "causes": [
+      {
+        "cause": "Missing structured data markup",
+        "proof": "Schema Richness score: 6/100",
+        "fix": "Add FAQPage, HowTo, Article, and Organization schema.",
+        "source": "pillar",
+        "pillar_name": "schema"
+      },
+      {
+        "cause": "Weak trust and authority signals",
+        "proof": "Authority Signals score: 12/100; Author bylines not detected in crawled pages",
+        "fix": "Add author attribution, credentials, citations, and visible dates.",
+        "source": "pillar",
+        "pillar_name": "authority"
+      },
+      {
+        "cause": "Citation depth inflated by URL presence",
+        "proof": "87% of citable scores came from URL-floor rule, not organic authority.",
+        "fix": "Build content that earns depth 3+ without relying on URL links.",
+        "source": "observation",
+        "pillar_name": null
+      }
+    ]
+  },
+  "completed_at": "2026-02-08T14:13:12.923956"
 }

@@ -16,11 +16,12 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-# Set environment before imports
-os.environ["ENV"] = "development"
-os.environ["DATABASE_URL"] = "postgresql+asyncpg://findable:findable@localhost:5432/findable"
-os.environ["REDIS_URL"] = "redis://localhost:6379/0"
-os.environ["JWT_SECRET"] = "dev-secret-key-for-local-testing"
+# Set environment before imports (use CI-compatible credentials when not overridden)
+if "DATABASE_URL" not in os.environ:
+    os.environ["DATABASE_URL"] = "postgresql+asyncpg://test:test@localhost:5432/findable_test"
+os.environ.setdefault("ENV", "test")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("JWT_SECRET", "test-secret-key-for-ci")
 
 
 @pytest.mark.asyncio
@@ -257,7 +258,7 @@ async def test_calibration_drift_alert_creation():
     from sqlalchemy import delete, select
 
     from api.database import async_session_maker
-    from api.models.calibration import AlertStatus, CalibrationDriftAlert
+    from api.models.calibration import CalibrationDriftAlert, DriftAlertStatus
 
     alert_id = uuid.uuid4()
 
@@ -276,7 +277,7 @@ async def test_calibration_drift_alert_creation():
             drift_magnitude=0.15,
             window_start=datetime.now(UTC) - timedelta(days=7),
             window_end=datetime.now(UTC),
-            status=AlertStatus.OPEN.value,
+            status=DriftAlertStatus.OPEN.value,
         )
         db.add(alert)
         await db.commit()

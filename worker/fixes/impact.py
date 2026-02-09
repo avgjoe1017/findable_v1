@@ -8,14 +8,14 @@ This module implements Tier C estimation.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 from worker.fixes.generator import Fix, FixPlan
 from worker.fixes.reason_codes import ReasonCode, get_reason_info
 from worker.questions.universal import QuestionCategory
 
 
-class ImpactTier(str, Enum):
+class ImpactTier(StrEnum):
     """Impact estimation tier."""
 
     TIER_C = "tier_c"  # Precomputed lookup (fast, conservative)
@@ -23,7 +23,7 @@ class ImpactTier(str, Enum):
     TIER_A = "tier_a"  # Full re-simulation (slow, most accurate)
 
 
-class ConfidenceLevel(str, Enum):
+class ConfidenceLevel(StrEnum):
     """Confidence in the impact estimate."""
 
     HIGH = "high"  # Based on strong patterns

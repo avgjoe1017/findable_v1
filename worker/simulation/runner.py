@@ -11,7 +11,7 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -39,7 +39,7 @@ PRODUCT_HOWTO_CATEGORIES = {
 }
 
 
-class Answerability(str, Enum):
+class Answerability(StrEnum):
     """How answerable a question is based on retrieved content."""
 
     FULLY_ANSWERABLE = "fully_answerable"  # All signals present
@@ -48,7 +48,7 @@ class Answerability(str, Enum):
     CONTRADICTORY = "contradictory"  # Conflicting information found
 
 
-class ConfidenceLevel(str, Enum):
+class ConfidenceLevel(StrEnum):
     """Confidence in the answerability assessment."""
 
     HIGH = "high"  # Strong signals, consistent content

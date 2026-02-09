@@ -39,6 +39,22 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     # - Database connection pool is created lazily
     # - Redis connection is created per-request
 
+    # Load active calibration config (for dynamic weights/thresholds)
+    if settings.calibration_enabled:
+        try:
+            from worker.scoring.calculator_v2 import load_active_calibration_weights
+
+            weights = await load_active_calibration_weights()
+            logger.info(
+                "Calibration config loaded",
+                weights=weights,
+            )
+        except Exception as e:
+            logger.warning(
+                "Failed to load calibration config, using defaults",
+                error=str(e),
+            )
+
     yield
 
     # Shutdown tasks

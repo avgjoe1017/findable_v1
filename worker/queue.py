@@ -3,7 +3,7 @@
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from rq import Queue
@@ -18,7 +18,7 @@ from worker.redis import (
 )
 
 
-class JobStatus(str, Enum):
+class JobStatus(StrEnum):
     """RQ job status values."""
 
     QUEUED = "queued"
@@ -31,7 +31,7 @@ class JobStatus(str, Enum):
     CANCELED = "canceled"
 
 
-class QueuePriority(str, Enum):
+class QueuePriority(StrEnum):
     """Queue priority levels."""
 
     HIGH = "high"

@@ -6,13 +6,13 @@ All reports follow this contract for API responses and persistence.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from api.config import SCORE_BAND_CONSERVATIVE, SCORE_BAND_GENEROUS
 
 
-class ReportVersion(str, Enum):
+class ReportVersion(StrEnum):
     """Report schema versions."""
 
     V1_0 = "1.0"
@@ -927,7 +927,7 @@ class ActionCenterSection:
         }
 
 
-class DivergenceLevel(str, Enum):
+class DivergenceLevel(StrEnum):
     """Level of divergence between simulation and observation."""
 
     NONE = "none"  # < 10% difference
@@ -974,6 +974,10 @@ class CitableIndexSection:
     """Citable Index section — how deeply AI relies on this source.
 
     Keyed off citation depth >= 3 (the "citable" threshold).
+
+    Benchmark bands:
+        Citable (% depth >= 3):  low <10%, mid 10-25%, high 25%+
+        Strongly sourced (% depth >= 4): low <5%, mid 5-15%, high 15%+
     """
 
     # Headline metric
@@ -981,28 +985,112 @@ class CitableIndexSection:
     pct_citable: float  # % questions at depth >= 3
     pct_strongly_sourced: float  # % questions at depth >= 4
 
+    # Benchmark bands (derived from pct_citable and pct_strongly_sourced)
+    citable_band: str = "low"  # "low" (<10%) | "mid" (10-25%) | "high" (25%+)
+    strongly_sourced_band: str = "low"  # "low" (<5%) | "mid" (5-15%) | "high" (15%+)
+
     # Depth distribution histogram
-    depth_histogram: dict[int, int]  # {0: N, 1: N, ..., 5: N}
+    depth_histogram: dict[int, int] = field(default_factory=dict)  # {0: N, 1: N, ..., 5: N}
 
     # Confidence in the scores
-    confidence: str  # "high" | "medium" | "low"
-    depth_divergence: float  # avg |ai - heuristic|
+    confidence: str = "low"  # "high" | "medium" | "low"
+    depth_divergence: float = 0.0  # avg |ai - heuristic|
 
     # Free-signal aggregates
-    avg_competitors: float
-    framing_distribution: dict[str, int]
+    avg_competitors: float = 0.0
+    framing_distribution: dict[str, int] = field(default_factory=dict)
+
+    # Evidence: top wins (depth >= 3) and top misses (depth <= 1)
+    top_wins: list[dict] = field(default_factory=list)  # [{question, depth, framing}]
+    top_misses: list[dict] = field(default_factory=list)  # [{question, depth, framing}]
 
     def to_dict(self) -> dict:
         return {
             "avg_depth": round(self.avg_depth, 2),
             "pct_citable": round(self.pct_citable, 1),
             "pct_strongly_sourced": round(self.pct_strongly_sourced, 1),
+            "citable_band": self.citable_band,
+            "strongly_sourced_band": self.strongly_sourced_band,
             "depth_histogram": self.depth_histogram,
             "confidence": self.confidence,
             "depth_divergence": round(self.depth_divergence, 2),
             "avg_competitors": round(self.avg_competitors, 2),
             "framing_distribution": self.framing_distribution,
+            "top_wins": self.top_wins,
+            "top_misses": self.top_misses,
         }
+
+
+@dataclass
+class TopCause:
+    """A single cause explaining why the site scores how it does."""
+
+    cause: str  # Short label, e.g. "Weak Schema Markup"
+    proof: str  # Evidence statement, e.g. "Schema score 22/100; no FAQPage or HowTo"
+    fix: str  # Actionable recommendation
+    source: str  # "pillar" | "observation"
+    pillar_name: str | None = None  # Which pillar this maps to (if source=pillar)
+
+    def to_dict(self) -> dict:
+        return {
+            "cause": self.cause,
+            "proof": self.proof,
+            "fix": self.fix,
+            "source": self.source,
+            "pillar_name": self.pillar_name,
+        }
+
+
+@dataclass
+class TopCausesSection:
+    """Top 3 causes explaining the score — 2 from weakest pillars, 1 from observation evidence."""
+
+    causes: list[TopCause] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "causes": [c.to_dict() for c in self.causes],
+        }
+
+
+@dataclass
+class HeadlineSection:
+    """2-axis headline: Findable Score (readiness) + Citable Index (live citations).
+
+    Shown first in every report so the user sees both axes immediately.
+    """
+
+    # Axis 1: Findable Score (site readiness)
+    findable_score: float  # 0-100
+    findable_level: str  # e.g. "partially_findable"
+    findable_level_label: str  # e.g. "Partially Findable"
+
+    # Axis 2: Citable Index (live citation depth)
+    pct_citable: float | None = None  # % depth >= 3 (None if no observation)
+    citable_band: str | None = None  # "low" | "mid" | "high"
+    pct_strongly_sourced: float | None = None  # % depth >= 4
+    strongly_sourced_band: str | None = None
+    avg_depth: float | None = None  # 0-5
+
+    # Quick summary
+    summary: str = (
+        ""  # e.g. "Your site scores 62/100 (Findable). AI rarely includes your URL (15% citable)."
+    )
+
+    def to_dict(self) -> dict:
+        d: dict = {
+            "findable_score": round(self.findable_score, 1),
+            "findable_level": self.findable_level,
+            "findable_level_label": self.findable_level_label,
+        }
+        if self.pct_citable is not None:
+            d["pct_citable"] = round(self.pct_citable, 1)
+            d["citable_band"] = self.citable_band
+            d["pct_strongly_sourced"] = round(self.pct_strongly_sourced or 0.0, 1)
+            d["strongly_sourced_band"] = self.strongly_sourced_band
+            d["avg_depth"] = round(self.avg_depth or 0.0, 2)
+        d["summary"] = self.summary
+        return d
 
 
 @dataclass
@@ -1023,14 +1111,27 @@ class FullReport:
     benchmark: BenchmarkSection | None = None
     divergence: DivergenceSection | None = None
     citable_index: CitableIndexSection | None = None  # v1.1: Citation depth metrics
+    headline: HeadlineSection | None = None  # v1.1: 2-axis headline
+    top_causes: TopCausesSection | None = None  # v1.1: Top 3 causes
+    citation_context: dict | None = None  # v2.2: Citation prediction by site type
+    source_primacy: dict | None = None  # v2.3: Source primacy analysis
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
-        result = {
-            "metadata": self.metadata.to_dict(),
-            "score": self.score.to_dict(),
-            "fixes": self.fixes.to_dict(),
-        }
+        result: dict = {}
+
+        # Headline goes first in every report
+        if self.headline:
+            result["headline"] = self.headline.to_dict()
+
+        result["metadata"] = self.metadata.to_dict()
+        result["score"] = self.score.to_dict()
+
+        # Top causes right after score
+        if self.top_causes:
+            result["top_causes"] = self.top_causes.to_dict()
+
+        result["fixes"] = self.fixes.to_dict()
 
         if self.crawl:
             result["crawl"] = self.crawl.to_dict()
@@ -1064,6 +1165,12 @@ class FullReport:
 
         if self.citable_index:
             result["citable_index"] = self.citable_index.to_dict()
+
+        if self.citation_context:
+            result["citation_context"] = self.citation_context
+
+        if self.source_primacy:
+            result["source_primacy"] = self.source_primacy
 
         return result
 

@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from worker.fixes.generator_v2 import FixPlanV2
 
 from worker.extraction.entity_recognition import EntityRecognitionResult
+from worker.extraction.site_type import SiteTypeResult
 from worker.fixes.generator import FixPlan
 from worker.fixes.impact import FixPlanImpact
 from worker.observation.benchmark import BenchmarkResult
@@ -36,6 +37,7 @@ from worker.reports.contract import (
     FixItem,
     FixSection,
     FullReport,
+    HeadlineSection,
     ObservationSection,
     PillarSummary,
     ReportMetadata,
@@ -47,6 +49,8 @@ from worker.reports.contract import (
     StructureSection,
     TechnicalComponent,
     TechnicalSection,
+    TopCause,
+    TopCausesSection,
 )
 from worker.scoring.authority import AuthoritySignalsScore
 from worker.scoring.calculator import ScoreBreakdown
@@ -105,6 +109,7 @@ class ReportAssembler:
         schema_score: SchemaRichnessScore | None = None,
         authority_score: AuthoritySignalsScore | None = None,
         entity_recognition_result: EntityRecognitionResult | None = None,
+        site_type_result: SiteTypeResult | None = None,
     ) -> FullReport:
         """
         Assemble a complete report from analysis results.
@@ -124,6 +129,7 @@ class ReportAssembler:
             run_started_at: Optional run start time
             run_completed_at: Optional run completion time
             entity_recognition_result: Optional entity recognition analysis
+            site_type_result: Optional site content type classification
 
         Returns:
             FullReport with all sections assembled
@@ -238,6 +244,51 @@ class ReportAssembler:
             )
             action_center_section = self._build_action_center_section(fix_plan_v2)
 
+        # Build headline section (2-axis model: Findable Score + Citable Index)
+        headline_section = self._build_headline_section(
+            score_v2=score_v2_section,
+            score_v1=score_section,
+            citable_index=citable_index_section,
+        )
+
+        # Build top 3 causes section
+        top_causes_section = None
+        if score_v2_section:
+            top_causes_section = self._build_top_causes_section(
+                findable_v2=findable_v2,  # type: ignore[possibly-undefined]
+                observation=observation,
+                citable_index=citable_index_section,
+            )
+
+        # Build citation context and source primacy if we have site type classification
+        citation_context_dict = None
+        source_primacy_dict = None
+        if site_type_result:
+            from worker.extraction.source_primacy import analyze_source_primacy
+            from worker.scoring.citation_context import generate_citation_context
+
+            citation_ctx = generate_citation_context(site_type_result)
+            citation_context_dict = citation_ctx.to_dict()
+
+            # Analyze source primacy
+            page_urls = []
+            if crawl_data and crawl_data.get("pages"):
+                page_urls = [p.get("url", "") for p in crawl_data["pages"] if p.get("url")]
+            primacy_result = analyze_source_primacy(
+                domain=domain,
+                site_type=site_type_result.site_type,
+                page_urls=page_urls,
+                brand_name=company_name,
+            )
+            source_primacy_dict = primacy_result.to_dict()
+
+            # Enrich citation context with primacy info
+            citation_context_dict["source_primacy"] = source_primacy_dict["primacy_level"]
+            citation_context_dict["primacy_score"] = source_primacy_dict["primacy_score"]
+            citation_context_dict["primacy_expected_citation_rate"] = source_primacy_dict[
+                "expected_citation_rate"
+            ]
+
         return FullReport(
             metadata=metadata,
             score=score_section,
@@ -253,6 +304,10 @@ class ReportAssembler:
             benchmark=benchmark_section,
             divergence=divergence_section,
             citable_index=citable_index_section,
+            headline=headline_section,
+            top_causes=top_causes_section,
+            citation_context=citation_context_dict,
+            source_primacy=source_primacy_dict,
         )
 
     def _build_metadata(
@@ -908,23 +963,27 @@ class ReportAssembler:
         # Extract per-result depth data
         depths = []
         heuristic_depths = []
+        result_data = []  # (depth, question_text, framing, question_id)
         for result in observation.results:
             depth = getattr(result, "citation_depth", None)
             if depth is not None:
                 depths.append(depth)
                 h_depth = getattr(result, "heuristic_depth", depth)
                 heuristic_depths.append(h_depth)
+                result_data.append(
+                    (
+                        depth,
+                        result.question_text,
+                        getattr(result, "source_framing", ""),
+                        result.question_id,
+                    )
+                )
 
         if not depths:
             return CitableIndexSection(
                 avg_depth=observation.avg_citation_depth or 0.0,
                 pct_citable=0.0,
                 pct_strongly_sourced=0.0,
-                depth_histogram={},
-                confidence="low",
-                depth_divergence=0.0,
-                avg_competitors=0.0,
-                framing_distribution={},
             )
 
         n = len(depths)
@@ -938,6 +997,12 @@ class ReportAssembler:
         # Citable thresholds
         pct_citable = sum(1 for d in depths if d >= 3) / n * 100
         pct_strongly_sourced = sum(1 for d in depths if d >= 4) / n * 100
+
+        # Benchmark bands
+        citable_band = "high" if pct_citable >= 25 else "mid" if pct_citable >= 10 else "low"
+        strongly_sourced_band = (
+            "high" if pct_strongly_sourced >= 15 else "mid" if pct_strongly_sourced >= 5 else "low"
+        )
 
         # Divergence and confidence
         divergence = sum(abs(d - h) for d, h in zip(depths, heuristic_depths, strict=False)) / n
@@ -959,16 +1024,224 @@ class ReportAssembler:
                 framing_dist[framing] = framing_dist.get(framing, 0) + 1
         avg_competitors = avg_competitors / len(observation.results) if observation.results else 0.0
 
+        # Top wins (depth >= 3, sorted highest first) and misses (depth <= 1, sorted lowest first)
+        sorted_by_depth = sorted(result_data, key=lambda x: -x[0])
+        top_wins = [
+            {"question": r[1][:100], "depth": r[0], "framing": r[2]}
+            for r in sorted_by_depth
+            if r[0] >= 3
+        ][:3]
+
+        sorted_by_depth_asc = sorted(result_data, key=lambda x: x[0])
+        top_misses = [
+            {"question": r[1][:100], "depth": r[0], "framing": r[2]}
+            for r in sorted_by_depth_asc
+            if r[0] <= 1
+        ][:3]
+
         return CitableIndexSection(
             avg_depth=observation.avg_citation_depth or 0.0,
             pct_citable=pct_citable,
             pct_strongly_sourced=pct_strongly_sourced,
+            citable_band=citable_band,
+            strongly_sourced_band=strongly_sourced_band,
             depth_histogram=histogram,
             confidence=confidence,
             depth_divergence=divergence,
             avg_competitors=avg_competitors,
             framing_distribution=dict(sorted(framing_dist.items(), key=lambda x: -x[1])),
+            top_wins=top_wins,
+            top_misses=top_misses,
         )
+
+    def _build_headline_section(
+        self,
+        score_v2: ScoreSectionV2 | None,
+        score_v1: ScoreSection,
+        citable_index: CitableIndexSection | None,
+    ) -> HeadlineSection:
+        """Build the 2-axis headline: Findable Score + Citable Index."""
+        # Use v2 score if available, otherwise fall back to v1
+        if score_v2:
+            findable_score = score_v2.total_score
+            findable_level = score_v2.level
+            findable_level_label = score_v2.level_label
+        else:
+            findable_score = score_v1.total_score
+            findable_level = score_v1.grade.lower().replace(" ", "_")
+            findable_level_label = score_v1.grade
+
+        headline = HeadlineSection(
+            findable_score=findable_score,
+            findable_level=findable_level,
+            findable_level_label=findable_level_label,
+        )
+
+        if citable_index:
+            headline.pct_citable = citable_index.pct_citable
+            headline.citable_band = citable_index.citable_band
+            headline.pct_strongly_sourced = citable_index.pct_strongly_sourced
+            headline.strongly_sourced_band = citable_index.strongly_sourced_band
+            headline.avg_depth = citable_index.avg_depth
+
+            # Generate summary sentence
+            # Citable = includes your URL (depth 3+), Strongly Sourced = treats as authoritative (depth 4+)
+            band_label = {
+                "low": "rarely includes your URL",
+                "mid": "sometimes includes your URL",
+                "high": "frequently includes your URL",
+            }.get(citable_index.citable_band, "")
+
+            headline.summary = (
+                f"Your site scores {findable_score:.0f}/100 ({findable_level_label}). "
+                f"AI {band_label} ({citable_index.pct_citable:.0f}% citable)."
+            )
+        else:
+            headline.summary = (
+                f"Your site scores {findable_score:.0f}/100 ({findable_level_label}). "
+                "Run observation to measure live citation depth."
+            )
+
+        return headline
+
+    def _build_top_causes_section(
+        self,
+        findable_v2: FindableScoreV2,
+        observation: ObservationRun | None,
+        citable_index: CitableIndexSection | None,
+    ) -> TopCausesSection:
+        """Build top 3 causes: 2 from weakest pillars + 1 from observation evidence."""
+        causes: list[TopCause] = []
+
+        # Sort pillars by raw_score ascending (weakest first), only evaluated ones
+        evaluated_pillars = [p for p in findable_v2.pillars if p.evaluated]
+        weakest = sorted(evaluated_pillars, key=lambda p: p.raw_score)
+
+        # Cause descriptions per pillar
+        pillar_cause_map: dict[str, dict[str, str]] = {
+            "technical": {
+                "cause": "AI crawlers can't access your content",
+                "fix": "Fix robots.txt blocks, improve page speed, and ensure HTTPS.",
+            },
+            "structure": {
+                "cause": "Content isn't structured for AI extraction",
+                "fix": "Fix heading hierarchy, lead with answers, and add FAQ sections.",
+            },
+            "schema": {
+                "cause": "Missing structured data markup",
+                "fix": "Add FAQPage, HowTo, Article, and Organization schema.",
+            },
+            "authority": {
+                "cause": "Weak trust and authority signals",
+                "fix": "Add author attribution, credentials, citations, and visible dates.",
+            },
+            "entity_recognition": {
+                "cause": "AI doesn't recognize your brand as an entity",
+                "fix": "Build external brand presence (Wikipedia, Wikidata, domain authority).",
+            },
+            "retrieval": {
+                "cause": "Content doesn't surface in AI retrieval",
+                "fix": "Improve content depth, reduce boilerplate, and add quotable statements.",
+            },
+            "coverage": {
+                "cause": "Missing answers to common questions about your domain",
+                "fix": "Create content covering entity facts and product/how-to questions.",
+            },
+        }
+
+        # Pick 2 weakest pillars
+        for pillar in weakest[:2]:
+            cause_info = pillar_cause_map.get(
+                pillar.name,
+                {
+                    "cause": f"Low {pillar.display_name} score",
+                    "fix": "Review and improve this area.",
+                },
+            )
+
+            # Build proof from pillar data
+            proof_parts = [f"{pillar.display_name} score: {pillar.raw_score:.0f}/100"]
+            if pillar.critical_issues:
+                proof_parts.append(pillar.critical_issues[0])
+
+            causes.append(
+                TopCause(
+                    cause=cause_info["cause"],
+                    proof="; ".join(proof_parts),
+                    fix=cause_info["fix"],
+                    source="pillar",
+                    pillar_name=pillar.name,
+                )
+            )
+
+        # 3rd cause: observation evidence (if available)
+        if citable_index and observation:
+            if citable_index.pct_citable < 25:
+                # Low citation depth — use miss evidence
+                miss_evidence = ""
+                if citable_index.top_misses:
+                    miss_q = citable_index.top_misses[0].get("question", "")[:80]
+                    miss_evidence = (
+                        f' E.g. "{miss_q}" got depth {citable_index.top_misses[0].get("depth", 0)}.'
+                    )
+
+                causes.append(
+                    TopCause(
+                        cause="AI mentions you but doesn't cite you as a source",
+                        proof=(
+                            f"Only {citable_index.pct_citable:.0f}% of answers reach depth 3+ (citable). "
+                            f"Avg depth: {citable_index.avg_depth:.1f}/5.{miss_evidence}"
+                        ),
+                        fix=(
+                            "Make content more quotable: add unique data, research, definitions, "
+                            "and explicit source attribution so AI treats you as authoritative."
+                        ),
+                        source="observation",
+                    )
+                )
+            elif citable_index.avg_competitors > 3:
+                causes.append(
+                    TopCause(
+                        cause="AI lists you alongside too many competitors",
+                        proof=(
+                            f"Avg {citable_index.avg_competitors:.1f} competitors mentioned per answer. "
+                            "Being listed dilutes depth to 1-2."
+                        ),
+                        fix=(
+                            "Differentiate with original research, unique data points, and expert "
+                            "commentary that makes you the primary source, not one of many."
+                        ),
+                        source="observation",
+                    )
+                )
+            else:
+                # Strong observation — note it positively
+                causes.append(
+                    TopCause(
+                        cause="Strong citation performance",
+                        proof=(
+                            f"{citable_index.pct_citable:.0f}% citable, "
+                            f"{citable_index.pct_strongly_sourced:.0f}% strongly sourced. "
+                            f"Avg depth: {citable_index.avg_depth:.1f}/5."
+                        ),
+                        fix="Maintain current content quality and monitor for depth regression.",
+                        source="observation",
+                    )
+                )
+        elif observation:
+            # Have observation but no citable index (shouldn't happen normally)
+            mention_rate = observation.company_mention_rate
+            if mention_rate < 0.5:
+                causes.append(
+                    TopCause(
+                        cause="AI rarely mentions your brand",
+                        proof=f"Company mentioned in only {mention_rate:.0%} of answers.",
+                        fix="Improve brand visibility through content, schema, and authority signals.",
+                        source="observation",
+                    )
+                )
+
+        return TopCausesSection(causes=causes[:3])
 
 
 def assemble_report(
@@ -990,6 +1263,7 @@ def assemble_report(
     schema_score: SchemaRichnessScore | None = None,
     authority_score: AuthoritySignalsScore | None = None,
     entity_recognition_result: EntityRecognitionResult | None = None,
+    site_type_result: SiteTypeResult | None = None,
 ) -> FullReport:
     """
     Convenience function to assemble a report.
@@ -1013,6 +1287,7 @@ def assemble_report(
         schema_score: Optional schema richness score (v2)
         authority_score: Optional authority signals score (v2)
         entity_recognition_result: Optional entity recognition analysis (v2)
+        site_type_result: Optional site content type classification
 
     Returns:
         FullReport with all sections
@@ -1036,4 +1311,5 @@ def assemble_report(
         schema_score=schema_score,
         authority_score=authority_score,
         entity_recognition_result=entity_recognition_result,
+        site_type_result=site_type_result,
     )

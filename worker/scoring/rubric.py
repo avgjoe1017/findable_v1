@@ -5,12 +5,12 @@ the Findable Score. Provides transparency into how scores are derived.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 from worker.questions.universal import QuestionCategory, QuestionDifficulty
 
 
-class ScoreLevel(str, Enum):
+class ScoreLevel(StrEnum):
     """Score level classifications."""
 
     EXCELLENT = "excellent"  # 90-100

@@ -6,10 +6,10 @@ that AI models need to accurately cite and reference information.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class QuestionCategory(str, Enum):
+class QuestionCategory(StrEnum):
     """Categories for universal questions."""
 
     IDENTITY = "identity"  # Who/what is this organization
@@ -19,7 +19,7 @@ class QuestionCategory(str, Enum):
     DIFFERENTIATION = "differentiation"  # What makes them unique
 
 
-class QuestionDifficulty(str, Enum):
+class QuestionDifficulty(StrEnum):
     """Difficulty levels for questions."""
 
     EASY = "easy"  # Should be clearly stated

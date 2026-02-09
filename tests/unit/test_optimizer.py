@@ -169,9 +169,9 @@ class TestCalculateWeightedAccuracy:
 
         # Create mock samples
         class MockSample:
-            def __init__(self, pillar_scores, obs_mentioned):
+            def __init__(self, pillar_scores, obs_cited):
                 self.pillar_scores = pillar_scores
-                self.obs_mentioned = obs_mentioned
+                self.obs_cited = obs_cited
 
         samples = [
             MockSample(
@@ -207,9 +207,9 @@ class TestCalculateWeightedAccuracy:
         """Should handle samples with None pillar_scores."""
 
         class MockSample:
-            def __init__(self, pillar_scores, obs_mentioned):
+            def __init__(self, pillar_scores, obs_cited):
                 self.pillar_scores = pillar_scores
-                self.obs_mentioned = obs_mentioned
+                self.obs_cited = obs_cited
 
         samples = [
             MockSample(None, True),

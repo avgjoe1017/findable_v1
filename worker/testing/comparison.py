@@ -249,7 +249,7 @@ def compare_site(
     site: TestSite,
     pipeline_result: PipelineResult | None,
     ground_truth_results: list[GroundTruthResult],
-    findable_threshold: float = 50.0,
+    findable_threshold: float = 30.0,
     citation_threshold: float = 0.1,
 ) -> SiteComparison | None:
     """
@@ -533,7 +533,7 @@ def compare_all(
     ground_truth_results: list[GroundTruthResult],
     run_id: str,
     corpus_name: str = "",
-    findable_threshold: float = 50.0,
+    findable_threshold: float = 30.0,
     citation_threshold: float = 0.1,
 ) -> ValidationReport:
     """

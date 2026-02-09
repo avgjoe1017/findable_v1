@@ -33,7 +33,7 @@ export function SitesTable({ sites, isLoading, onStartRun, onDelete }: SitesTabl
     let comparison = 0
     switch (sortBy) {
       case 'name':
-        comparison = a.name.localeCompare(b.name)
+        comparison = (a.name ?? '').localeCompare(b.name ?? '')
         break
       case 'latest_score':
         comparison = (a.latest_score ?? 0) - (b.latest_score ?? 0)

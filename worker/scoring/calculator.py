@@ -281,6 +281,27 @@ class ScoreCalculator:
         Returns:
             ScoreBreakdown with complete transparency
         """
+        if not simulation.question_results:
+            grade = self.rubric.get_grade(0.0)
+            return ScoreBreakdown(
+                total_score=0.0,
+                grade=grade,
+                grade_description=self.rubric.get_grade_description(grade),
+                criterion_scores=[],
+                category_breakdowns={},
+                question_scores=[],
+                total_questions=0,
+                questions_answered=0,
+                questions_partial=0,
+                questions_unanswered=0,
+                coverage_percentage=0.0,
+                entity_coverage=getattr(simulation, "entity_coverage", 0.0),
+                product_coverage=getattr(simulation, "product_coverage", 0.0),
+                calculation_summary=["No questions to score."],
+                formula_used=self._get_formula(),
+                rubric_version=self.rubric.version,
+            )
+
         # Calculate question-level scores
         question_scores = self._calculate_question_scores(simulation.question_results)
 
@@ -553,11 +574,11 @@ class ScoreCalculator:
         """Calculate overall signal coverage."""
         questions_with_signals = [r for r in simulation.question_results if r.signals_total > 0]
         if not questions_with_signals:
-            return 0.5
+            return 0.0
 
         total_signals = sum(r.signals_total for r in questions_with_signals)
         found_signals = sum(r.signals_found for r in questions_with_signals)
-        return found_signals / total_signals if total_signals > 0 else 0.5
+        return found_signals / total_signals if total_signals > 0 else 0.0
 
     def _calculate_confidence_score(self, simulation: SimulationResult) -> float:
         """Calculate average confidence score."""

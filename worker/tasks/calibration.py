@@ -45,6 +45,7 @@ async def collect_calibration_samples(
     simulation_result: SimulationResult,
     observation_run: ObservationRun,
     pillar_scores: dict[str, float] | None = None,
+    site_type: str | None = None,
 ) -> int:
     """
     Collect calibration samples from a completed run with observation.
@@ -172,6 +173,7 @@ async def collect_calibration_samples(
                 ),
                 question_text=comp.question_text,
                 domain_industry=domain_industry,
+                site_type=site_type,
                 pillar_scores=pillar_scores,
                 config_id=config_id,
                 experiment_id=experiment_id,

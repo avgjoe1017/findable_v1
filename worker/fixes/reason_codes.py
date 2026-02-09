@@ -5,10 +5,10 @@ cannot be answered or is only partially answerable.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class ReasonCode(str, Enum):
+class ReasonCode(StrEnum):
     """Reason codes for question failures."""
 
     # Content gaps

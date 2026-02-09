@@ -9,10 +9,10 @@ Defines queries across categories:
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class QueryCategory(str, Enum):
+class QueryCategory(StrEnum):
     """Categories for test queries."""
 
     INFORMATIONAL = "informational"  # What is X

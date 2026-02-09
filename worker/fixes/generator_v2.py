@@ -6,7 +6,7 @@ prioritized action plan with impact estimates.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID, uuid4
 
 import structlog
@@ -24,7 +24,7 @@ from worker.tasks.technical_check import generate_technical_fixes
 logger = structlog.get_logger(__name__)
 
 
-class FixCategory(str, Enum):
+class FixCategory(StrEnum):
     """Categories for v2 fixes."""
 
     TECHNICAL = "technical"
@@ -34,7 +34,7 @@ class FixCategory(str, Enum):
     CONTENT = "content"
 
 
-class EffortLevel(str, Enum):
+class EffortLevel(StrEnum):
     """Effort levels for implementing fixes."""
 
     LOW = "low"  # < 1 hour, no technical skills
@@ -42,7 +42,7 @@ class EffortLevel(str, Enum):
     HIGH = "high"  # > 4 hours or requires developer
 
 
-class ImpactLevel(str, Enum):
+class ImpactLevel(StrEnum):
     """Impact levels for fixes."""
 
     CRITICAL = "critical"  # Must fix immediately

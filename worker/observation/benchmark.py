@@ -2,14 +2,14 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from worker.observation.models import ObservationRun
 from worker.observation.parser import ParsedObservation
 
 
-class BenchmarkOutcome(str, Enum):
+class BenchmarkOutcome(StrEnum):
     """Outcome of a single question benchmark."""
 
     WIN = "win"  # You were mentioned/cited, competitor was not
@@ -19,7 +19,7 @@ class BenchmarkOutcome(str, Enum):
     MUTUAL_LOSS = "mutual_loss"  # Neither was mentioned
 
 
-class MentionLevel(str, Enum):
+class MentionLevel(StrEnum):
     """Level of mention in AI response."""
 
     CITED = "cited"  # URL explicitly cited

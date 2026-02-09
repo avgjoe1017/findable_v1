@@ -653,8 +653,8 @@ class TestScoreCalculator:
 
         breakdown = calculator.calculate(simulation)
 
-        assert breakdown.total_score == 0
         assert breakdown.total_questions == 0
+        assert breakdown.total_score == 0
         assert breakdown.grade == "F"
 
 

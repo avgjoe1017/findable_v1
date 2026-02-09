@@ -29,7 +29,7 @@ class TestReportVersion:
 
     def test_current_version(self) -> None:
         """Current version is set."""
-        assert CURRENT_VERSION == ReportVersion.V1_0
+        assert CURRENT_VERSION == ReportVersion.V1_1
 
 
 class TestReportMetadata:

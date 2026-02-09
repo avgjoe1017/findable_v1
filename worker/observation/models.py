@@ -2,11 +2,11 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID, uuid4
 
 
-class ProviderType(str, Enum):
+class ProviderType(StrEnum):
     """Supported observation providers."""
 
     OPENROUTER = "openrouter"
@@ -15,7 +15,7 @@ class ProviderType(str, Enum):
     MOCK = "mock"
 
 
-class ObservationStatus(str, Enum):
+class ObservationStatus(StrEnum):
     """Status of an observation request."""
 
     PENDING = "pending"

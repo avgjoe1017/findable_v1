@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from api.models.site import Site
 
 
-class PlanTier(str, Enum):
+class PlanTier(StrEnum):
     """User plan tiers."""
 
     STARTER = "starter"

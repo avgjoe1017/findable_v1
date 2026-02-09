@@ -1,7 +1,7 @@
 """Embedding model definitions and loading."""
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Protocol
 
 import numpy as np
@@ -15,7 +15,7 @@ except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
 
 
-class ModelType(str, Enum):
+class ModelType(StrEnum):
     """Type of embedding model."""
 
     SENTENCE_TRANSFORMER = "sentence_transformer"

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, func
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from api.models.site import Site
 
 
-class OutcomeMatch(str, Enum):
+class OutcomeMatch(StrEnum):
     """How well simulation matched observation."""
 
     CORRECT = "correct"  # Simulation prediction matched reality
@@ -34,7 +34,7 @@ class OutcomeMatch(str, Enum):
     UNKNOWN = "unknown"  # Can't determine
 
 
-class CalibrationConfigStatus(str, Enum):
+class CalibrationConfigStatus(StrEnum):
     """Status of a calibration configuration."""
 
     DRAFT = "draft"  # Being edited, not yet validated
@@ -43,7 +43,7 @@ class CalibrationConfigStatus(str, Enum):
     ARCHIVED = "archived"  # No longer used, kept for history
 
 
-class ExperimentStatus(str, Enum):
+class ExperimentStatus(StrEnum):
     """Status of a calibration experiment."""
 
     DRAFT = "draft"  # Not yet started
@@ -51,7 +51,7 @@ class ExperimentStatus(str, Enum):
     CONCLUDED = "concluded"  # Finished, winner determined
 
 
-class DriftType(str, Enum):
+class DriftType(StrEnum):
     """Type of calibration drift detected."""
 
     ACCURACY = "accuracy"  # Overall prediction accuracy dropped
@@ -60,7 +60,7 @@ class DriftType(str, Enum):
     PILLAR = "pillar"  # Specific pillar correlation dropped
 
 
-class DriftAlertStatus(str, Enum):
+class DriftAlertStatus(StrEnum):
     """Status of a drift alert."""
 
     OPEN = "open"  # Needs attention
@@ -135,6 +135,11 @@ class CalibrationSample(Base):
 
     # Site context at time of sample
     domain_industry: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    site_type: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+        index=True,
+    )  # documentation, reference, developer_tools, saas_marketing, etc.
 
     # Pillar scores at time of sample (for correlation analysis)
     pillar_scores: Mapped[dict | None] = mapped_column(JSONB, nullable=True)

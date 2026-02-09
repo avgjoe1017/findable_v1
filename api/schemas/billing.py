@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, HttpUrl
 
 
-class PlanTier(str, Enum):
+class PlanTier(StrEnum):
     """Available plan tiers."""
 
     STARTER = "starter"
@@ -17,7 +17,7 @@ class PlanTier(str, Enum):
     AGENCY = "agency"
 
 
-class SubscriptionStatus(str, Enum):
+class SubscriptionStatus(StrEnum):
     """Stripe subscription status."""
 
     ACTIVE = "active"
@@ -30,7 +30,7 @@ class SubscriptionStatus(str, Enum):
     PAUSED = "paused"
 
 
-class BillingCycle(str, Enum):
+class BillingCycle(StrEnum):
     """Billing cycle options."""
 
     MONTHLY = "monthly"

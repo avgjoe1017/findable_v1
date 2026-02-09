@@ -640,6 +640,15 @@ async def analyze_citation_depth(
     for i, result in enumerate(observation_results):
         depth = depths[i] if i < len(depths) else 0
         signals = text_signals[i]
+
+        # URL-floor rule: if the response contains a target-domain URL,
+        # the AI is actively linking to the company — depth cannot be < 3.
+        # Prevents "linked yet not citable" contradictions (e.g. citation_rate=0.85
+        # but avg_depth=1.8).
+        mentions_url = result.mentions_url if hasattr(result, "mentions_url") else False
+        if mentions_url and depth < 3:
+            depth = 3
+
         results.append(
             CitationDepthResult(
                 question_id=result.question_id,

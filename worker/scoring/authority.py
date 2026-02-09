@@ -161,7 +161,7 @@ class AuthorityScoreCalculator:
         components.append(author_comp)
         total_weighted += author_comp.weighted_score
         if not authority_analysis.has_author:
-            critical_issues.append("No author attribution found")
+            critical_issues.append("Author bylines not detected in crawled pages")
             recommendations.append("Add author byline to content")
 
         # 2. Author Credentials (20%)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from api.models.site import Site
 
 
-class RunStatus(str, Enum):
+class RunStatus(StrEnum):
     """Run status states."""
 
     QUEUED = "queued"
@@ -32,7 +32,7 @@ class RunStatus(str, Enum):
     FAILED = "failed"
 
 
-class RunType(str, Enum):
+class RunType(StrEnum):
     """Type of run."""
 
     STARTER_AUDIT = "starter_audit"

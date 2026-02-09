@@ -2,10 +2,10 @@
 
 import re
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class SplitLevel(str, Enum):
+class SplitLevel(StrEnum):
     """Hierarchy of split points, from coarsest to finest."""
 
     SECTION = "section"  # ## Headings, <h2>, etc.

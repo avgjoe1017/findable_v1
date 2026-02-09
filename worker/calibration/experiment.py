@@ -11,7 +11,7 @@ import hashlib
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 import structlog
@@ -30,7 +30,7 @@ from api.models.calibration import (
 logger = structlog.get_logger(__name__)
 
 
-class ExperimentArm(str, Enum):
+class ExperimentArm(StrEnum):
     """Experiment arm assignment."""
 
     CONTROL = "control"

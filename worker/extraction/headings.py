@@ -5,7 +5,7 @@ for AI content extraction and understanding.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 import structlog
 from bs4 import BeautifulSoup
@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 logger = structlog.get_logger(__name__)
 
 
-class HeadingIssueType(str, Enum):
+class HeadingIssueType(StrEnum):
     """Types of heading hierarchy issues."""
 
     MISSING_H1 = "missing_h1"

@@ -31,11 +31,12 @@ def upgrade() -> None:
             is_active BOOLEAN NOT NULL DEFAULT FALSE,
 
             -- Pillar weights (must sum to 100)
-            weight_technical FLOAT NOT NULL DEFAULT 15.0,
-            weight_structure FLOAT NOT NULL DEFAULT 20.0,
-            weight_schema FLOAT NOT NULL DEFAULT 15.0,
-            weight_authority FLOAT NOT NULL DEFAULT 15.0,
-            weight_retrieval FLOAT NOT NULL DEFAULT 25.0,
+            weight_technical FLOAT NOT NULL DEFAULT 12.0,
+            weight_structure FLOAT NOT NULL DEFAULT 18.0,
+            weight_schema FLOAT NOT NULL DEFAULT 13.0,
+            weight_authority FLOAT NOT NULL DEFAULT 12.0,
+            weight_entity_recognition FLOAT NOT NULL DEFAULT 13.0,
+            weight_retrieval FLOAT NOT NULL DEFAULT 22.0,
             weight_coverage FLOAT NOT NULL DEFAULT 10.0,
 
             -- Answerability thresholds

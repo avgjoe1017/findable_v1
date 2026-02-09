@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 import structlog
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 logger = structlog.get_logger(__name__)
 
 
-class ScheduleFrequency(str, Enum):
+class ScheduleFrequency(StrEnum):
     """Schedule frequency options."""
 
     WEEKLY = "weekly"

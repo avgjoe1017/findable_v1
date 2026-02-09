@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from api.models.user import User
 
 
-class SubscriptionStatus(str, Enum):
+class SubscriptionStatus(StrEnum):
     """Stripe subscription status."""
 
     ACTIVE = "active"
@@ -30,7 +30,7 @@ class SubscriptionStatus(str, Enum):
     PAUSED = "paused"
 
 
-class UsageType(str, Enum):
+class UsageType(StrEnum):
     """Types of usage to track."""
 
     SITE_CREATED = "site_created"
@@ -41,7 +41,7 @@ class UsageType(str, Enum):
     API_CALL = "api_call"
 
 
-class BillingEventType(str, Enum):
+class BillingEventType(StrEnum):
     """Types of billing events."""
 
     SUBSCRIPTION_CREATED = "subscription_created"

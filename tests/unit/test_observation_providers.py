@@ -485,10 +485,12 @@ class TestRecordedResponses:
             cassette_dir=Path("tests/fixtures/llm_cassettes"),
         )
 
-        # Find a response about Acme
+        # Find a response about Acme (low threshold needed because
+        # cassette prompts include a long system instruction prefix,
+        # diluting Jaccard similarity with the short query)
         response = cassette.find_similar(
             "What does Acme Corporation do?",
-            threshold=0.5,
+            threshold=0.2,
         )
 
         assert response is not None

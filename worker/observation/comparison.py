@@ -1,14 +1,14 @@
 """Comparison between simulation predictions and observation results."""
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 from worker.observation.models import ObservationResult, ObservationRun
 from worker.observation.parser import ParsedObservation
 from worker.simulation.runner import Answerability, QuestionResult, SimulationResult
 
 
-class OutcomeMatch(str, Enum):
+class OutcomeMatch(StrEnum):
     """How well simulation matched observation."""
 
     CORRECT = "correct"  # Simulation prediction matched reality
@@ -17,7 +17,7 @@ class OutcomeMatch(str, Enum):
     UNKNOWN = "unknown"  # Can't determine
 
 
-class SourceabilityOutcome(str, Enum):
+class SourceabilityOutcome(StrEnum):
     """Actual sourceability outcome from observation."""
 
     CITED = "cited"  # Company was explicitly cited with URL

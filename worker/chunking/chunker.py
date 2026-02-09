@@ -3,12 +3,12 @@
 import hashlib
 import re
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 from worker.chunking.splitter import SplitConfig, TextSplitter, estimate_tokens
 
 
-class ChunkType(str, Enum):
+class ChunkType(StrEnum):
     """Type of content in a chunk."""
 
     TEXT = "text"  # Regular prose

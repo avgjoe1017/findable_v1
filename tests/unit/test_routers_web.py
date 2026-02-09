@@ -1,16 +1,44 @@
 """Tests for web routes (Jinja2 HTML pages)."""
 
+import os
+from collections.abc import Generator
+from unittest.mock import AsyncMock
+
 import pytest
 from fastapi.testclient import TestClient
 
+from api.config import get_settings
+from api.database import get_db
 from api.main import create_app
 
 
 @pytest.fixture
-def client() -> TestClient:
-    """Create test client."""
+def client() -> Generator[TestClient, None, None]:
+    """Create test client with DB dependency overridden to avoid real connection."""
+    os.environ["ENV"] = "test"
+    get_settings.cache_clear()
     app = create_app()
-    return TestClient(app)
+
+    # Override get_db to provide a mock session (no real DB needed)
+    async def mock_get_db():
+        yield AsyncMock()
+
+    app.dependency_overrides[get_db] = mock_get_db
+
+    # Patch get_optional_user to return None (unauthenticated)
+    import api.routers.web as web_module
+
+    original_get_optional_user = web_module.get_optional_user
+
+    async def mock_get_optional_user(request):
+        return None
+
+    web_module.get_optional_user = mock_get_optional_user
+
+    yield TestClient(app)
+
+    web_module.get_optional_user = original_get_optional_user
+    app.dependency_overrides.clear()
 
 
 class TestDashboardRoute:

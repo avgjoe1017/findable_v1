@@ -6,7 +6,7 @@ and extracted information.
 
 import re
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 from worker.questions.universal import (
     QuestionCategory,
@@ -16,7 +16,7 @@ from worker.questions.universal import (
 )
 
 
-class QuestionSource(str, Enum):
+class QuestionSource(StrEnum):
     """Source of generated question."""
 
     UNIVERSAL = "universal"  # From universal set

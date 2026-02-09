@@ -500,6 +500,8 @@ async def view_report(
     observation = data.get("observation")
     benchmark = data.get("benchmark")
     divergence = data.get("divergence")
+    citation_context = data.get("citation_context")
+    source_primacy = data.get("source_primacy")
 
     # Get scores - use report denormalized fields if available, otherwise calculate
     typical_score = report.score_typical or int(score_data.get("total_score", 0))
@@ -699,6 +701,8 @@ async def view_report(
             "observation": observation,
             "benchmark": benchmark,
             "divergence": divergence,
+            "citation_context": citation_context,
+            "source_primacy": source_primacy,
             "show_the_math": score_data.get("show_the_math", ""),
         },
     )

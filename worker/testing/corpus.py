@@ -8,10 +8,10 @@ Defines test sites across categories:
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class SiteCategory(str, Enum):
+class SiteCategory(StrEnum):
     """Categories for test sites."""
 
     KNOWN_CITED = "known_cited"  # Sites that ARE cited by AI
@@ -229,19 +229,8 @@ KNOWN_CITED_SITES = [
 # ============================================================================
 
 KNOWN_UNCITED_SITES = [
-    # Small/New Blogs
-    TestSite(
-        url="https://backlinko.com",
-        name="Backlinko",
-        category=SiteCategory.KNOWN_UNCITED,
-        expected_queries=[
-            "link building strategies",
-            "SEO case studies",
-        ],
-        industry="SEO",
-        authority_level="medium",
-        notes="Good content but less frequently cited than major authorities",
-    ),
+    # NOTE: Backlinko was removed from this list after audit showed it was cited
+    # 20/20 times. It's actually a well-known SEO authority site.
     # Forums & UGC
     TestSite(
         url="https://www.reddit.com/r/SEO",
@@ -279,6 +268,219 @@ KNOWN_UNCITED_SITES = [
         industry="News",
         authority_level="high",
         notes="Major news source, but AI often prefers tech-specific sources",
+    ),
+    # Small SaaS / Niche Products - good content but rarely cited by AI
+    TestSite(
+        url="https://www.lemlist.com",
+        name="Lemlist",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "cold email best practices",
+            "email outreach tools",
+        ],
+        industry="Sales Tech",
+        authority_level="low",
+        notes="Niche SaaS tool, has blog content but not cited by AI models",
+    ),
+    TestSite(
+        url="https://www.hunter.io",
+        name="Hunter.io",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "email finder tools",
+            "how to find business email addresses",
+        ],
+        industry="Sales Tech",
+        authority_level="low",
+        notes="Email finder tool, rarely cited for general queries",
+    ),
+    TestSite(
+        url="https://buffer.com/resources",
+        name="Buffer Blog",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "social media scheduling",
+            "best times to post on social media",
+        ],
+        industry="Social Media",
+        authority_level="medium",
+        notes="Social media tool blog, competes with larger brands for citations",
+    ),
+    # Local businesses / service providers
+    TestSite(
+        url="https://www.yelp.com",
+        name="Yelp",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "restaurant reviews near me",
+            "best local businesses",
+        ],
+        industry="Local Business",
+        authority_level="medium",
+        notes="Large platform but AI doesn't cite specific Yelp listings",
+    ),
+    # Aggregators / comparison sites
+    TestSite(
+        url="https://www.g2.com",
+        name="G2",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "best CRM software reviews",
+            "project management tool comparison",
+        ],
+        industry="Software Reviews",
+        authority_level="medium",
+        notes="Review aggregator, AI summarizes rather than cites",
+    ),
+    TestSite(
+        url="https://www.capterra.com",
+        name="Capterra",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "best accounting software for small business",
+            "HR software reviews",
+        ],
+        industry="Software Reviews",
+        authority_level="medium",
+        notes="Software comparison site, rarely directly cited by AI",
+    ),
+    # E-commerce / product pages
+    TestSite(
+        url="https://www.etsy.com",
+        name="Etsy",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "handmade gifts",
+            "custom jewelry online",
+        ],
+        industry="E-commerce",
+        authority_level="medium",
+        notes="Marketplace, AI doesn't cite specific product listings",
+    ),
+    # Thin content / template sites
+    TestSite(
+        url="https://www.wix.com/blog",
+        name="Wix Blog",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "how to build a website",
+            "website builder comparison",
+        ],
+        industry="Website Builders",
+        authority_level="medium",
+        notes="Has content but competes with Shopify/WordPress for AI citations",
+    ),
+    # SaaS marketing pages — good SEO but AI prefers authoritative/docs content
+    TestSite(
+        url="https://www.freshworks.com",
+        name="Freshworks",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "CRM software for small business",
+            "customer support tools",
+        ],
+        industry="SaaS",
+        authority_level="medium",
+        notes="SaaS marketing site; competes with Salesforce/HubSpot for citations",
+    ),
+    TestSite(
+        url="https://www.pipedrive.com",
+        name="Pipedrive",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "sales pipeline management",
+            "best CRM for sales teams",
+        ],
+        industry="SaaS",
+        authority_level="medium",
+        notes="CRM SaaS marketing; AI cites Salesforce/HubSpot instead",
+    ),
+    TestSite(
+        url="https://www.datadog.com",
+        name="Datadog",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "application monitoring tools",
+            "cloud observability platform",
+        ],
+        industry="DevOps",
+        authority_level="medium",
+        notes="Confirmed 0% citation rate in calibration corpus (Feb 2026)",
+    ),
+    # Content aggregators / directories
+    TestSite(
+        url="https://www.crunchbase.com",
+        name="Crunchbase",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "startup funding data",
+            "company information lookup",
+        ],
+        industry="Business Data",
+        authority_level="medium",
+        notes="Database/directory site, AI summarizes rather than cites",
+    ),
+    TestSite(
+        url="https://www.glassdoor.com",
+        name="Glassdoor",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "company reviews",
+            "salary data by role",
+        ],
+        industry="Employment",
+        authority_level="medium",
+        notes="UGC reviews platform, rarely cited as authoritative source",
+    ),
+    # News/media sites with paywalls or non-technical focus
+    TestSite(
+        url="https://www.bloomberg.com",
+        name="Bloomberg",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "financial markets analysis",
+            "economic news",
+        ],
+        industry="Finance/News",
+        authority_level="high",
+        notes="Paywalled financial news, AI can't access full content",
+    ),
+    TestSite(
+        url="https://www.nytimes.com",
+        name="New York Times",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "current events analysis",
+            "investigative journalism",
+        ],
+        industry="News",
+        authority_level="high",
+        notes="Major newspaper but heavily paywalled; AI models avoid citing",
+    ),
+    # Affiliate / comparison content
+    TestSite(
+        url="https://www.pcmag.com",
+        name="PCMag",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "best laptops 2024",
+            "VPN reviews",
+        ],
+        industry="Tech Reviews",
+        authority_level="medium",
+        notes="Review/affiliate site; AI prefers manufacturer docs over reviews",
+    ),
+    TestSite(
+        url="https://www.trustpilot.com",
+        name="Trustpilot",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "company reviews and ratings",
+            "consumer trust score",
+        ],
+        industry="Reviews",
+        authority_level="medium",
+        notes="UGC review aggregator, not an authoritative source for AI",
     ),
 ]
 

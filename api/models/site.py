@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, func
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from api.models.user import User
 
 
-class BusinessModel(str, Enum):
+class BusinessModel(StrEnum):
     """Business model types for site classification."""
 
     LOCAL_SERVICE = "local_service"

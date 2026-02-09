@@ -4,10 +4,10 @@
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class Quadrant(str, Enum):
+class Quadrant(StrEnum):
     """Study quadrants based on expected score vs citation."""
 
     A = "high_score_cited"  # True Positives - validates scoring
