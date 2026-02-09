@@ -150,7 +150,7 @@ async def main():
         domains_with_variation = 0
         domains_constant = 0
         domains_missing = 0
-        for domain, d in domain_data.items():
+        for _domain, d in domain_data.items():
             if d["covered"] == 0:
                 continue
             vals = d["pillars"][p]

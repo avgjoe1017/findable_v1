@@ -183,7 +183,7 @@ async def update_database(results: list[dict]) -> int:
             return 0
 
         # Get site_id -> domain mapping
-        site_ids = list(set(row[1] for row in samples))
+        site_ids = list({row[1] for row in samples})
         sites_result = await db.execute(select(Site.id, Site.domain).where(Site.id.in_(site_ids)))
         site_domain_map = {row[0]: row[1] for row in sites_result.fetchall()}
 

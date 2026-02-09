@@ -230,7 +230,7 @@ async def optimize_pillar_weights(
     min_improvement: float = 0.02,
     step: float = WEIGHT_STEP,
     coarse_then_fine: bool = True,
-    use_bias_adjusted: bool = True,
+    use_bias_adjusted: bool = True,  # Deprecated: MCC is now always used  # noqa: ARG001
     max_weight_change: float = 10.0,
     site_type: str | None = None,
 ) -> OptimizationResult:
@@ -240,9 +240,12 @@ async def optimize_pillar_weights(
     This function:
     1. Loads calibration samples from the specified window
     2. Splits by DOMAIN (not random) into training and holdout sets
-    3. Tests weight combinations using bias-adjusted scoring
+    3. Tests weight combinations using Matthews Correlation Coefficient (MCC)
     4. Validates best config against holdout set
     5. Returns result if improvement exceeds threshold
+
+    MCC is used instead of bias-adjusted accuracy because it correctly handles
+    class imbalance: a trivial "predict all positive" classifier gets MCC=0.
 
     Args:
         window_days: Number of days to look back for samples
@@ -250,8 +253,8 @@ async def optimize_pillar_weights(
         holdout_pct: Percentage of DOMAINS to hold out for validation
         min_improvement: Minimum score improvement required (default 2%)
         step: Step size for grid search (default 5, use 10 for faster coarse search)
-        coarse_then_fine: If True, do coarse search (step=10) then fine search (step=5)
-        use_bias_adjusted: If True, optimize bias-adjusted score instead of raw accuracy
+        coarse_then_fine: If True, do coarse search (step=5) then fine search (step=2)
+        use_bias_adjusted: Deprecated, MCC is always used
         max_weight_change: Maximum change per pillar from defaults (default 10%)
         site_type: Optional filter to train weights only for a specific site type
 
@@ -320,14 +323,31 @@ async def optimize_pillar_weights(
         result.training_domains = len(training_domains)
         result.holdout_domains = len(holdout_domains)
 
-        # Check we have enough domains
-        if len(training_domains) < 3:
+        # Check we have enough domains for meaningful optimization
+        # With too few domains, the optimizer memorizes domain identity instead of
+        # learning generalizable scoring patterns. Minimum: 10 train + 3 holdout.
+        min_train_domains = 10
+        min_holdout_domains = 3
+        if len(training_domains) < min_train_domains:
             result.errors.append(
-                f"Insufficient domain diversity: {len(training_domains)} training domains"
+                f"Insufficient domain diversity: {len(training_domains)} training domains "
+                f"(need {min_train_domains}+). Use expert-set weights or site-type baselines."
             )
             logger.warning(
                 "weight_optimization_skipped_low_domain_diversity",
                 training_domains=len(training_domains),
+                min_required=min_train_domains,
+            )
+            return result
+        if len(holdout_domains) < min_holdout_domains:
+            result.errors.append(
+                f"Insufficient holdout domains: {len(holdout_domains)} "
+                f"(need {min_holdout_domains}+). Cannot validate reliably."
+            )
+            logger.warning(
+                "weight_optimization_skipped_low_holdout_domains",
+                holdout_domains=len(holdout_domains),
+                min_required=min_holdout_domains,
             )
             return result
 
@@ -338,22 +358,19 @@ async def optimize_pillar_weights(
             holdout_samples=len(holdout_samples),
             training_domains=len(training_domains),
             holdout_domains=len(holdout_domains),
-            use_bias_adjusted=use_bias_adjusted,
+            scoring_metric="mcc",
             max_weight_change=max_weight_change,
         )
 
         # Calculate baseline metrics with default weights
         baseline_metrics = _calculate_weighted_metrics(training_samples, DEFAULT_WEIGHTS)
         result.baseline_accuracy = baseline_metrics.accuracy
-        result.baseline_score = baseline_metrics.bias_adjusted_score
+        result.baseline_score = baseline_metrics.mcc  # Use MCC as primary scoring metric
         result.baseline_over_rate = baseline_metrics.over_rate
         result.baseline_under_rate = baseline_metrics.under_rate
 
-        # Use bias-adjusted score or raw accuracy for optimization
-        if use_bias_adjusted:
-            best_score = baseline_metrics.bias_adjusted_score
-        else:
-            best_score = baseline_metrics.accuracy
+        # Use MCC for optimization (robust to class imbalance)
+        best_score = baseline_metrics.mcc
 
         best_weights = DEFAULT_WEIGHTS.copy()
         best_metrics = baseline_metrics
@@ -395,10 +412,7 @@ async def optimize_pillar_weights(
                         primacy_weight=pw,
                     )
 
-                    if use_bias_adjusted:
-                        score = metrics.bias_adjusted_score
-                    else:
-                        score = metrics.accuracy
+                    score = metrics.mcc
 
                     if score > best_score:
                         best_score = score
@@ -417,9 +431,9 @@ async def optimize_pillar_weights(
             total_combinations_tested += len(fine_combinations)
 
             # Fine threshold search around best threshold
-            fine_thresholds = [
-                t for t in range(max(20, best_threshold - 10), min(70, best_threshold + 11), 2)
-            ]
+            fine_thresholds = list(
+                range(max(20, best_threshold - 10), min(70, best_threshold + 11), 2)
+            )
 
             # Fine primacy weight search around best
             if has_primacy_data:
@@ -453,10 +467,7 @@ async def optimize_pillar_weights(
                             primacy_weight=pw,
                         )
 
-                        if use_bias_adjusted:
-                            score = metrics.bias_adjusted_score
-                        else:
-                            score = metrics.accuracy
+                        score = metrics.mcc
 
                         if score > best_score:
                             best_score = score
@@ -475,10 +486,7 @@ async def optimize_pillar_weights(
         result.best_threshold = best_threshold
         result.best_primacy_weight = best_primacy_weight
 
-        if use_bias_adjusted:
-            result.improvement = best_score - result.baseline_score
-        else:
-            result.improvement = best_metrics.accuracy - result.baseline_accuracy
+        result.improvement = best_score - baseline_metrics.mcc
 
         result.is_improvement = result.improvement > 0
 
@@ -636,25 +644,42 @@ def _generate_fine_search_combinations(
 
 @dataclass
 class AccuracyMetrics:
-    """Detailed accuracy metrics including bias."""
+    """Detailed accuracy metrics including bias and MCC."""
 
     accuracy: float = 0.0
     over_rate: float = 0.0  # Optimistic predictions (predicted findable, was not)
     under_rate: float = 0.0  # Pessimistic predictions (predicted not findable, was)
     correct: int = 0
-    over: int = 0
-    under: int = 0
+    over: int = 0  # FP: predicted findable, was not cited
+    under: int = 0  # FN: predicted not findable, was cited
     total: int = 0
+    true_positives: int = 0  # Predicted findable AND was cited
+    true_negatives: int = 0  # Predicted not findable AND was not cited
+
+    @property
+    def mcc(self) -> float:
+        """
+        Matthews Correlation Coefficient - robust metric for imbalanced classes.
+
+        MCC = (TP*TN - FP*FN) / sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
+
+        Returns 0 for trivial classifiers (always-positive or always-negative),
+        +1 for perfect classification, -1 for perfectly wrong.
+        Unlike bias_adjusted_score, MCC correctly handles class imbalance.
+        """
+        tp, tn, fp, fn = self.true_positives, self.true_negatives, self.over, self.under
+        denominator = (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)
+        if denominator == 0:
+            return 0.0
+        return (tp * tn - fp * fn) / (denominator**0.5)
 
     @property
     def bias_adjusted_score(self) -> float:
         """
-        Bias-adjusted score penalizes imbalanced over/under predictions.
+        Legacy bias-adjusted score. Kept for backward compatibility.
 
-        Formula: accuracy - 0.5 * |over_rate - under_rate|
-
-        This prevents the optimizer from finding weights that improve accuracy
-        by becoming more pessimistic (or optimistic).
+        WARNING: This metric rewards "predict all positive" with imbalanced classes.
+        Use MCC instead for optimizer scoring.
         """
         if self.total == 0:
             return 0.0
@@ -753,27 +778,42 @@ def _batch_evaluate(
         else:
             all_scores = base_scores
 
+        # Pre-compute positive/negative counts for MCC
+        n_positive = int(actuals.sum())
+        n_negative = n_samples - n_positive
+
         for threshold in thresholds:
             # Predictions: (C, N) boolean
             predictions = all_scores >= threshold
 
             # Compare to actuals (broadcast)
             actuals_row = actuals[np.newaxis, :]  # (1, N)
-            correct_mask = predictions == actuals_row
-            over_mask = predictions & ~actuals_row
-            under_mask = ~predictions & actuals_row
+            over_mask = predictions & ~actuals_row  # FP
+            under_mask = ~predictions & actuals_row  # FN
 
-            correct_counts = correct_mask.sum(axis=1)  # (C,)
-            over_counts = over_mask.sum(axis=1)
-            under_counts = under_mask.sum(axis=1)
+            fp = over_mask.sum(axis=1)  # (C,)
+            fn = under_mask.sum(axis=1)
+            tp = n_positive - fn  # TP = total positives - false negatives
+            tn = n_negative - fp  # TN = total negatives - false positives
 
-            accuracy = correct_counts / n_samples
-            over_rate = over_counts / n_samples
-            under_rate = under_counts / n_samples
+            accuracy = (tp + tn) / n_samples
+            over_rate = fp / n_samples
+            under_rate = fn / n_samples
 
-            # Bias-adjusted score
-            bias_penalty = 0.5 * np.abs(over_rate - under_rate)
-            scores = np.maximum(0.0, accuracy - bias_penalty)
+            # Matthews Correlation Coefficient (vectorized)
+            # MCC = (TP*TN - FP*FN) / sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
+            numerator = (tp * tn - fp * fn).astype(np.float64)
+            denom_parts = (
+                (tp + fp).astype(np.float64)
+                * (tp + fn).astype(np.float64)
+                * (tn + fp).astype(np.float64)
+                * (tn + fn).astype(np.float64)
+            )
+            # Avoid division by zero (happens when all predictions are same class)
+            denom = np.sqrt(np.maximum(denom_parts, 1e-10))
+            scores = numerator / denom
+            # Clamp MCC to [-1, 1] (numerical precision)
+            scores = np.clip(scores, -1.0, 1.0)
 
             # Find best in this threshold
             best_idx = np.argmax(scores)
@@ -786,10 +826,12 @@ def _batch_evaluate(
                     accuracy=float(accuracy[best_idx]),
                     over_rate=float(over_rate[best_idx]),
                     under_rate=float(under_rate[best_idx]),
-                    correct=int(correct_counts[best_idx]),
-                    over=int(over_counts[best_idx]),
-                    under=int(under_counts[best_idx]),
+                    correct=int(tp[best_idx] + tn[best_idx]),
+                    over=int(fp[best_idx]),
+                    under=int(fn[best_idx]),
                     total=n_samples,
+                    true_positives=int(tp[best_idx]),
+                    true_negatives=int(tn[best_idx]),
                 )
 
     return best_weights, best_threshold, best_score, best_metrics, best_pw
@@ -827,7 +869,7 @@ def _calculate_weighted_metrics(
 
         # Skip samples with insufficient pillar coverage (need at least 70% of weight)
         covered_weight = sum(
-            DEFAULT_WEIGHTS[p] for p in weights.keys() if sample.pillar_scores.get(p) is not None
+            DEFAULT_WEIGHTS[p] for p in weights if sample.pillar_scores.get(p) is not None
         )
         if covered_weight < 70.0:
             continue
@@ -857,8 +899,12 @@ def _calculate_weighted_metrics(
 
         metrics.total += 1
 
-        if predicted_findable == was_cited:
+        if predicted_findable and was_cited:
             metrics.correct += 1
+            metrics.true_positives += 1
+        elif not predicted_findable and not was_cited:
+            metrics.correct += 1
+            metrics.true_negatives += 1
         elif predicted_findable and not was_cited:
             # Over-prediction (optimistic): predicted findable but wasn't cited
             metrics.over += 1

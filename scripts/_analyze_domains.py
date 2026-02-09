@@ -123,15 +123,15 @@ async def main():
     for domain, d in sorted_domains:
         cite_pct = d["cited"] / d["total"] * 100 if d["total"] > 0 else 0
 
-        def avg_pillar(p):
+        def avg_pillar(p, d=d):
             vals = d["pillars"].get(p, [])
             return f"{sum(vals)/len(vals):5.1f}" if vals else "  N/A"
 
-        def cat_cite(cat):
+        def cat_cite(cat, d=d):
             c = d["by_category"].get(cat, {"total": 0, "cited": 0})
             return f"{c['cited']/c['total']*100:.0f}%" if c["total"] > 0 else "N/A"
 
-        def diff_cite(diff):
+        def diff_cite(diff, d=d):
             c = d["by_difficulty"].get(diff, {"total": 0, "cited": 0})
             return f"{c['cited']/c['total']*100:.0f}%" if c["total"] > 0 else "N/A"
 

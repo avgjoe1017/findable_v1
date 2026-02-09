@@ -347,7 +347,7 @@ def _score_from_domain_alignment(
     return PrimacySignal(name="domain_alignment", score=score, reason=reason)
 
 
-def _score_from_self_reference(domain: str, page_urls: list[str]) -> PrimacySignal:
+def _score_from_self_reference(_domain: str, page_urls: list[str]) -> PrimacySignal:
     """Score based on whether the site's URLs reference its own domain/brand.
 
     Sites that primarily link to their own docs/API/product pages are primary sources.
@@ -358,8 +358,6 @@ def _score_from_self_reference(domain: str, page_urls: list[str]) -> PrimacySign
 
     own_topic_count = 0
     external_topic_count = 0
-
-    domain_base = domain.split(".")[0] if "." in domain else domain
 
     for url in page_urls:
         path = urlparse(url).path.lower()

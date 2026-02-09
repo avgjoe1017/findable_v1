@@ -152,10 +152,8 @@ async def main():
         ]
 
         # Unique domains per arm
-        control_domains = set(s.site.domain if s.site else str(s.site_id) for s in control_samples)
-        treatment_domains = set(
-            s.site.domain if s.site else str(s.site_id) for s in treatment_samples
-        )
+        control_domains = {s.site.domain if s.site else str(s.site_id) for s in control_samples}
+        treatment_domains = {s.site.domain if s.site else str(s.site_id) for s in treatment_samples}
 
         print("Unique Domains:")
         print(

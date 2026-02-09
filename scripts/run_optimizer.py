@@ -139,13 +139,13 @@ async def run_optimizer(
 
         print("BASELINE (default weights, threshold=50):")
         print(
-            f"  Training accuracy:  {baseline_metrics.accuracy:.1%} (bias-adj: {baseline_metrics.bias_adjusted_score:.4f})"
+            f"  Training accuracy:  {baseline_metrics.accuracy:.1%} (MCC: {baseline_metrics.mcc:.4f})"
         )
         print(
             f"  Training bias:      over={baseline_metrics.over_rate:.1%} under={baseline_metrics.under_rate:.1%}"
         )
         print(
-            f"  Holdout accuracy:   {baseline_holdout.accuracy:.1%} (bias-adj: {baseline_holdout.bias_adjusted_score:.4f})"
+            f"  Holdout accuracy:   {baseline_holdout.accuracy:.1%} (MCC: {baseline_holdout.mcc:.4f})"
         )
         print(
             f"  Holdout bias:       over={baseline_holdout.over_rate:.1%} under={baseline_holdout.under_rate:.1%}"
@@ -159,7 +159,7 @@ async def run_optimizer(
             h = _calculate_weighted_metrics(holdout_samples, DEFAULT_WEIGHTS, threshold=t)
             marker = " <-- current" if t == 50 else ""
             print(
-                f"  threshold={t}: train={m.accuracy:.1%} holdout={h.accuracy:.1%} over={m.over_rate:.1%} under={m.under_rate:.1%}{marker}"
+                f"  threshold={t}: train={m.accuracy:.1%} MCC={m.mcc:.3f} holdout={h.accuracy:.1%} over={m.over_rate:.1%} under={m.under_rate:.1%}{marker}"
             )
         print()
 
@@ -183,7 +183,7 @@ async def run_optimizer(
         print(f"  Thresholds to test: {thresholds_to_test}")
         print(f"  Total evaluations: {len(combinations) * len(thresholds_to_test)}")
 
-        best_score = baseline_metrics.bias_adjusted_score
+        best_score = baseline_metrics.mcc
         best_weights = DEFAULT_WEIGHTS.copy()
         best_metrics = baseline_metrics
         best_threshold = 50
@@ -226,13 +226,11 @@ async def run_optimizer(
                 best_threshold = coarse_threshold
                 best_primacy_weight = coarse_pw
 
-        print(f"  Best coarse score: {best_score:.4f} (accuracy={best_metrics.accuracy:.1%})")
+        print(f"  Best coarse MCC: {best_score:.4f} (accuracy={best_metrics.accuracy:.1%})")
         print(f"  Best coarse threshold: {best_threshold}")
         if has_primacy_data:
             print(f"  Best coarse primacy weight: {best_primacy_weight}")
-        print(
-            f"  Best coarse weights: {json.dumps({k: v for k, v in best_weights.items()}, indent=None)}"
-        )
+        print(f"  Best coarse weights: {json.dumps(dict(best_weights.items()), indent=None)}")
         print()
 
         # Phase 2: Fine search around best coarse result
@@ -282,7 +280,7 @@ async def run_optimizer(
                     best_threshold = fine_threshold
                     best_primacy_weight = fine_pw
 
-            print(f"  Best fine score: {best_score:.4f} (accuracy={best_metrics.accuracy:.1%})")
+            print(f"  Best fine MCC: {best_score:.4f} (accuracy={best_metrics.accuracy:.1%})")
             print(f"  Best fine threshold: {best_threshold}")
             if has_primacy_data:
                 print(f"  Best fine primacy weight: {best_primacy_weight}")
@@ -322,13 +320,13 @@ async def run_optimizer(
             f"  {'Training accuracy':<25} {baseline_metrics.accuracy:>11.1%} {best_metrics.accuracy:>11.1%} {best_metrics.accuracy - baseline_metrics.accuracy:>+9.1%}"
         )
         print(
-            f"  {'Training bias-adj':<25} {baseline_metrics.bias_adjusted_score:>12.4f} {best_metrics.bias_adjusted_score:>12.4f} {best_metrics.bias_adjusted_score - baseline_metrics.bias_adjusted_score:>+10.4f}"
+            f"  {'Training MCC':<25} {baseline_metrics.mcc:>12.4f} {best_metrics.mcc:>12.4f} {best_metrics.mcc - baseline_metrics.mcc:>+10.4f}"
         )
         print(
             f"  {'Holdout accuracy':<25} {baseline_holdout.accuracy:>11.1%} {holdout_metrics.accuracy:>11.1%} {holdout_metrics.accuracy - baseline_holdout.accuracy:>+9.1%}"
         )
         print(
-            f"  {'Holdout bias-adj':<25} {baseline_holdout.bias_adjusted_score:>12.4f} {holdout_metrics.bias_adjusted_score:>12.4f} {holdout_metrics.bias_adjusted_score - baseline_holdout.bias_adjusted_score:>+10.4f}"
+            f"  {'Holdout MCC':<25} {baseline_holdout.mcc:>12.4f} {holdout_metrics.mcc:>12.4f} {holdout_metrics.mcc - baseline_holdout.mcc:>+10.4f}"
         )
         print()
 
@@ -378,22 +376,25 @@ async def run_optimizer(
         print()
 
         # Generalization check
-        gap = best_metrics.accuracy - holdout_metrics.accuracy
-        if gap > 0.10:
-            print(f"WARNING: Large train-holdout gap ({gap:.1%}). Possible overfitting.")
-        elif holdout_metrics.accuracy >= baseline_holdout.accuracy:
+        mcc_gap = best_metrics.mcc - holdout_metrics.mcc
+        acc_gap = best_metrics.accuracy - holdout_metrics.accuracy
+        if mcc_gap > 0.20:
+            print(f"WARNING: Large train-holdout MCC gap ({mcc_gap:.3f}). Possible overfitting.")
+        elif holdout_metrics.mcc >= baseline_holdout.mcc:
             print(
-                f"GOOD: Holdout accuracy improved or maintained ({holdout_metrics.accuracy:.1%} vs {baseline_holdout.accuracy:.1%} baseline)."
+                f"GOOD: Holdout MCC improved or maintained ({holdout_metrics.mcc:.4f} vs {baseline_holdout.mcc:.4f} baseline)."
             )
         else:
             print(
-                f"NOTE: Holdout accuracy dropped from {baseline_holdout.accuracy:.1%} to {holdout_metrics.accuracy:.1%}."
+                f"NOTE: Holdout MCC dropped from {baseline_holdout.mcc:.4f} to {holdout_metrics.mcc:.4f}."
+            )
+        if acc_gap > 0.10:
+            print(
+                f"  Accuracy gap: train={best_metrics.accuracy:.1%} holdout={holdout_metrics.accuracy:.1%} ({acc_gap:.1%} gap)"
             )
 
-        improvement = best_score - baseline_metrics.bias_adjusted_score
-        print(
-            f"\nOverall improvement (bias-adjusted): {improvement:+.4f} ({improvement/max(0.001, baseline_metrics.bias_adjusted_score)*100:+.1f}%)"
-        )
+        improvement = best_metrics.mcc - baseline_metrics.mcc
+        print(f"\nOverall improvement (MCC): {improvement:+.4f}")
 
         # Save as config
         if save_config and improvement > 0:
@@ -414,9 +415,9 @@ async def run_optimizer(
                     name=name,
                     description=(
                         f"Optimizer output: coarse-then-fine search, "
-                        f"bias-adjusted scoring, ±{max_weight_change} constraint. "
-                        f"Training accuracy: {best_metrics.accuracy:.1%}, "
-                        f"Holdout accuracy: {holdout_metrics.accuracy:.1%}, "
+                        f"MCC scoring, ±{max_weight_change} constraint. "
+                        f"Training MCC: {best_metrics.mcc:.4f}, "
+                        f"Holdout MCC: {holdout_metrics.mcc:.4f}, "
                         f"Threshold: {best_threshold}. "
                         f"Based on {len(samples)} samples across {len(training_domains) + len(holdout_domains)} domains."
                     ),
@@ -441,13 +442,13 @@ async def run_optimizer(
                     validation_pessimism_bias=holdout_metrics.under_rate,
                     notes=json.dumps(
                         {
-                            "optimizer_version": "v4",
+                            "optimizer_version": "v5_mcc",
                             "findability_threshold": best_threshold,
                             "primacy_weight": best_primacy_weight,
                             "training_accuracy": round(best_metrics.accuracy, 4),
-                            "training_bias_adjusted": round(best_score, 4),
+                            "training_mcc": round(best_metrics.mcc, 4),
                             "holdout_accuracy": round(holdout_metrics.accuracy, 4),
-                            "holdout_bias_adjusted": round(holdout_metrics.bias_adjusted_score, 4),
+                            "holdout_mcc": round(holdout_metrics.mcc, 4),
                             "window_days": window_days,
                             "sample_count": len(samples),
                             "domain_count": len(training_domains) + len(holdout_domains),

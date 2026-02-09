@@ -294,7 +294,7 @@ class SiteTypeDetector:
             SiteTypeResult with classification and citation context
         """
         signals: list[str] = []
-        scores: dict[SiteType, float] = {st: 0.0 for st in SiteType}
+        scores: dict[SiteType, float] = dict.fromkeys(SiteType, 0.0)
 
         # 1. Check domain patterns (strongest signal)
         domain_type = self._check_domain_patterns(domain)
@@ -392,7 +392,7 @@ class SiteTypeDetector:
 
     def _score_from_page_types(self, counts: Counter, total: int) -> dict[SiteType, float]:
         """Score site types based on page type distribution."""
-        scores: dict[SiteType, float] = {st: 0.0 for st in SiteType}
+        scores: dict[SiteType, float] = dict.fromkeys(SiteType, 0.0)
 
         doc_pages = counts.get(PageType.DOCUMENTATION, 0)
         blog_pages = counts.get(PageType.BLOG_POST, 0) + counts.get(PageType.BLOG_INDEX, 0)
@@ -429,7 +429,7 @@ class SiteTypeDetector:
 
     def _score_from_urls(self, urls: list[str]) -> dict[SiteType, float]:
         """Score site types based on URL path patterns."""
-        scores: dict[SiteType, float] = {st: 0.0 for st in SiteType}
+        scores: dict[SiteType, float] = dict.fromkeys(SiteType, 0.0)
 
         doc_urls = 0
         api_urls = 0
