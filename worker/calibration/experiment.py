@@ -119,7 +119,7 @@ async def get_active_experiment() -> CalibrationExperiment | None:
                 CalibrationExperiment.status == ExperimentStatus.RUNNING.value
             )
         )
-        return result.scalar_one_or_none()
+        return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
 
 async def assign_to_experiment(
@@ -356,7 +356,7 @@ async def analyze_experiment(experiment_id: uuid.UUID) -> ExperimentResults:
             accuracy_difference=accuracy_difference,
             p_value=p_value,
             is_significant=is_significant,
-            winner=winner,
+            winner=winner,  # type: ignore[arg-type]
             winner_reason=winner_reason,
             ready_to_conclude=ready_to_conclude,
             min_samples_per_arm=min_samples,

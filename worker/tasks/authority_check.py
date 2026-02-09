@@ -167,7 +167,7 @@ def generate_authority_fixes(score: AuthoritySignalsScore) -> list[dict]:
     Returns:
         List of fix dictionaries
     """
-    fixes = []
+    fixes: list[dict[str, object]] = []
     analysis = score.authority_analysis
 
     if not analysis:
@@ -315,6 +315,6 @@ def generate_authority_fixes(score: AuthoritySignalsScore) -> list[dict]:
         )
 
     # Sort by priority
-    fixes.sort(key=lambda x: x["priority"])
+    fixes.sort(key=lambda x: x["priority"])  # type: ignore[arg-type, return-value]
 
     return fixes

@@ -11,6 +11,7 @@ observation outcomes, improving prediction accuracy over time.
 
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import structlog
 from sqlalchemy import func, select
@@ -279,7 +280,7 @@ async def analyze_calibration_data(
             .where(CalibrationSample.created_at >= window_start)
             .group_by(CalibrationSample.outcome_match)
         )
-        outcome_counts = dict(outcome_counts_result.fetchall())
+        outcome_counts: dict[str, int] = dict(outcome_counts_result.fetchall())  # type: ignore[arg-type]
 
         correct = outcome_counts.get(OutcomeMatch.CORRECT.value, 0)
         optimistic = outcome_counts.get(OutcomeMatch.OPTIMISTIC.value, 0)
@@ -500,7 +501,7 @@ async def check_calibration_drift(
         return alerts
 
 
-async def _get_window_stats(db, start: datetime, end: datetime) -> dict:
+async def _get_window_stats(db: "Any", start: datetime, end: datetime) -> dict:
     """Get statistics for a time window."""
     # Count by outcome
     result = await db.execute(
@@ -545,7 +546,7 @@ async def get_active_calibration_config() -> CalibrationConfig | None:
         result = await db.execute(
             select(CalibrationConfig).where(CalibrationConfig.is_active == True)  # noqa: E712
         )
-        return result.scalar_one_or_none()
+        return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
 
 def get_calibration_weights() -> dict[str, float]:
@@ -565,7 +566,7 @@ def get_calibration_weights() -> dict[str, float]:
         return get_pillar_weights()
     except Exception:
         # Fallback to defaults
-        return DEFAULT_PILLAR_WEIGHTS.copy()
+        return DEFAULT_PILLAR_WEIGHTS.copy()  # type: ignore[return-value]
 
 
 async def analyze_calibration_detailed(
@@ -602,7 +603,7 @@ async def analyze_calibration_detailed(
             select(
                 CalibrationSample.sim_answerability,
                 func.count(CalibrationSample.id).label("total"),
-                func.sum(func.cast(CalibrationSample.prediction_accurate, func.Integer)).label(
+                func.sum(func.cast(CalibrationSample.prediction_accurate, func.Integer)).label(  # type: ignore[arg-type]
                     "accurate"
                 ),
             )
@@ -627,7 +628,7 @@ async def analyze_calibration_detailed(
                 CalibrationSample.obs_provider,
                 CalibrationSample.obs_model,
                 func.count(CalibrationSample.id).label("total"),
-                func.sum(func.cast(CalibrationSample.prediction_accurate, func.Integer)).label(
+                func.sum(func.cast(CalibrationSample.prediction_accurate, func.Integer)).label(  # type: ignore[arg-type]
                     "accurate"
                 ),
             )
@@ -635,8 +636,8 @@ async def analyze_calibration_detailed(
             .where(CalibrationSample.outcome_match != OutcomeMatch.UNKNOWN.value)
             .group_by(CalibrationSample.obs_provider, CalibrationSample.obs_model)
         )
-        accuracy_by_provider = {}
-        for row in provider_results.fetchall():
+        accuracy_by_provider: dict[str, dict[str, Any]] = {}
+        for row in provider_results.fetchall():  # type: ignore[assignment]
             provider_key = f"{row[0]}:{row[1]}"
             prov_total = row[2] or 0
             prov_accurate = row[3] or 0
@@ -662,7 +663,7 @@ async def analyze_calibration_detailed(
             .where(CalibrationSample.outcome_match != OutcomeMatch.UNKNOWN.value)
         )
 
-        pillar_correlation = _calculate_pillar_correlation(samples_with_pillars.fetchall())
+        pillar_correlation = _calculate_pillar_correlation(samples_with_pillars.fetchall())  # type: ignore[arg-type]
 
         # Generate recommendations
         recommendations = _generate_calibration_recommendations(
@@ -708,7 +709,9 @@ def _calculate_pillar_correlation(samples: list) -> dict:
         "coverage",
     ]
 
-    pillar_data = {name: {"high": [], "low": [], "mid": []} for name in pillar_names}
+    pillar_data: dict[str, dict[str, list[float]]] = {
+        name: {"high": [], "low": [], "mid": []} for name in pillar_names
+    }
 
     for pillar_scores, prediction_accurate, _outcome_match in samples:
         if not pillar_scores:

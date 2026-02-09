@@ -215,7 +215,7 @@ class JSDetector:
         body = soup.find("body")
         if body:
             # Remove script/style/nav/footer
-            for tag in body.find_all(["script", "style", "nav", "footer", "header"]):
+            for tag in body.find_all(["script", "style", "nav", "footer", "header"]):  # type: ignore[union-attr]
                 tag.decompose()
             text = body.get_text(separator=" ", strip=True)
             return len(text)

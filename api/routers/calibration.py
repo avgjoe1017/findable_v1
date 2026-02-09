@@ -164,7 +164,7 @@ async def get_calibration_analysis(
         .where(CalibrationSample.created_at >= window_start)
         .group_by(CalibrationSample.outcome_match)
     )
-    outcome_counts_raw = dict(outcome_results.fetchall())
+    outcome_counts_raw: dict[str, int] = dict(outcome_results.fetchall())  # type: ignore[arg-type]
 
     correct = outcome_counts_raw.get("correct", 0)
     optimistic = outcome_counts_raw.get("optimistic", 0)

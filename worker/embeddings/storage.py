@@ -345,8 +345,8 @@ class EmbeddingStore:
         )
 
         result = await session.execute(query, {"site_id": site_id})
-        if result.rowcount is not None:
-            return int(result.rowcount)
+        if result.rowcount is not None:  # type: ignore[attr-defined]
+            return int(result.rowcount)  # type: ignore[attr-defined]
         return 0
 
     async def delete_page_embeddings(
@@ -374,8 +374,8 @@ class EmbeddingStore:
         )
 
         result = await session.execute(query, {"page_id": page_id})
-        if result.rowcount is not None:
-            return int(result.rowcount)
+        if result.rowcount is not None:  # type: ignore[attr-defined]
+            return int(result.rowcount)  # type: ignore[attr-defined]
         return 0
 
     async def get_embedding_count(

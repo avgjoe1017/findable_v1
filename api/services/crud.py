@@ -19,7 +19,7 @@ class CRUDBase(Generic[ModelType]):
 
     async def get(self, db: AsyncSession, id: uuid.UUID) -> ModelType | None:
         """Get a single record by ID."""
-        result = await db.execute(select(self.model).where(self.model.id == id))
+        result = await db.execute(select(self.model).where(self.model.id == id))  # type: ignore[attr-defined]
         return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
     async def get_multi(

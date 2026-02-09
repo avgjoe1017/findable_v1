@@ -80,7 +80,7 @@ def get_pillar_weights(config: "CalibrationConfig | None" = None) -> dict[str, f
         return _cached_weights.copy()
 
     # Fall back to defaults
-    return DEFAULT_PILLAR_WEIGHTS.copy()
+    return DEFAULT_PILLAR_WEIGHTS.copy()  # type: ignore[return-value]
 
 
 # Cache for active calibration weights
@@ -159,14 +159,14 @@ async def load_active_calibration_weights() -> dict[str, float]:
                     weights=active_config.weights,
                     config_name=active_config.name,
                 )
-                return active_config.weights
+                return active_config.weights  # type: ignore[no-any-return]
 
     except Exception as e:
         logger.debug("active_calibration_load_failed", error=str(e))
 
     # No active config - clear cache and return defaults
     set_active_calibration_weights(None)
-    return DEFAULT_PILLAR_WEIGHTS.copy()
+    return DEFAULT_PILLAR_WEIGHTS.copy()  # type: ignore[return-value]
 
 
 # Findability Levels - action-oriented, not judgmental
@@ -430,7 +430,7 @@ class FindableScoreV2:
                     f"{action.action[:40]:<40} {'+' + str(int(action.impact_points)) + ' pts':>8} "
                     f"{action.effort:>10}"
                 )
-                total_impact += action.impact_points
+                total_impact += action.impact_points  # type: ignore[assignment]
 
             lines.append("-" * 60)
             projected = self.total_score + total_impact
@@ -520,7 +520,7 @@ class FindableScoreCalculatorV2:
                 total=total,
                 config_name=self._config_name,
             )
-            self._weights = DEFAULT_PILLAR_WEIGHTS.copy()
+            self._weights = DEFAULT_PILLAR_WEIGHTS.copy()  # type: ignore[assignment]
             self._config_name = "default (fallback)"
 
         logger.debug(
@@ -799,12 +799,12 @@ class FindableScoreCalculatorV2:
             MilestoneInfo or None if already at highest level
         """
         for milestone in MILESTONES:
-            if score < milestone["score"]:
+            if score < milestone["score"]:  # type: ignore[operator]
                 return MilestoneInfo(
-                    score=milestone["score"],
-                    name=milestone["name"],
-                    description=milestone["description"],
-                    points_needed=round(milestone["score"] - score, 1),
+                    score=milestone["score"],  # type: ignore[arg-type]
+                    name=milestone["name"],  # type: ignore[arg-type]
+                    description=milestone["description"],  # type: ignore[arg-type]
+                    points_needed=round(milestone["score"] - score, 1),  # type: ignore[operator]
                 )
         return None  # Already at highest level
 

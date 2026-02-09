@@ -206,7 +206,7 @@ def generate_structure_fixes(score: StructureQualityScore) -> list[dict]:
     Returns:
         List of fix dictionaries
     """
-    fixes = []
+    fixes: list[dict[str, object]] = []
     analysis = score.structure_analysis
 
     if not analysis:
@@ -367,6 +367,6 @@ def generate_structure_fixes(score: StructureQualityScore) -> list[dict]:
         )
 
     # Sort by priority
-    fixes.sort(key=lambda x: x["priority"])
+    fixes.sort(key=lambda x: x["priority"])  # type: ignore[arg-type, return-value]
 
     return fixes

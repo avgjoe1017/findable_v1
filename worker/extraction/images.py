@@ -4,8 +4,11 @@ Analyzes image alt text quality for AI systems that are increasingly
 multimodal. Good alt text helps AI understand and cite visual content.
 """
 
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass, field
+from typing import Any
 
 import structlog
 from bs4 import BeautifulSoup
@@ -212,7 +215,7 @@ class ImageAnalyzer:
 
         return result
 
-    def _analyze_image(self, img, main_content) -> ImageInfo:
+    def _analyze_image(self, img: Any, main_content: Any) -> ImageInfo:
         """Analyze a single image element."""
         src = img.get("src", "") or img.get("data-src", "") or ""
         alt = img.get("alt")
@@ -255,7 +258,7 @@ class ImageAnalyzer:
             issues=issues,
         )
 
-    def _is_decorative(self, img, src: str, alt_text: str) -> bool:
+    def _is_decorative(self, img: Any, src: str, alt_text: str) -> bool:
         """Check if image is likely decorative."""
         # Explicit decorative markers
         if img.get("role") == "presentation":

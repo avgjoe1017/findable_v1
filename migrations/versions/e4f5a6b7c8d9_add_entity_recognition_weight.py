@@ -31,16 +31,25 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    # Add weight_entity_recognition column with default value
-    op.add_column(
-        "calibration_configs",
-        sa.Column(
-            "weight_entity_recognition",
-            sa.Float(),
-            nullable=False,
-            server_default="13.0",
-        ),
+    # Add weight_entity_recognition column with default value (idempotent)
+    conn = op.get_bind()
+    result = conn.execute(
+        sa.text(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name = 'calibration_configs' "
+            "AND column_name = 'weight_entity_recognition'"
+        )
     )
+    if not result.fetchone():
+        op.add_column(
+            "calibration_configs",
+            sa.Column(
+                "weight_entity_recognition",
+                sa.Float(),
+                nullable=False,
+                server_default="13.0",
+            ),
+        )
 
     # Update default values for existing weights in new configs
     # Note: Existing configs retain their values, only new defaults change

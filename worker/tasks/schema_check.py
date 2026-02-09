@@ -162,7 +162,7 @@ def generate_schema_fixes(score: SchemaRichnessScore) -> list[dict]:
     Returns:
         List of fix dictionaries
     """
-    fixes = []
+    fixes: list[dict[str, object]] = []
     analysis = score.schema_analysis
 
     if not analysis:
@@ -305,7 +305,7 @@ def generate_schema_fixes(score: SchemaRichnessScore) -> list[dict]:
         )
 
     # Sort by priority
-    fixes.sort(key=lambda x: x["priority"])
+    fixes.sort(key=lambda x: x["priority"])  # type: ignore[arg-type, return-value]
 
     return fixes
 

@@ -4,7 +4,10 @@ Analyzes internal linking patterns which affect AI's ability
 to understand site structure and find related content.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import structlog
@@ -158,7 +161,7 @@ class LinkAnalyzer:
         # Pre-compute which links are in main content (O(n) vs O(n²))
         main_content_links = set()
         if main_content:
-            for a_tag in main_content.find_all("a", href=True):
+            for a_tag in main_content.find_all("a", href=True):  # type: ignore[union-attr]
                 main_content_links.add(id(a_tag))
 
         # Pre-compute which links are in nav containers (O(n) vs O(n²))
@@ -279,7 +282,7 @@ class LinkAnalyzer:
         except Exception:
             return False
 
-    def _is_in_container(self, element, container_ids: set) -> bool:
+    def _is_in_container(self, element: Any, container_ids: set[int]) -> bool:
         """Check if element is inside any of the specified containers."""
         parent = element.parent
         while parent:
@@ -322,7 +325,7 @@ class LinkAnalyzer:
 
         # Penalize too many links (can dilute value)
         if analysis.internal_links > MAX_LINKS_PER_PAGE:
-            penalty = min(20, (analysis.internal_links - MAX_LINKS_PER_PAGE) * 0.5)
+            penalty = min(20, (analysis.internal_links - MAX_LINKS_PER_PAGE) * 0.5)  # type: ignore[assignment]
             score -= penalty
             issues.append(
                 f"High internal link count ({analysis.internal_links}). " f"May dilute link value."

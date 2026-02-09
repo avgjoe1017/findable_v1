@@ -559,7 +559,7 @@ class StructureAnalyzer:
         if not first_para:
             main_el = soup.find("main") or soup.find("article") or soup.body
             if main_el:
-                for p in main_el.find_all("p", recursive=True)[:3]:
+                for p in main_el.find_all("p", recursive=True)[:3]:  # type: ignore[union-attr]
                     text = p.get_text(strip=True)
                     if len(text) > 30:
                         first_para = text
@@ -650,7 +650,7 @@ class StructureAnalyzer:
         main_el = soup.find("main") or soup.find("article") or soup.body
         paragraphs = []
         if main_el:
-            for p in main_el.find_all("p", recursive=True):
+            for p in main_el.find_all("p", recursive=True):  # type: ignore[union-attr]
                 text = p.get_text(strip=True)
                 if len(text) > 20:  # Skip very short
                     paragraphs.append(text)

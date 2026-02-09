@@ -63,8 +63,8 @@ def init_sentry() -> bool:
                 ),
             ],
             # Filter sensitive data
-            before_send=_before_send,
-            before_send_transaction=_before_send_transaction,
+            before_send=_before_send,  # type: ignore[arg-type]
+            before_send_transaction=_before_send_transaction,  # type: ignore[arg-type]
         )
 
         _sentry_initialized = True
@@ -189,7 +189,7 @@ def capture_message(message: str, level: str = "info") -> str | None:
     try:
         import sentry_sdk
 
-        event_id: str | None = sentry_sdk.capture_message(message, level=level)
+        event_id: str | None = sentry_sdk.capture_message(message, level=level)  # type: ignore[arg-type]
         return event_id
     except Exception:
         return None

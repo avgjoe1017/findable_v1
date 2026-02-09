@@ -400,9 +400,9 @@ async def run_pipeline(
         chunked_pages = []
         total_chunks = 0
 
-        for page in extraction_result.pages:
+        for page in extraction_result.pages:  # type: ignore[assignment]
             chunked_page = chunker.chunk_text(
-                text=page.main_content,
+                text=page.main_content,  # type: ignore[attr-defined]
                 url=page.url,
                 title=page.title,
             )
@@ -441,8 +441,8 @@ async def run_pipeline(
         # Collect schema types and headings
         schema_types = list(set(extraction_result.schema_types_found))
         headings: dict[str, list[str]] = {"h1": [], "h2": [], "h3": []}
-        for page in extraction_result.pages:
-            page_headings = page.metadata.headings or {}
+        for page in extraction_result.pages:  # type: ignore[assignment]
+            page_headings = page.metadata.headings or {}  # type: ignore[attr-defined]
             for level in ["h1", "h2", "h3"]:
                 if level in page_headings:
                     headings[level].extend(page_headings[level])
@@ -630,6 +630,6 @@ async def run_pipeline_batch(
                 )
             )
         else:
-            processed_results.append(result)
+            processed_results.append(result)  # type: ignore[arg-type]
 
     return processed_results

@@ -370,7 +370,7 @@ class RobotsTxtAIResult:
         - training: Whether content is used for AI training
         - user_browsing: Whether AI can fetch pages on user request
         """
-        visibility = {
+        visibility: dict[str, dict[str, object]] = {
             "search_cited": {},
             "direct_cited": {},
             "link_only": {},

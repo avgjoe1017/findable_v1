@@ -231,8 +231,8 @@ class PageTypeDetector:
             page_type=page_type,
             confidence=confidence,
             signals=signals[:5],  # Limit signals
-            scoring_context=context["scoring_context"],
-            expected_gaps=context["expected_gaps"],
+            scoring_context=context["scoring_context"],  # type: ignore[arg-type]
+            expected_gaps=context["expected_gaps"],  # type: ignore[arg-type]
         )
 
     def _analyze_html(self, html: str) -> tuple[PageType, list[str]]:

@@ -8,6 +8,7 @@ This module provides weight and threshold optimization without ML infrastructure
 
 import itertools
 import uuid
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
@@ -288,7 +289,7 @@ async def optimize_pillar_weights(
             """Calculate the percentage of total weight covered by non-null pillars."""
             covered_weight = 0.0
             for pillar in pillar_keys:
-                if sample.pillar_scores.get(pillar) is not None:
+                if sample.pillar_scores and sample.pillar_scores.get(pillar) is not None:
                     covered_weight += DEFAULT_WEIGHTS[pillar]
             return covered_weight
 
@@ -671,7 +672,7 @@ class AccuracyMetrics:
         denominator = (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)
         if denominator == 0:
             return 0.0
-        return (tp * tn - fp * fn) / (denominator**0.5)
+        return float((tp * tn - fp * fn) / (denominator**0.5))
 
     @property
     def bias_adjusted_score(self) -> float:
@@ -773,8 +774,8 @@ def _batch_evaluate(
     for pw in pw_list:
         if has_primacy and pw > 0:
             # Add primacy bonus: (C, N) + (1, N) broadcast
-            primacy_bonus = primacy_scores * (pw / 100.0)  # (N,)
-            all_scores = base_scores + primacy_bonus[np.newaxis, :]  # (C, N)
+            primacy_bonus = primacy_scores * (pw / 100.0)  # type: ignore[operator]
+            all_scores = base_scores + primacy_bonus[np.newaxis, :]  # type: ignore[index]
         else:
             all_scores = base_scores
 
@@ -1106,7 +1107,7 @@ def _calculate_threshold_accuracy(
             correct += 1
         # Also count adjacent predictions as partially correct for smoothing
         elif _are_adjacent(predicted, actual):
-            correct += 0.5
+            correct += 0.5  # type: ignore[assignment]
 
         total += 1
 
@@ -1124,7 +1125,7 @@ def _are_adjacent(pred: str, actual: str) -> bool:
         return False
 
 
-def _frange(start: float, stop: float, step: float):
+def _frange(start: float, stop: float, step: float) -> Iterator[float]:
     """Generate floats in a range (like range() but for floats)."""
     while start <= stop:
         yield start

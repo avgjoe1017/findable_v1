@@ -4,6 +4,7 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 import structlog
@@ -96,8 +97,8 @@ class EmailProvider(NotificationProvider):
         recipient: str,
         title: str,
         message: str,
-        data: dict | None,
-        settings,
+        data: dict | None,  # type: ignore[type-arg]
+        settings: Any,
     ) -> NotificationResult:
         """Send email via SendGrid API."""
         if not settings.sendgrid_api_key:

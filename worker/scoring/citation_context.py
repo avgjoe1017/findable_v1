@@ -326,8 +326,8 @@ def generate_citation_context(
         site_type=st.value,
         site_type_confidence=site_type_result.confidence,
         citation_baseline=site_type_result.citation_baseline,
-        citation_range=baseline["range"],
-        citation_description=baseline["description"],
+        citation_range=baseline["range"],  # type: ignore[arg-type]
+        citation_description=baseline["description"],  # type: ignore[arg-type]
         overall_likelihood=overall,
         category_predictions=predictions,
         recommendations=recommendations,

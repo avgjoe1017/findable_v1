@@ -220,11 +220,11 @@ class CompetitorBenchmarkerV2:
                 domain=comp_domain,
                 total_score=comp_score.total_score,
                 grade=(
-                    comp_score.grade.value
-                    if hasattr(comp_score.grade, "value")
-                    else str(comp_score.grade)
+                    comp_score.grade.value  # type: ignore[attr-defined]
+                    if hasattr(comp_score.grade, "value")  # type: ignore[attr-defined]
+                    else str(comp_score.grade)  # type: ignore[attr-defined]
                 ),
-                grade_description=comp_score.grade_description,
+                grade_description=comp_score.grade_description,  # type: ignore[attr-defined]
                 pillars=comp_score.pillars,
                 pillars_good=comp_score.pillars_good,
                 pillars_warning=comp_score.pillars_warning,
@@ -259,7 +259,7 @@ class CompetitorBenchmarkerV2:
     ) -> HeadToHeadV2:
         """Build head-to-head comparison with a single competitor."""
         your_grade = (
-            your_score.grade.value if hasattr(your_score.grade, "value") else str(your_score.grade)
+            your_score.grade.value if hasattr(your_score.grade, "value") else str(your_score.grade)  # type: ignore[attr-defined]
         )
 
         h2h = HeadToHeadV2(
@@ -352,7 +352,7 @@ class CompetitorBenchmarkerV2:
 
     def _generate_insights(self, result: BenchmarkV2Result) -> list[str]:
         """Generate insights from v2 benchmark results."""
-        insights = []
+        insights: list[str] = []
 
         if not result.your_score:
             return insights
@@ -401,7 +401,7 @@ class CompetitorBenchmarkerV2:
 
     def _generate_recommendations(self, result: BenchmarkV2Result) -> list[str]:
         """Generate recommendations from v2 benchmark results."""
-        recommendations = []
+        recommendations: list[str] = []
 
         if not result.your_score:
             return recommendations

@@ -7,7 +7,7 @@ import uuid
 from collections import defaultdict
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, cast
+from typing import Any
 
 import structlog
 from fastapi import Request, Response, status
@@ -66,7 +66,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         # Add to request state for access in handlers
         request.state.request_id = request_id
 
-        response = cast(Response, await call_next(request))
+        response = await call_next(request)  # type: ignore[return-value]
 
         # Add request ID to response headers
         response.headers["X-Request-ID"] = request_id
@@ -88,7 +88,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             query=str(request.query_params) if request.query_params else None,
         )
 
-        response = cast(Response, await call_next(request))
+        response = await call_next(request)  # type: ignore[return-value]
 
         # Calculate duration
         duration_ms = (time.perf_counter() - start_time) * 1000
@@ -123,11 +123,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: CallNext) -> Response:
         if not self.enabled:
-            return cast(Response, await call_next(request))
+            return await call_next(request)  # type: ignore[return-value]
 
         # Skip excluded paths
         if request.url.path in self.EXCLUDE_PATHS:
-            return cast(Response, await call_next(request))
+            return await call_next(request)  # type: ignore[return-value]
 
         # Get client identifier
         client_ip = self._get_client_ip(request)
@@ -158,7 +158,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             )
             return self._rate_limit_response(retry_after)
 
-        response = cast(Response, await call_next(request))
+        response = await call_next(request)  # type: ignore[return-value]
 
         # Add rate limit headers
         response.headers["X-RateLimit-Limit"] = str(limits.requests_per_minute)
@@ -233,7 +233,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to responses."""
 
     async def dispatch(self, request: Request, call_next: CallNext) -> Response:
-        response = cast(Response, await call_next(request))
+        response = await call_next(request)  # type: ignore[return-value]
 
         # Prevent MIME type sniffing
         response.headers["X-Content-Type-Options"] = "nosniff"

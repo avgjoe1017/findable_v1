@@ -373,7 +373,7 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
             site_type_result = detect_site_type(
                 domain=domain,
                 page_urls=page_urls,
-                page_htmls=page_htmls,
+                page_htmls=page_htmls,  # type: ignore[arg-type]
             )
 
             logger.info(
@@ -618,9 +618,9 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
         chunked_pages = []
         total_chunks = 0
 
-        for page in extraction_result.pages:
+        for page in extraction_result.pages:  # type: ignore[assignment]
             chunked_page = chunker.chunk_text(
-                text=page.main_content,
+                text=page.main_content,  # type: ignore[attr-defined]
                 url=page.url,
                 title=page.title,
             )
@@ -731,8 +731,8 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
         # Collect schema types and headings from extraction
         schema_types = list(set(extraction_result.schema_types_found))
         headings: dict[str, list[str]] = {"h1": [], "h2": [], "h3": []}
-        for page in extraction_result.pages:
-            page_headings = page.metadata.headings or {}
+        for page in extraction_result.pages:  # type: ignore[assignment]
+            page_headings = page.metadata.headings or {}  # type: ignore[attr-defined]
             for level in ["h1", "h2", "h3"]:
                 if level in page_headings:
                     headings[level].extend(page_headings[level])
@@ -911,7 +911,7 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
                         run_id=run_id,
                         simulation_result=simulation_result,
                         observation_run=observation_run,
-                        pillar_scores=pillar_scores_snapshot,
+                        pillar_scores=pillar_scores_snapshot,  # type: ignore[arg-type]
                         site_type=(site_type_result.site_type.value if site_type_result else None),
                     )
 
@@ -1129,9 +1129,9 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
             # Link report to run and mark complete in same transaction
             result = await db.execute(select(Run).where(Run.id == run_id))
             run = result.scalar_one()
-            run.report_id = report.id
-            run.status = "complete"
-            run.completed_at = datetime.now(UTC)
+            run.report_id = report.id  # type: ignore[attr-defined]
+            run.status = "complete"  # type: ignore[attr-defined]
+            run.completed_at = datetime.now(UTC)  # type: ignore[attr-defined]
 
             await db.commit()
 

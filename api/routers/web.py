@@ -892,7 +892,7 @@ async def login_submit(
 
     from api.models import User
 
-    result = await db.execute(select(User).where(User.email == email))
+    result = await db.execute(select(User).where(User.email == email))  # type: ignore[arg-type]
     user = result.scalar_one_or_none()
 
     if not user:
@@ -995,7 +995,7 @@ async def register_submit(
 
     from api.models import User
 
-    result = await db.execute(select(User).where(User.email == email))
+    result = await db.execute(select(User).where(User.email == email))  # type: ignore[arg-type]
     existing = result.scalar_one_or_none()
 
     if existing:

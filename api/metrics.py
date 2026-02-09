@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import time
 from collections.abc import Awaitable, Callable
-from typing import cast
 
 from fastapi import Request, Response
 from prometheus_client import (
@@ -125,7 +124,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         # Skip metrics for excluded paths
         if request.url.path in self.EXCLUDE_PATHS:
-            return cast(Response, await call_next(request))
+            return await call_next(request)  # type: ignore[return-value]
 
         method = request.method
         # Normalize endpoint path (remove IDs)
@@ -137,7 +136,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         start_time = time.perf_counter()
 
         try:
-            response = cast(Response, await call_next(request))
+            response = await call_next(request)  # type: ignore[return-value]
             status_code = str(response.status_code)
 
             # Record metrics

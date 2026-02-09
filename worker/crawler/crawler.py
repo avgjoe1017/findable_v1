@@ -191,8 +191,8 @@ class Crawler:
         try:
             soup = BeautifulSoup(html, "html.parser")
             title_tag = soup.find("title")
-            if title_tag and title_tag.string:
-                return title_tag.string.strip()[:500]  # type: ignore[no-any-return]
+            if title_tag and title_tag.string:  # type: ignore[union-attr]
+                return title_tag.string.strip()[:500]  # type: ignore[union-attr, no-any-return]
         except Exception:
             pass
         return None

@@ -125,12 +125,12 @@ async def run_snapshot(
         # Import here to avoid circular imports
         from worker.tasks.audit import run_audit
 
-        result = await run_audit(run_id, site_id)
+        result = await run_audit(run_id, site_id)  # type: ignore[assignment]
 
-        if result["status"] != "complete":
-            raise RuntimeError(f"Audit failed: {result.get('error', 'Unknown error')}")
+        if result["status"] != "complete":  # type: ignore[index]
+            raise RuntimeError(f"Audit failed: {result.get('error', 'Unknown error')}")  # type: ignore[attr-defined]
 
-        report_id = uuid.UUID(result["report_id"])
+        report_id = uuid.UUID(result["report_id"])  # type: ignore[index]
 
         # Create snapshot record
         async with async_session_maker() as db:

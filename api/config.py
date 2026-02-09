@@ -155,7 +155,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Get cached settings instance."""
     try:
-        return Settings()
+        return Settings()  # type: ignore[call-arg]
     except Exception as e:
         if "validation" in type(e).__name__.lower() or "required" in str(e).lower():
             raise RuntimeError(

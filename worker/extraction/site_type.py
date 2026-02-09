@@ -366,9 +366,9 @@ class SiteTypeDetector:
             signals=signals,
             page_type_counts=dict(page_type_counts),
             total_pages_analyzed=total_pages,
-            citation_baseline=baseline["citation_rate"],
-            citation_range=baseline["range"],
-            citation_description=baseline["description"],
+            citation_baseline=baseline["citation_rate"],  # type: ignore[arg-type]
+            citation_range=baseline["range"],  # type: ignore[arg-type]
+            citation_description=baseline["description"],  # type: ignore[arg-type]
             category_predictions=category_preds,
         )
 

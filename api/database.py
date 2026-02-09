@@ -69,7 +69,7 @@ class _SessionMakerProxy:
     def __call__(self) -> AsyncSession:
         return get_session_maker()()
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> object:
         return getattr(get_session_maker(), name)
 
 
@@ -80,7 +80,7 @@ async_session_maker = _SessionMakerProxy()
 class _EngineProxy:
     """Proxy object that lazily initializes the engine."""
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> object:
         return getattr(get_engine(), name)
 
 

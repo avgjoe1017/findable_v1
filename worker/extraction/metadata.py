@@ -82,8 +82,8 @@ def _get_meta_content(
     else:
         return None
 
-    if tag and tag.get("content"):
-        content = tag["content"]
+    if tag and tag.get("content"):  # type: ignore[union-attr]
+        content = tag["content"]  # type: ignore[index]
         return content.strip() if isinstance(content, str) else str(content).strip()
     return None
 
@@ -210,13 +210,13 @@ def extract_metadata(html: str, url: str | None = None) -> PageMetadata:
 
     # Canonical URL
     canonical = soup.find("link", rel="canonical")
-    if canonical and canonical.get("href"):
-        metadata.canonical_url = canonical["href"]
+    if canonical and canonical.get("href"):  # type: ignore[union-attr]
+        metadata.canonical_url = canonical["href"]  # type: ignore[assignment, index]
 
     # Language
     html_tag = soup.find("html")
     if html_tag:
-        metadata.language = html_tag.get("lang") or html_tag.get("xml:lang")
+        metadata.language = html_tag.get("lang") or html_tag.get("xml:lang")  # type: ignore[union-attr, assignment]
 
     # Open Graph
     metadata.og_title = _get_meta_content(soup, property="og:title")
@@ -231,11 +231,11 @@ def extract_metadata(html: str, url: str | None = None) -> PageMetadata:
 
     # Favicon
     favicon = soup.find("link", rel=lambda x: x and "icon" in x.lower() if x else False)
-    if favicon and favicon.get("href"):
-        href = favicon["href"]
-        if url and not href.startswith("http"):
-            href = urljoin(url, href)
-        metadata.favicon = href
+    if favicon and favicon.get("href"):  # type: ignore[union-attr]
+        href = favicon["href"]  # type: ignore[index]
+        if url and not href.startswith("http"):  # type: ignore[union-attr]
+            href = urljoin(url, href)  # type: ignore[type-var, assignment]
+        metadata.favicon = href  # type: ignore[assignment]
 
     # Headings
     metadata.headings = _extract_headings(soup)

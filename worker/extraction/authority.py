@@ -480,7 +480,7 @@ class AuthorityAnalyzer:
 
         # Check for author link
         link = elem.find("a")
-        if link and link.get("href"):
+        if link and link.get("href"):  # type: ignore[union-attr]
             author.is_linked = True
 
         # Check for social links
@@ -585,7 +585,7 @@ class AuthorityAnalyzer:
                 # Skip generic "about" or "team" links
                 if text and len(text) > 2 and text not in ["about", "team", "about us"]:
                     result.has_author_page_link = True
-                    result.author_page_url = link.get("href")
+                    result.author_page_url = link.get("href")  # type: ignore[assignment]
                     break
 
         # Calculate score
@@ -768,9 +768,9 @@ class AuthorityAnalyzer:
                         date_type = "modified"
                     dates.append(
                         ContentDate(
-                            date_str=datetime_attr,
+                            date_str=datetime_attr,  # type: ignore[arg-type]
                             date_type=date_type,
-                            parsed_date=self._parse_date(datetime_attr),
+                            parsed_date=self._parse_date(datetime_attr),  # type: ignore[arg-type]
                         )
                     )
                 else:

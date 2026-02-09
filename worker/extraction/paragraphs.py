@@ -125,7 +125,7 @@ class ParagraphAnalyzer:
             result.issues.append("No content area found")
             return result
 
-        paragraphs = main.find_all("p")
+        paragraphs = main.find_all("p")  # type: ignore[union-attr]
 
         if not paragraphs:
             result.level = "partial"

@@ -129,9 +129,9 @@ async def run_technical_checks_parallel(
         return_exceptions=True,
     )
 
-    robots_result = results[0] if not isinstance(results[0], Exception) else None
-    ttfb_result = results[1] if not isinstance(results[1], Exception) else None
-    llms_txt_result = results[2] if not isinstance(results[2], Exception) else None
+    robots_result = results[0] if not isinstance(results[0], Exception | BaseException) else None  # type: ignore[arg-type]
+    ttfb_result = results[1] if not isinstance(results[1], Exception | BaseException) else None  # type: ignore[arg-type]
+    llms_txt_result = results[2] if not isinstance(results[2], Exception | BaseException) else None  # type: ignore[arg-type]
 
     # JS detection is sync, run separately
     js_result = None

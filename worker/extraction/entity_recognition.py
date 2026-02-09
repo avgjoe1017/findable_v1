@@ -473,7 +473,7 @@ class WikipediaClient:
         }
 
         async with httpx.AsyncClient(timeout=self.timeout, headers=self.headers) as client:
-            response = await client.get(self.BASE_URL, params=params)
+            response = await client.get(self.BASE_URL, params=params)  # type: ignore[arg-type]
             response.raise_for_status()
             data = response.json()
 
@@ -584,7 +584,7 @@ class WikidataClient:
         }
 
         async with httpx.AsyncClient(timeout=self.timeout, headers=self.headers) as client:
-            response = await client.get(self.BASE_URL, params=params)
+            response = await client.get(self.BASE_URL, params=params)  # type: ignore[arg-type]
             response.raise_for_status()
             data = response.json()
 
@@ -917,8 +917,8 @@ class EntityRecognitionAnalyzer:
             # Check meta description
             meta_desc = soup.find("meta", attrs={"name": "description"})
             if meta_desc:
-                desc_content = meta_desc.get("content", "")
-                if brand_pattern.search(desc_content):
+                desc_content = meta_desc.get("content", "")  # type: ignore[union-attr]
+                if brand_pattern.search(desc_content):  # type: ignore[arg-type]
                     reinforcement.in_meta_description = True
 
             # Check first paragraph

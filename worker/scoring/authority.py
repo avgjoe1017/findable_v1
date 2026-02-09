@@ -268,13 +268,13 @@ class AuthorityScoreCalculator:
         if analysis.primary_author:
             if analysis.primary_author.is_linked:
                 score += 20
-                details["is_linked"] = True
+                details["is_linked"] = True  # type: ignore[assignment]
             if analysis.primary_author.has_photo:
                 score += 15
-                details["has_photo"] = True
+                details["has_photo"] = True  # type: ignore[assignment]
             if analysis.primary_author.has_social_links:
                 score += 15
-                details["has_social"] = True
+                details["has_social"] = True  # type: ignore[assignment]
 
         score = min(100, score)
         level = "full" if score >= 70 else "partial" if score >= 40 else "limited"
@@ -321,12 +321,12 @@ class AuthorityScoreCalculator:
         # Check for bio
         if analysis.has_author_bio:
             score += 30
-            details["has_bio"] = True
+            details["has_bio"] = True  # type: ignore[assignment]
 
         # Check for photo (indicates real person)
         if analysis.has_author_photo:
             score += 20
-            details["has_photo"] = True
+            details["has_photo"] = True  # type: ignore[assignment]
 
         # Bonus for multiple credentials
         if len(analysis.credentials_found) >= 3:
