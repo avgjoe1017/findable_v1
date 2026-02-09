@@ -1,8 +1,8 @@
 # Findable Score Analyzer - Progress Tracker
 
-Last Updated: 2026-02-08 (Session #68)
+Last Updated: 2026-02-08 (Session #69)
 
-**Current Status:** Day 30 + Findable Score v2 Complete + Calibration System + Citation Context Layer + Source Primacy in Optimizer + Observation Web UI + Per-Site-Type Training + 1,275 Calibration Samples (35% negative) + All Tests Green
+**Current Status:** Day 30 + Findable Score v2 Complete + Calibration System + Citation Context Layer + Source Primacy in Optimizer + Observation Web UI + Per-Site-Type Training + 1,275 Calibration Samples (35% negative) + Optimizer Bugs Fixed (MCC + per-question features) + All Tests Green
 
 ## Next: Citation Context Layer — From "Can AI Find You?" to "Will AI Cite You?"
 
@@ -5037,3 +5037,66 @@ All 20 KNOWN_UNCITED_SITES audited successfully:
 1. Re-run optimizer with balanced dataset (`python scripts/run_optimizer.py --save`)
 2. Evaluate whether 35% negative rate improves holdout accuracy beyond 50.7%
 3. Review KNOWN_UNCITED_SITES labels — many are actually frequently cited
+
+## Session #69 - Calibration Optimizer Fix Plan Implementation (2026-02-08)
+
+**Goal:** Fix the 5 cascading bugs identified in `docs/calibration-optimizer-diagnosis.md` that made the optimizer produce an illusion of 80.8% accuracy while actually learning nothing.
+
+### Root Cause Summary
+
+The optimizer's 80.8% training accuracy was meaningless because:
+- 516 samples collapsed to 20 unique feature vectors (all samples from same domain identical)
+- 4 pillars were constant across all 20 domains (tech=70, struct=65, schema=50, auth=60)
+- Retrieval/coverage never stored in production audit path (recent samples filtered out)
+- bias_adjusted_score rewarded "predict all positive" with imbalanced classes
+- MCC=0 for the same classifier — correctly identifies it learned nothing
+
+### Fixes Implemented
+
+**Fix 1+5: Per-Question Features + Production Snapshot** (Critical)
+- `worker/tasks/audit.py`: Added `retrieval` (from `simulation_result.overall_score`) and `coverage` (from `simulation_result.coverage_score`) to `pillar_scores_snapshot`
+- `worker/tasks/calibration.py`: Each CalibrationSample now gets per-question `retrieval` and `coverage` overrides:
+  - `retrieval` = `sim_result.score * 100` (per-question simulation score, 0-100)
+  - `coverage` = answerability mapped to 0-100 (fully=100, partially=50, not=0, contradictory=25)
+- This transforms 20 unique feature vectors into ~516 unique vectors with within-domain variation
+
+**Fix 3: Replace bias_adjusted with MCC** (High)
+- `worker/calibration/optimizer.py`: Added `true_positives` and `true_negatives` fields to `AccuracyMetrics`
+- Added `mcc` property: `(TP*TN - FP*FN) / sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))`
+- Updated vectorized `_batch_evaluate()` to compute MCC instead of bias-adjusted score
+- Updated `_calculate_weighted_metrics()` to track TP/TN
+- Updated `optimize_pillar_weights()` slow loop to use MCC
+- All-positive classifier: MCC=0.0000 (correctly zero), Perfect: MCC=1.0000
+- `scripts/run_optimizer.py`: Updated all display output from "bias-adj" to "MCC"
+- `scripts/run_site_type_optimizer.py`: Same MCC updates
+
+**Fix 4: Entity Recognition** (Resolved by Fix 1+5)
+- Code was already correctly wired in `audit.py:567-604`
+- Legacy samples lacked it; recent samples had it but were filtered by 70% weight coverage
+- With retrieval+coverage now stored, recent samples pass the filter and include entity_recognition
+
+**Fix 7: Minimum Domain Count Guard** (Medium)
+- `worker/calibration/optimizer.py`: Increased minimum from 3 to 10 training domains and 3 holdout domains
+- Prevents running optimizer with too few data points (was: 20 effective, 16 train / 4 holdout)
+
+### Investigation Results (Bug #4: Constant Pillar Scores)
+- The scoring modules do NOT have hardcoded defaults — scores are computed from actual data
+- The 20 legacy test sites happened to produce similar scores through the testing pipeline
+- This is a data diversity issue, not a code bug — more diverse domains will produce varied scores
+
+### Verification
+- All 26 unit tests pass (scoring calculator)
+- MCC sanity check: all-positive=0.0, perfect=1.0, vectorized matches property-based
+
+### Files Modified
+- `worker/calibration/optimizer.py` - MCC scoring, TP/TN tracking, domain count guard
+- `worker/tasks/audit.py` - Added retrieval+coverage to pillar_scores_snapshot
+- `worker/tasks/calibration.py` - Per-question pillar_scores with retrieval/coverage override
+- `scripts/run_optimizer.py` - MCC display output
+- `scripts/run_site_type_optimizer.py` - MCC display output
+
+### Next Steps
+1. Re-collect calibration samples through fixed pipeline (existing 1,275 samples have old format)
+2. Re-run optimizer with MCC scoring and per-question features
+3. Evaluate whether within-domain variation enables genuine learning (MCC > 0)
+4. Collect more diverse domains (target 50+ unique domains)

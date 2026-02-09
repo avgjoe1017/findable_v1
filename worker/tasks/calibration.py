@@ -141,6 +141,25 @@ async def collect_calibration_samples(
             # Map outcome match to our enum
             outcome_match_value = _map_outcome_match(comp.outcome_match)
 
+            # Per-question pillar scores: copy site-level scores and override
+            # retrieval + coverage with per-question simulation data.
+            # This gives the optimizer within-domain variation to learn from.
+            question_pillar_scores = dict(pillar_scores) if pillar_scores else {}
+            if sim_result:
+                # Retrieval: per-question simulation score (0-1 -> 0-100)
+                question_pillar_scores["retrieval"] = round(sim_result.score * 100, 1)
+                # Coverage: per-question answerability mapped to 0-100
+                _answerability_to_score = {
+                    "fully_answerable": 100.0,
+                    "partially_answerable": 50.0,
+                    "not_answerable": 0.0,
+                    "contradictory": 25.0,
+                }
+                ans_val = (
+                    sim_result.answerability.value if sim_result.answerability else "not_answerable"
+                )
+                question_pillar_scores["coverage"] = _answerability_to_score.get(ans_val, 0.0)
+
             sample = CalibrationSample(
                 id=uuid.uuid4(),
                 site_id=site_id,
@@ -174,7 +193,7 @@ async def collect_calibration_samples(
                 question_text=comp.question_text,
                 domain_industry=domain_industry,
                 site_type=site_type,
-                pillar_scores=pillar_scores,
+                pillar_scores=question_pillar_scores,
                 config_id=config_id,
                 experiment_id=experiment_id,
                 experiment_arm=experiment_arm,

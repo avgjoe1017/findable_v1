@@ -171,13 +171,11 @@ async def run_site_type_optimizer(
                 holdout_samp, DEFAULT_WEIGHTS, threshold=30
             )
             print("  Baseline (global weights, t=30):")
-            print(
-                f"    Train: {baseline.accuracy:.1%} (bias-adj: {baseline.bias_adjusted_score:.4f})"
-            )
-            print(f"    Holdout: {baseline_holdout.accuracy:.1%}")
+            print(f"    Train: {baseline.accuracy:.1%} (MCC: {baseline.mcc:.4f})")
+            print(f"    Holdout: {baseline_holdout.accuracy:.1%} (MCC: {baseline_holdout.mcc:.4f})")
 
             # Search thresholds with global weights to find best for this type
-            best_score = baseline.bias_adjusted_score
+            best_score = baseline.mcc
             best_threshold = 30
             best_primacy_weight = 0.0
             best_weights = DEFAULT_WEIGHTS.copy()
@@ -194,8 +192,8 @@ async def run_site_type_optimizer(
                         threshold=t,
                         primacy_weight=pw,
                     )
-                    if m.bias_adjusted_score > best_score:
-                        best_score = m.bias_adjusted_score
+                    if m.mcc > best_score:
+                        best_score = m.mcc
                         best_threshold = t
                         best_primacy_weight = pw
 
@@ -212,13 +210,13 @@ async def run_site_type_optimizer(
                 primacy_weight=best_primacy_weight,
             )
 
-            improvement = best_score - baseline.bias_adjusted_score
+            improvement = best_score - baseline.mcc
             print(f"  Optimized (t={best_threshold}, pw={best_primacy_weight}):")
+            print(f"    Train: {optimized.accuracy:.1%} (MCC: {optimized.mcc:.4f})")
             print(
-                f"    Train: {optimized.accuracy:.1%} (bias-adj: {optimized.bias_adjusted_score:.4f})"
+                f"    Holdout: {optimized_holdout.accuracy:.1%} (MCC: {optimized_holdout.mcc:.4f})"
             )
-            print(f"    Holdout: {optimized_holdout.accuracy:.1%}")
-            print(f"    Improvement: {improvement:+.4f}")
+            print(f"    MCC improvement: {improvement:+.4f}")
             print()
 
             results_summary.append(

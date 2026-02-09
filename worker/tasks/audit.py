@@ -863,6 +863,7 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
                         or schema_score
                         or authority_score
                         or entity_recognition_result
+                        or simulation_result
                     ):
                         pillar_scores_snapshot = {
                             "technical": technical_score.total_score if technical_score else None,
@@ -873,6 +874,12 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
                                 entity_recognition_result.normalized_score
                                 if entity_recognition_result
                                 else None
+                            ),
+                            "retrieval": (
+                                simulation_result.overall_score if simulation_result else None
+                            ),
+                            "coverage": (
+                                simulation_result.coverage_score if simulation_result else None
                             ),
                         }
 
