@@ -31,6 +31,36 @@ from api.models import Report, Run, Site
 
 logger = structlog.get_logger(__name__)
 
+# ============================================================================
+# Redis Connection Pool (module-level, reused across requests)
+# ============================================================================
+
+_redis_pool: object | None = None
+_redis_pool_lock = asyncio.Lock()
+
+
+async def _get_redis_pool():
+    """Get or create a cached Redis connection pool."""
+    global _redis_pool
+    if _redis_pool is not None:
+        return _redis_pool
+
+    async with _redis_pool_lock:
+        # Double-check after acquiring lock
+        if _redis_pool is not None:
+            return _redis_pool
+
+        import redis.asyncio as aioredis
+
+        settings = get_settings()
+        _redis_pool = aioredis.from_url(
+            str(settings.redis_url),
+            decode_responses=True,
+            max_connections=10,
+        )
+        return _redis_pool
+
+
 # Template configuration
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "web" / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -103,24 +133,20 @@ async def _check_rate_limit(request: Request) -> None:
         return
 
     try:
-        import redis.asyncio as aioredis
+        r = await _get_redis_pool()
 
         key = f"findable:public_audit:rate:{ip_hash}"
 
-        r = aioredis.from_url(str(settings.redis_url))
-        try:
-            current = await r.get(key)
-            if current and int(current) >= MAX_AUDITS_PER_HOUR:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail=f"Rate limit exceeded. Maximum {MAX_AUDITS_PER_HOUR} audits per hour.",
-                )
-            pipe = r.pipeline()
-            pipe.incr(key)
-            pipe.expire(key, 3600)  # 1 hour TTL
-            await pipe.execute()
-        finally:
-            await r.close()
+        current = await r.get(key)
+        if current and int(current) >= MAX_AUDITS_PER_HOUR:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Rate limit exceeded. Maximum {MAX_AUDITS_PER_HOUR} audits per hour.",
+            )
+        pipe = r.pipeline()
+        pipe.incr(key)
+        pipe.expire(key, 3600)  # 1 hour TTL
+        await pipe.execute()
 
     except HTTPException:
         raise
@@ -139,16 +165,14 @@ async def _check_rate_limit(request: Request) -> None:
 # ============================================================================
 
 
-def _is_private_or_reserved(hostname: str) -> bool:
-    """Check if a hostname resolves to a private, loopback, or reserved IP.
+def _is_private_or_reserved_sync(hostname: str) -> bool:
+    """Synchronous SSRF check for direct IPs and known dangerous hostnames.
 
-    Protects against SSRF by checking:
-    - Direct IP addresses (IPv4 and IPv6, including hex/octal encoding)
-    - DNS resolution to private ranges (169.254.x.x, 10.x.x.x, 172.16-31.x.x, etc.)
-    - Cloud metadata endpoints (169.254.169.254)
-    - IPv6 loopback (::1) and link-local (fe80::)
+    This is safe to call from a sync Pydantic validator. It does NOT perform
+    DNS resolution (which is blocking). The async DNS check runs separately
+    in the endpoint handler via _check_dns_ssrf().
     """
-    # First, try parsing as a direct IP address
+    # Try parsing as a direct IP address
     try:
         addr = ipaddress.ip_address(hostname)
         return addr.is_private or addr.is_loopback or addr.is_reserved or addr.is_link_local
@@ -161,12 +185,27 @@ def _is_private_or_reserved(hostname: str) -> bool:
         "metadata.google.internal",
         "metadata.internal",
     }
-    if hostname.lower() in dangerous_hosts:
-        return True
+    return hostname.lower() in dangerous_hosts
 
-    # Resolve DNS and check all results
+
+async def _check_dns_ssrf(hostname: str) -> bool:
+    """Async DNS resolution SSRF check.
+
+    Resolves hostname and checks if any resulting IP is private/reserved.
+    Uses asyncio.get_event_loop().getaddrinfo() to avoid blocking the event loop.
+    """
+    # Skip DNS for direct IPs (already checked in sync validator)
     try:
-        results = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        ipaddress.ip_address(hostname)
+        return False
+    except ValueError:
+        pass
+
+    try:
+        loop = asyncio.get_event_loop()
+        results = await loop.getaddrinfo(
+            hostname, None, family=socket.AF_UNSPEC, type=socket.SOCK_STREAM
+        )
         for _family, _type, _proto, _canonname, sockaddr in results:
             ip_str = sockaddr[0]
             try:
@@ -206,8 +245,9 @@ class PublicAuditRequest(BaseModel):
             raise ValueError("Only HTTP and HTTPS URLs are allowed")
         # Extract hostname (strip port)
         hostname = parsed.netloc.split(":")[0].lower()
-        # SSRF protection: reject private, loopback, reserved, and link-local addresses
-        if _is_private_or_reserved(hostname):
+        # SSRF protection (sync): reject direct IPs and known dangerous hostnames
+        # DNS-based SSRF check runs async in the endpoint handler
+        if _is_private_or_reserved_sync(hostname):
             raise ValueError("Cannot audit local or private addresses")
         return v
 
@@ -295,6 +335,15 @@ async def start_public_audit(
     """Start a free public audit. Rate limited to 3/hour per IP."""
     await _check_rate_limit(request)
 
+    # Async DNS-based SSRF check (can't run in sync Pydantic validator)
+    parsed_check = urlparse(audit_request.url)
+    hostname_check = parsed_check.netloc.split(":")[0].lower()
+    if await _check_dns_ssrf(hostname_check):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot audit local or private addresses",
+        )
+
     parsed = urlparse(audit_request.url)
     domain = parsed.netloc.replace("www.", "")
 
@@ -373,6 +422,15 @@ async def start_public_audit_form(
     audit_request = PublicAuditRequest(url=url)
 
     await _check_rate_limit(request)
+
+    # Async DNS-based SSRF check
+    parsed_check = urlparse(audit_request.url)
+    hostname_check = parsed_check.netloc.split(":")[0].lower()
+    if await _check_dns_ssrf(hostname_check):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot audit local or private addresses",
+        )
 
     parsed = urlparse(audit_request.url)
     domain = parsed.netloc.replace("www.", "")

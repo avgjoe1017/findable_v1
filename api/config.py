@@ -37,6 +37,8 @@ class Settings(BaseSettings):
 
     # Database
     database_url: PostgresDsn
+    db_pool_size: int = 20
+    db_max_overflow: int = 30
 
     # Redis
     redis_url: RedisDsn
