@@ -3,11 +3,14 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
+from sqlalchemy import func, select
+from sqlalchemy.orm import aliased
 
 from api.auth import CurrentUser
 from api.database import DbSession
 from api.deps import PaginationDep
 from api.exceptions import ConflictError, NotFoundError
+from api.models import Report, Run
 from api.schemas.responses import PaginatedResponse, SuccessResponse
 from api.schemas.site import (
     CompetitorListUpdate,
@@ -72,16 +75,42 @@ async def list_sites(
         limit=pagination.limit,
     )
 
+    # Batch load latest reports for all sites in ONE query (avoids N+1)
+    site_ids = [s.id for s in sites]
+    latest_reports_map: dict[uuid.UUID, Report] = {}
+    if site_ids:
+        # Subquery: max report created_at per site
+        latest_report_sub = (
+            select(
+                Run.site_id,
+                func.max(Report.created_at).label("max_created"),
+            )
+            .join(Report, Report.run_id == Run.id)
+            .where(Run.site_id.in_(site_ids), Run.status == "complete")
+            .group_by(Run.site_id)
+            .subquery()
+        )
+        # Join back to get actual Report rows
+        ReportAlias = aliased(Report)
+        RunAlias = aliased(Run)
+        report_result = await db.execute(
+            select(ReportAlias, RunAlias.site_id)
+            .join(RunAlias, ReportAlias.run_id == RunAlias.id)
+            .join(
+                latest_report_sub,
+                (RunAlias.site_id == latest_report_sub.c.site_id)
+                & (ReportAlias.created_at == latest_report_sub.c.max_created),
+            )
+        )
+        for report, sid in report_result.all():
+            latest_reports_map[sid] = report
+
     # Convert to list schema with competitor counts
     site_list = []
     for site in sites:
-        # Get latest report scores if available
-        latest_report = await site_service.get_latest_report(db, site.id)
-        latest_score = None
-        latest_mention_rate = None
-        if latest_report:
-            latest_score = latest_report.score_typical
-            latest_mention_rate = latest_report.mention_rate
+        latest_report = latest_reports_map.get(site.id)
+        latest_score = latest_report.score_typical if latest_report else None
+        latest_mention_rate = latest_report.mention_rate if latest_report else None
 
         site_list.append(
             SiteList(

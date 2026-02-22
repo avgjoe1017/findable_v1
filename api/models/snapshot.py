@@ -50,11 +50,13 @@ class Snapshot(Base):
         UUID(as_uuid=True),
         ForeignKey("runs.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
     report_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("reports.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
 
     # Trigger type

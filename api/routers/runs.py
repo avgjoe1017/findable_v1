@@ -243,8 +243,10 @@ async def stream_run_progress(
 
             last_status = None
             last_progress = None
+            timeout_counter = 0
+            max_timeout = 600  # 10 minutes
 
-            while True:
+            while timeout_counter < max_timeout:
                 # Get fresh run data
                 async with get_session_maker()() as session:
                     result = await session.execute(select(Run).where(Run.id == run_id))
@@ -281,8 +283,8 @@ async def stream_run_progress(
                         last_status = current_status
                         last_progress = current_progress
 
-                # Poll every 500ms
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(2)
+                timeout_counter += 2
 
         return StreamingResponse(
             event_generator(),

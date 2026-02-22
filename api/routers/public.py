@@ -203,8 +203,9 @@ async def _check_dns_ssrf(hostname: str) -> bool:
 
     try:
         loop = asyncio.get_event_loop()
-        results = await loop.getaddrinfo(
-            hostname, None, family=socket.AF_UNSPEC, type=socket.SOCK_STREAM
+        results = await asyncio.wait_for(
+            loop.getaddrinfo(hostname, None, family=socket.AF_UNSPEC, type=socket.SOCK_STREAM),
+            timeout=5.0,
         )
         for _family, _type, _proto, _canonname, sockaddr in results:
             ip_str = sockaddr[0]
@@ -214,8 +215,8 @@ async def _check_dns_ssrf(hostname: str) -> bool:
                     return True
             except ValueError:
                 continue
-    except socket.gaierror:
-        # DNS resolution failed — allow (will fail later during crawl)
+    except (socket.gaierror, TimeoutError):
+        # DNS resolution failed or timed out — allow (will fail later during crawl)
         pass
 
     return False

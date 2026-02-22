@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.auth import current_active_user
@@ -97,22 +98,30 @@ async def get_usage(
 @router.get("/plans", response_model=PlanComparisonResponse)
 async def get_plans(
     current_user: Annotated[User, Depends(current_active_user)],
-) -> PlanComparisonResponse:
+) -> JSONResponse:
     """Get comparison of all available plans."""
-    return PlanComparisonResponse(
+    data = PlanComparisonResponse(
         starter=PlanLimitsResponse(**PLAN_LIMITS[PlanTier.STARTER]),  # type: ignore[arg-type]
         professional=PlanLimitsResponse(**PLAN_LIMITS[PlanTier.PROFESSIONAL]),  # type: ignore[arg-type]
         agency=PlanLimitsResponse(**PLAN_LIMITS[PlanTier.AGENCY]),  # type: ignore[arg-type]
         current_plan=current_user.plan,
+    )
+    return JSONResponse(
+        content=data.model_dump(mode="json"),
+        headers={"Cache-Control": "private, max-age=3600"},
     )
 
 
 @router.get("/plans/{plan}", response_model=PlanLimitsResponse)
 async def get_plan_limits(
     plan: PlanTier,
-) -> PlanLimitsResponse:
+) -> JSONResponse:
     """Get limits for a specific plan."""
-    return PlanLimitsResponse(**PLAN_LIMITS[plan])  # type: ignore[arg-type]
+    data = PlanLimitsResponse(**PLAN_LIMITS[plan])  # type: ignore[arg-type]
+    return JSONResponse(
+        content=data.model_dump(mode="json"),
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 # Limit check endpoints

@@ -391,16 +391,17 @@ async def list_calibration_configs(
         )
 
     result = await db.execute(
-        select(CalibrationConfig).order_by(CalibrationConfig.created_at.desc())
+        select(CalibrationConfig).order_by(CalibrationConfig.created_at.desc()).limit(100)
     )
     configs = result.scalars().all()
 
-    # Find active config
-    active_config_id = None
-    for config in configs:
-        if config.is_active:
-            active_config_id = config.id
-            break
+    # Find active config via SQL (avoid Python loop)
+    active_result = await db.execute(
+        select(CalibrationConfig.id)
+        .where(CalibrationConfig.is_active == True)  # noqa: E712
+        .limit(1)
+    )
+    active_config_id = active_result.scalar_one_or_none()
 
     return SuccessResponse(
         data=CalibrationConfigListResponse(

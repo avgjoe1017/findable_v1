@@ -24,10 +24,21 @@ def get_redis_connection() -> Redis:
     return Redis(connection_pool=pool)
 
 
+@lru_cache
+def _get_redis_pool_bytes() -> ConnectionPool:
+    """Get a cached Redis connection pool for byte-mode (RQ)."""
+    settings = get_settings()
+    return ConnectionPool.from_url(
+        str(settings.redis_url),
+        decode_responses=False,
+        max_connections=10,
+    )
+
+
 def get_redis_connection_bytes() -> Redis:
     """Get a Redis connection without decode_responses for RQ."""
-    settings = get_settings()
-    return Redis.from_url(str(settings.redis_url))
+    pool = _get_redis_pool_bytes()
+    return Redis(connection_pool=pool)
 
 
 # Queue names

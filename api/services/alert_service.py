@@ -368,76 +368,47 @@ class AlertService:
         return result.rowcount or 0
 
     async def get_stats(self, user_id: uuid.UUID) -> dict:
-        """Get alert statistics for a user."""
+        """Get alert statistics for a user in a single query."""
         now = datetime.now(UTC)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         week_start = today_start - timedelta(days=7)
 
-        # Total alerts
-        total_result = await self.db.execute(select(func.count()).where(Alert.user_id == user_id))
-        total = total_result.scalar_one()
+        unread_statuses = [AlertStatus.PENDING.value, AlertStatus.SENT.value]
 
-        # Unread count
-        unread_result = await self.db.execute(
-            select(func.count()).where(
-                Alert.user_id == user_id,
-                Alert.status.in_([AlertStatus.PENDING.value, AlertStatus.SENT.value]),
-            )
+        result = await self.db.execute(
+            select(
+                func.count().label("total"),
+                func.count().filter(Alert.status.in_(unread_statuses)).label("unread"),
+                func.count()
+                .filter(
+                    Alert.severity == AlertSeverity.CRITICAL.value,
+                    Alert.status.in_(unread_statuses),
+                )
+                .label("critical"),
+                func.count()
+                .filter(
+                    Alert.severity == AlertSeverity.WARNING.value,
+                    Alert.status.in_(unread_statuses),
+                )
+                .label("warning"),
+                func.count()
+                .filter(
+                    Alert.severity == AlertSeverity.INFO.value,
+                    Alert.status.in_(unread_statuses),
+                )
+                .label("info"),
+                func.count().filter(Alert.created_at >= today_start).label("today"),
+                func.count().filter(Alert.created_at >= week_start).label("week"),
+            ).where(Alert.user_id == user_id)
         )
-        unread = unread_result.scalar_one()
-
-        # By severity
-        critical_result = await self.db.execute(
-            select(func.count()).where(
-                Alert.user_id == user_id,
-                Alert.severity == AlertSeverity.CRITICAL.value,
-                Alert.status.in_([AlertStatus.PENDING.value, AlertStatus.SENT.value]),
-            )
-        )
-        critical = critical_result.scalar_one()
-
-        warning_result = await self.db.execute(
-            select(func.count()).where(
-                Alert.user_id == user_id,
-                Alert.severity == AlertSeverity.WARNING.value,
-                Alert.status.in_([AlertStatus.PENDING.value, AlertStatus.SENT.value]),
-            )
-        )
-        warning = warning_result.scalar_one()
-
-        info_result = await self.db.execute(
-            select(func.count()).where(
-                Alert.user_id == user_id,
-                Alert.severity == AlertSeverity.INFO.value,
-                Alert.status.in_([AlertStatus.PENDING.value, AlertStatus.SENT.value]),
-            )
-        )
-        info = info_result.scalar_one()
-
-        # Today
-        today_result = await self.db.execute(
-            select(func.count()).where(
-                Alert.user_id == user_id,
-                Alert.created_at >= today_start,
-            )
-        )
-        today = today_result.scalar_one()
-
-        # This week
-        week_result = await self.db.execute(
-            select(func.count()).where(
-                Alert.user_id == user_id,
-                Alert.created_at >= week_start,
-            )
-        )
-        week = week_result.scalar_one()
+        row = result.one()
 
         return {
-            "total_alerts": total,
-            "unread_count": unread,
-            "critical_count": critical,
-            "warning_count": warning,
-            "info_count": info,
-            "alerts_today": today,
-            "alerts_this_week": week,
+            "total_alerts": row.total,
+            "unread_count": row.unread,
+            "critical_count": row.critical,
+            "warning_count": row.warning,
+            "info_count": row.info,
+            "alerts_today": row.today,
+            "alerts_this_week": row.week,
         }

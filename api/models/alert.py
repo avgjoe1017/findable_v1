@@ -158,7 +158,7 @@ class Alert(Base):
     # Alert details
     alert_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     severity: Mapped[str] = mapped_column(
-        String(20), default=AlertSeverity.WARNING.value, nullable=False
+        String(20), default=AlertSeverity.WARNING.value, nullable=False, index=True
     )
     status: Mapped[str] = mapped_column(
         String(20), default=AlertStatus.PENDING.value, nullable=False, index=True
