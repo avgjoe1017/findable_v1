@@ -8,7 +8,9 @@ Rate limited to 3 audits per hour per IP address via Redis.
 
 import asyncio
 import hashlib
+import ipaddress
 import json
+import socket
 import uuid
 from collections.abc import AsyncGenerator
 from pathlib import Path
@@ -44,24 +46,65 @@ MAX_AUDITS_PER_HOUR = 3
 
 
 def _get_client_ip(request: Request) -> str:
-    """Extract client IP, handling proxies."""
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
+    """Extract client IP from the direct connection.
+
+    Uses the direct socket connection IP (request.client.host) rather than
+    X-Forwarded-For, which can be spoofed by clients to bypass rate limits.
+    Trusted proxy headers should only be used behind a known reverse proxy
+    that strips/overwrites them.
+    """
     return request.client.host if request.client else "unknown"
 
 
+# In-memory fallback rate limiter when Redis is unavailable
+_rate_limit_fallback: dict[str, list[float]] = {}
+_FALLBACK_MAX_ENTRIES = 10000  # Prevent memory exhaustion
+
+
+def _check_rate_limit_fallback(ip_hash: str) -> bool:
+    """In-memory rate limit check. Returns True if request should be blocked."""
+    import time
+
+    now = time.time()
+    cutoff = now - 3600  # 1 hour window
+
+    # Evict old entries periodically
+    if len(_rate_limit_fallback) > _FALLBACK_MAX_ENTRIES:
+        stale_keys = [k for k, v in _rate_limit_fallback.items() if not v or v[-1] < cutoff]
+        for k in stale_keys:
+            del _rate_limit_fallback[k]
+
+    timestamps = _rate_limit_fallback.get(ip_hash, [])
+    # Remove expired timestamps
+    timestamps = [t for t in timestamps if t > cutoff]
+
+    if len(timestamps) >= MAX_AUDITS_PER_HOUR:
+        _rate_limit_fallback[ip_hash] = timestamps
+        return True
+
+    timestamps.append(now)
+    _rate_limit_fallback[ip_hash] = timestamps
+    return False
+
+
 async def _check_rate_limit(request: Request) -> None:
-    """Check per-IP rate limit using Redis."""
+    """Check per-IP rate limit using Redis with in-memory fallback."""
     settings = get_settings()
+    client_ip = _get_client_ip(request)
+    ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()[:16]
+
     if not settings.redis_url:
-        return  # No Redis = no rate limiting
+        # No Redis configured — use in-memory fallback (fail closed)
+        if _check_rate_limit_fallback(ip_hash):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Rate limit exceeded. Maximum {MAX_AUDITS_PER_HOUR} audits per hour.",
+            )
+        return
 
     try:
         import redis.asyncio as aioredis
 
-        client_ip = _get_client_ip(request)
-        ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()[:16]
         key = f"findable:public_audit:rate:{ip_hash}"
 
         r = aioredis.from_url(str(settings.redis_url))
@@ -82,13 +125,61 @@ async def _check_rate_limit(request: Request) -> None:
     except HTTPException:
         raise
     except Exception as e:
-        logger.warning("rate_limit_check_failed", error=str(e))
-        # Fail open — allow the request if Redis is down
+        logger.warning("rate_limit_redis_failed_using_fallback", error=str(e))
+        # Redis down — fall back to in-memory rate limiting (fail closed)
+        if _check_rate_limit_fallback(ip_hash):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Rate limit exceeded. Maximum {MAX_AUDITS_PER_HOUR} audits per hour.",
+            )
 
 
 # ============================================================================
 # Schemas
 # ============================================================================
+
+
+def _is_private_or_reserved(hostname: str) -> bool:
+    """Check if a hostname resolves to a private, loopback, or reserved IP.
+
+    Protects against SSRF by checking:
+    - Direct IP addresses (IPv4 and IPv6, including hex/octal encoding)
+    - DNS resolution to private ranges (169.254.x.x, 10.x.x.x, 172.16-31.x.x, etc.)
+    - Cloud metadata endpoints (169.254.169.254)
+    - IPv6 loopback (::1) and link-local (fe80::)
+    """
+    # First, try parsing as a direct IP address
+    try:
+        addr = ipaddress.ip_address(hostname)
+        return addr.is_private or addr.is_loopback or addr.is_reserved or addr.is_link_local
+    except ValueError:
+        pass
+
+    # Reject known dangerous hostnames
+    dangerous_hosts = {
+        "localhost",
+        "metadata.google.internal",
+        "metadata.internal",
+    }
+    if hostname.lower() in dangerous_hosts:
+        return True
+
+    # Resolve DNS and check all results
+    try:
+        results = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        for _family, _type, _proto, _canonname, sockaddr in results:
+            ip_str = sockaddr[0]
+            try:
+                addr = ipaddress.ip_address(ip_str)
+                if addr.is_private or addr.is_loopback or addr.is_reserved or addr.is_link_local:
+                    return True
+            except ValueError:
+                continue
+    except socket.gaierror:
+        # DNS resolution failed — allow (will fail later during crawl)
+        pass
+
+    return False
 
 
 class PublicAuditRequest(BaseModel):
@@ -100,15 +191,24 @@ class PublicAuditRequest(BaseModel):
     @classmethod
     def validate_url(cls, v: str) -> str:
         v = v.strip()
+        if len(v) > 2048:
+            raise ValueError("URL too long (max 2048 characters)")
         if not v.startswith(("http://", "https://")):
             v = f"https://{v}"
         parsed = urlparse(v)
         if not parsed.netloc or "." not in parsed.netloc:
             raise ValueError("Invalid URL")
-        # Reject localhost, private IPs
+        # Reject URLs with credentials
+        if parsed.username or parsed.password:
+            raise ValueError("URLs with credentials are not allowed")
+        # Only allow http/https schemes
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError("Only HTTP and HTTPS URLs are allowed")
+        # Extract hostname (strip port)
         hostname = parsed.netloc.split(":")[0].lower()
-        if hostname in ("localhost", "127.0.0.1", "0.0.0.0") or hostname.startswith("192.168."):
-            raise ValueError("Cannot audit local addresses")
+        # SSRF protection: reject private, loopback, reserved, and link-local addresses
+        if _is_private_or_reserved(hostname):
+            raise ValueError("Cannot audit local or private addresses")
         return v
 
 
@@ -156,14 +256,30 @@ def _make_shareable_id(run_id: uuid.UUID) -> str:
 
 
 async def _find_run_by_shareable_id(db: AsyncSession, shareable_id: str) -> Run | None:
-    """Find a run by its shareable ID prefix."""
-    # shareable_id is first 12 hex chars of run_id
-    result = await db.execute(select(Run))
-    runs = result.scalars().all()
-    for run in runs:
-        if run.id.hex[:12] == shareable_id:
-            return run
-    return None
+    """Find a run by its shareable ID prefix.
+
+    Uses SQL-level filtering to avoid loading all runs into memory.
+    The shareable_id is the first 12 hex chars of the UUID (no dashes).
+    """
+    # Validate shareable_id format to prevent SQL injection / bad queries
+    if (
+        not shareable_id
+        or len(shareable_id) != 12
+        or not all(c in "0123456789abcdef" for c in shareable_id.lower())
+    ):
+        return None
+
+    # Reconstruct UUID prefix pattern for SQL LIKE query
+    # UUID text format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    # First 12 hex chars = first 8 chars + first 4 of second group
+    # e.g., "550e8400e29b" -> LIKE '550e8400-e29b%'
+    prefix = f"{shareable_id[:8]}-{shareable_id[8:12]}"
+
+    from sqlalchemy import String as SAString
+    from sqlalchemy import cast
+
+    result = await db.execute(select(Run).where(cast(Run.id, SAString).like(f"{prefix}%")).limit(1))
+    return result.scalar_one_or_none()
 
 
 # ============================================================================

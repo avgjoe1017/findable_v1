@@ -15,6 +15,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Set environment before imports (use CI-compatible credentials when not overridden)
 if "DATABASE_URL" not in os.environ:
@@ -24,20 +25,29 @@ os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("JWT_SECRET", "test-secret-key-for-ci")
 
 
+def _make_session_maker() -> async_sessionmaker[AsyncSession]:
+    """Create a fresh async session maker for the current event loop."""
+    db_url = os.environ.get(
+        "DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/findable_test"
+    )
+    engine = create_async_engine(db_url, echo=False)
+    return async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_calibration_sample_creation():
     """Test creating and querying calibration samples."""
     from sqlalchemy import delete, select
 
-    from api.database import async_session_maker
     from api.models.calibration import CalibrationSample, OutcomeMatch
 
+    session_maker = _make_session_maker()
     sample_id = uuid.uuid4()
     site_id = uuid.uuid4()
     run_id = uuid.uuid4()
 
-    async with async_session_maker() as db:
+    async with session_maker() as db:
         # Clean up any existing test samples
         await db.execute(delete(CalibrationSample).where(CalibrationSample.id == sample_id))
         await db.commit()
@@ -50,10 +60,12 @@ async def test_calibration_sample_creation():
             question_id="q_test_123",
             question_text="What is the test question?",
             question_category="general",
+            question_difficulty="medium",
             sim_answerability="fully_answerable",
             sim_score=0.85,
             sim_signals_found=8,
             sim_signals_total=10,
+            sim_relevance_score=0.8,
             obs_mentioned=True,
             obs_cited=True,
             obs_provider="test_provider",
@@ -96,12 +108,12 @@ async def test_calibration_config_lifecycle():
     """Test creating, validating, and activating calibration configs."""
     from sqlalchemy import delete, select, update
 
-    from api.database import async_session_maker
     from api.models.calibration import CalibrationConfig
 
+    session_maker = _make_session_maker()
     config_id = uuid.uuid4()
 
-    async with async_session_maker() as db:
+    async with session_maker() as db:
         # Clean up
         await db.execute(delete(CalibrationConfig).where(CalibrationConfig.id == config_id))
         await db.commit()
@@ -165,18 +177,18 @@ async def test_calibration_experiment_flow():
     """Test the A/B experiment lifecycle."""
     from sqlalchemy import delete, select
 
-    from api.database import async_session_maker
     from api.models.calibration import (
         CalibrationConfig,
         CalibrationExperiment,
         ExperimentStatus,
     )
 
+    session_maker = _make_session_maker()
     control_id = uuid.uuid4()
     treatment_id = uuid.uuid4()
     experiment_id = uuid.uuid4()
 
-    async with async_session_maker() as db:
+    async with session_maker() as db:
         # Clean up
         await db.execute(
             delete(CalibrationExperiment).where(CalibrationExperiment.id == experiment_id)
@@ -257,12 +269,12 @@ async def test_calibration_drift_alert_creation():
     """Test creating and managing drift alerts."""
     from sqlalchemy import delete, select
 
-    from api.database import async_session_maker
     from api.models.calibration import CalibrationDriftAlert, DriftAlertStatus
 
+    session_maker = _make_session_maker()
     alert_id = uuid.uuid4()
 
-    async with async_session_maker() as db:
+    async with session_maker() as db:
         # Clean up
         await db.execute(delete(CalibrationDriftAlert).where(CalibrationDriftAlert.id == alert_id))
         await db.commit()
@@ -271,12 +283,12 @@ async def test_calibration_drift_alert_creation():
         alert = CalibrationDriftAlert(
             id=alert_id,
             drift_type="accuracy",
-            description="Accuracy dropped below threshold",
             expected_value=0.75,
             observed_value=0.60,
             drift_magnitude=0.15,
-            window_start=datetime.now(UTC) - timedelta(days=7),
-            window_end=datetime.now(UTC),
+            sample_window_start=datetime.now(UTC) - timedelta(days=7),
+            sample_window_end=datetime.now(UTC),
+            sample_count=100,
             status=DriftAlertStatus.OPEN.value,
         )
         db.add(alert)
@@ -303,14 +315,14 @@ async def test_sample_pillar_score_aggregation():
     """Test that pillar scores can be aggregated across samples."""
     from sqlalchemy import delete, select
 
-    from api.database import async_session_maker
     from api.models.calibration import CalibrationSample, OutcomeMatch
 
+    session_maker = _make_session_maker()
     site_id = uuid.uuid4()
     run_id = uuid.uuid4()
     sample_ids = [uuid.uuid4() for _ in range(5)]
 
-    async with async_session_maker() as db:
+    async with session_maker() as db:
         # Clean up
         for sid in sample_ids:
             await db.execute(delete(CalibrationSample).where(CalibrationSample.id == sid))
@@ -372,10 +384,17 @@ async def test_sample_pillar_score_aggregation():
                 run_id=run_id,
                 question_id=f"q_test_{i}",
                 question_text=f"Test question {i}",
+                question_category="general",
+                question_difficulty="medium",
                 sim_answerability="fully_answerable",
                 sim_score=0.8 + i * 0.02,
+                sim_signals_found=8,
+                sim_signals_total=10,
+                sim_relevance_score=0.7,
                 obs_mentioned=True,
                 obs_cited=i % 2 == 0,
+                obs_provider="test_provider",
+                obs_model="test_model",
                 outcome_match=OutcomeMatch.CORRECT.value,
                 prediction_accurate=True,
                 pillar_scores=scores,
@@ -412,14 +431,14 @@ async def test_outcome_match_distribution():
     """Test querying samples by outcome match type."""
     from sqlalchemy import delete, func, select
 
-    from api.database import async_session_maker
     from api.models.calibration import CalibrationSample, OutcomeMatch
 
+    session_maker = _make_session_maker()
     site_id = uuid.uuid4()
     run_id = uuid.uuid4()
     sample_ids = [uuid.uuid4() for _ in range(6)]
 
-    async with async_session_maker() as db:
+    async with session_maker() as db:
         # Clean up
         for sid in sample_ids:
             await db.execute(delete(CalibrationSample).where(CalibrationSample.id == sid))
@@ -442,9 +461,17 @@ async def test_outcome_match_distribution():
                 run_id=run_id,
                 question_id=f"q_{sid}",
                 question_text="Test question",
+                question_category="general",
+                question_difficulty="medium",
                 sim_answerability="fully_answerable",
                 sim_score=0.8,
+                sim_signals_found=8,
+                sim_signals_total=10,
+                sim_relevance_score=0.7,
                 obs_mentioned=outcome != OutcomeMatch.UNKNOWN,
+                obs_cited=outcome == OutcomeMatch.CORRECT,
+                obs_provider="test_provider",
+                obs_model="test_model",
                 outcome_match=outcome.value,
                 prediction_accurate=outcome == OutcomeMatch.CORRECT,
                 pillar_scores={
