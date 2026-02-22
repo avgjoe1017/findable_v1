@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 
 import structlog
 from fastapi import APIRouter, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, field_validator
 from sqlalchemy import select
@@ -495,6 +495,43 @@ async def score_page(request: Request, shareable_id: str) -> HTMLResponse:
                 "og_description": f"{domain} scored {round(total_score)}/100 on the Findable Score. Level: {level_label}.",
             },
         )
+
+
+@score_router.get("/score/{shareable_id}/og.png")
+async def score_og_image(shareable_id: str) -> Response:
+    """Generate and return an OG image (1200x630 PNG) for a completed score page."""
+    async with async_session_maker() as db:
+        run = await _find_run_by_shareable_id(db, shareable_id)
+
+        if not run or run.status != "complete":
+            raise HTTPException(status_code=404, detail="Score not found")
+
+        # Load report
+        report_result = await db.execute(select(Report).where(Report.id == run.report_id))
+        report = report_result.scalar_one_or_none()
+
+        if not report or not report.data:
+            raise HTTPException(status_code=404, detail="Report not found")
+
+        v2_score = report.data.get("score", {}).get("v2", {})
+        score = round(v2_score.get("total_score", 0))
+        level_label = v2_score.get("level_label", "Unknown")
+
+        # Get domain from site
+        site_result = await db.execute(select(Site).where(Site.id == run.site_id))
+        site = site_result.scalar_one_or_none()
+        domain = site.domain if site else "unknown"
+
+    # Lazy import to avoid heavy PIL import on startup
+    from worker.reports.og_image import generate_og_image
+
+    png_bytes = generate_og_image(score, domain, level_label)
+
+    return Response(
+        content=png_bytes,
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @score_router.get("/audit", response_class=HTMLResponse)

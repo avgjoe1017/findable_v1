@@ -1137,3 +1137,224 @@ async def validation_page(
             "mismatch_drivers": mismatch_drivers_counter.most_common(10),
         },
     )
+
+
+@router.get("/admin/adoption", response_class=HTMLResponse, name="adoption_dashboard")
+async def adoption_dashboard(
+    request: Request,
+    db: Any = Depends(get_db),
+) -> HTMLResponse:
+    """Admin dashboard for public audit adoption metrics."""
+
+    from sqlalchemy import func, select, text
+
+    from api.models.analytics import AnalyticsEvent
+    from api.models.run import Run
+
+    user = await get_optional_user(request)
+    if not user or not getattr(user, "is_superuser", False):
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    # --- Aggregate KPIs from runs table (public audits) ---
+    try:
+        # Total public audits
+        total_q = await db.execute(
+            select(func.count(Run.id)).where(
+                Run.config["public_audit"].as_boolean() == True  # noqa: E712
+            )
+        )
+        total_audits = total_q.scalar() or 0
+
+        # Completed public audits
+        completed_q = await db.execute(
+            select(func.count(Run.id)).where(
+                Run.config["public_audit"].as_boolean() == True,  # noqa: E712
+                Run.status == "complete",
+            )
+        )
+        completed_audits = completed_q.scalar() or 0
+        completion_rate = round(completed_audits / max(total_audits, 1) * 100)
+
+        # Daily audit counts (last 14 days)
+        daily_q = await db.execute(
+            text(
+                """
+                SELECT date_trunc('day', created_at)::date AS day, count(*)
+                FROM runs
+                WHERE config->>'public_audit' = 'true'
+                  AND created_at >= now() - interval '14 days'
+                GROUP BY 1 ORDER BY 1
+            """
+            )
+        )
+        daily_rows = daily_q.fetchall()
+        daily_audits = [row[1] for row in daily_rows]
+        max_daily_audits = max(daily_audits) if daily_audits else 1
+
+        # Top audited domains
+        top_q = await db.execute(
+            text(
+                """
+                SELECT s.domain, count(*) as cnt,
+                       max(r.created_at) as last_audit
+                FROM runs r
+                JOIN sites s ON s.id = r.site_id
+                WHERE r.config->>'public_audit' = 'true'
+                GROUP BY s.domain
+                ORDER BY cnt DESC
+                LIMIT 10
+            """
+            )
+        )
+        top_rows = top_q.fetchall()
+        top_domains = []
+        for row in top_rows:
+            top_domains.append(
+                {
+                    "domain": row[0],
+                    "count": row[1],
+                    "score": None,  # TODO: join with latest report score
+                    "last_audit": _format_last_run_from_dt(row[2]),
+                }
+            )
+
+        # Score distribution buckets
+        score_q = await db.execute(
+            text(
+                """
+                SELECT
+                    CASE
+                        WHEN rp.score_typical >= 70 THEN '70-100'
+                        WHEN rp.score_typical >= 55 THEN '55-69'
+                        WHEN rp.score_typical >= 40 THEN '40-54'
+                        ELSE '0-39'
+                    END AS bucket,
+                    count(*)
+                FROM runs r
+                JOIN reports rp ON rp.id = r.report_id
+                WHERE r.config->>'public_audit' = 'true'
+                  AND r.status = 'complete'
+                GROUP BY 1
+            """
+            )
+        )
+        bucket_rows = {row[0]: row[1] for row in score_q.fetchall()}
+        total_scored = sum(bucket_rows.values()) or 1
+        score_buckets = [
+            {
+                "label": "70-100 (Highly Findable)",
+                "count": bucket_rows.get("70-100", 0),
+                "pct": round(bucket_rows.get("70-100", 0) / total_scored * 100),
+                "color": "var(--fs-teal)",
+            },
+            {
+                "label": "55-69 (Findable)",
+                "count": bucket_rows.get("55-69", 0),
+                "pct": round(bucket_rows.get("55-69", 0) / total_scored * 100),
+                "color": "var(--fs-amber)",
+            },
+            {
+                "label": "40-54 (Partial)",
+                "count": bucket_rows.get("40-54", 0),
+                "pct": round(bucket_rows.get("40-54", 0) / total_scored * 100),
+                "color": "#f97316",
+            },
+            {
+                "label": "0-39 (Not Findable)",
+                "count": bucket_rows.get("0-39", 0),
+                "pct": round(bucket_rows.get("0-39", 0) / total_scored * 100),
+                "color": "var(--fs-red)",
+            },
+        ]
+
+        # Analytics events (email captures, shares, returns)
+        email_q = await db.execute(
+            select(func.count(AnalyticsEvent.id)).where(
+                AnalyticsEvent.event_type == "email_captured"
+            )
+        )
+        email_captures = email_q.scalar() or 0
+        email_capture_rate = round(email_captures / max(completed_audits, 1) * 100)
+
+        return_q = await db.execute(
+            select(func.count(AnalyticsEvent.id)).where(AnalyticsEvent.event_type == "return_visit")
+        )
+        return_visitors = return_q.scalar() or 0
+        return_rate = round(return_visitors / max(total_audits, 1) * 100)
+
+        # Recent events
+        recent_q = await db.execute(
+            select(AnalyticsEvent).order_by(AnalyticsEvent.created_at.desc()).limit(20)
+        )
+        recent_rows = recent_q.scalars().all()
+        recent_events = []
+        for ev in recent_rows:
+            desc = ev.event_type.replace("_", " ").title()
+            if ev.domain_audited:
+                desc += f" - {ev.domain_audited}"
+            recent_events.append(
+                {
+                    "type": ev.event_type,
+                    "description": desc,
+                    "time_ago": _format_last_run_from_dt(ev.created_at),
+                }
+            )
+
+    except Exception as e:
+        logger.warning("adoption_dashboard_query_failed", error=str(e))
+        total_audits = 0
+        completed_audits = 0
+        completion_rate = 0
+        daily_audits = []
+        max_daily_audits = 1
+        top_domains = []
+        score_buckets = []
+        email_captures = 0
+        email_capture_rate = 0
+        return_visitors = 0
+        return_rate = 0
+        recent_events = []
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/adoption.html",
+        context={
+            "total_audits": total_audits,
+            "completed_audits": completed_audits,
+            "completion_rate": completion_rate,
+            "daily_audits": daily_audits,
+            "max_daily_audits": max_daily_audits,
+            "top_domains": top_domains,
+            "score_buckets": score_buckets,
+            "email_captures": email_captures,
+            "email_capture_rate": email_capture_rate,
+            "return_visitors": return_visitors,
+            "return_rate": return_rate,
+            "recent_events": recent_events,
+        },
+    )
+
+
+def _format_last_run_from_dt(dt: Any) -> str:
+    """Format a datetime as relative time string."""
+    if not dt:
+        return "Never"
+
+    from datetime import datetime
+
+    now = datetime.now(UTC)
+    if hasattr(dt, "tzinfo") and dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+
+    diff = now - dt
+    seconds = diff.total_seconds()
+    if seconds < 60:
+        return "Just now"
+    if seconds < 3600:
+        mins = int(seconds / 60)
+        return f"{mins}m ago"
+    if seconds < 86400:
+        hours = int(seconds / 3600)
+        return f"{hours}h ago"
+    days = int(seconds / 86400)
+    return f"{days}d ago"

@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+
+{% block title %}Adoption Metrics &mdash; Findable Score{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --fs-teal:    #14b8a6;
+        --fs-teal-d:  #0d9488;
+        --fs-teal-l:  rgba(20,184,166,.12);
+        --fs-surface: #0c1322;
+        --fs-card:    #111827;
+        --fs-border:  #1e293b;
+        --fs-text:    #94a3b8;
+        --fs-text-hi: #e2e8f0;
+        --fs-red:     #ef4444;
+        --fs-amber:   #f59e0b;
+        --fs-green:   #22c55e;
+    }
+
+    body { font-family: 'Instrument Sans', system-ui, sans-serif; }
+    .mono { font-family: 'DM Mono', 'Fira Mono', monospace; }
+
+    /* ---- metric card ---- */
+    .metric-card {
+        background: var(--fs-card);
+        border: 1px solid var(--fs-border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--fs-teal), transparent);
+        opacity: .6;
+    }
+
+    /* ---- sparkline bar ---- */
+    .spark-bar {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 40px;
+    }
+    .spark-bar span {
+        flex: 1;
+        background: var(--fs-teal);
+        border-radius: 2px 2px 0 0;
+        min-height: 2px;
+        opacity: .7;
+        transition: opacity .15s;
+    }
+    .spark-bar span:hover { opacity: 1; }
+
+    /* ---- ring gauge ---- */
+    .ring-gauge {
+        width: 72px; height: 72px;
+        position: relative;
+    }
+    .ring-gauge svg { transform: rotate(-90deg); }
+    .ring-gauge .label {
+        position: absolute; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ---- table ---- */
+    .adopt-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .adopt-table th {
+        font-size: .6875rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--fs-text);
+        padding: .625rem .75rem;
+        border-bottom: 1px solid var(--fs-border);
+        text-align: left;
+    }
+    .adopt-table td {
+        padding: .625rem .75rem;
+        border-bottom: 1px solid rgba(30,41,59,.5);
+        font-size: .8125rem;
+        color: var(--fs-text-hi);
+    }
+    .adopt-table tr:last-child td { border-bottom: 0; }
+    .adopt-table tr:hover td { background: rgba(20,184,166,.04); }
+
+    /* ---- status dot ---- */
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot-green { background: var(--fs-green); box-shadow: 0 0 6px rgba(34,197,94,.4); }
+    .dot-amber { background: var(--fs-amber); box-shadow: 0 0 6px rgba(245,158,11,.4); }
+    .dot-red   { background: var(--fs-red);   box-shadow: 0 0 6px rgba(239,68,68,.4); }
+
+    /* ---- fade-in stagger ---- */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up {
+        animation: fadeUp .5s cubic-bezier(.22,1,.36,1) both;
+    }
+
+    /* ---- grid noise texture (subtle) ---- */
+    .dashboard-bg {
+        background:
+            radial-gradient(ellipse 70% 50% at 20% 0%, rgba(20,184,166,.06) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 40% at 80% 100%, rgba(20,184,166,.03) 0%, transparent 60%),
+            var(--fs-surface);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-bg min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-slate-800/70 backdrop-blur-sm sticky top-0 z-10"
+            style="background: rgba(12,19,34,.85);">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="/" class="flex items-center gap-2">
+                    <span class="text-lg font-bold text-white">Findable</span>
+                    <span class="text-lg font-light" style="color:var(--fs-teal);">Score</span>
+                </a>
+                <span class="text-slate-600 mx-2">/</span>
+                <span class="text-sm text-slate-400 font-medium">Adoption Metrics</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="mono text-xs text-slate-500">Last refresh: {{ last_refresh or "just now" }}</span>
+                <a href="/admin/adoption" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:border-teal-500/40 hover:text-teal-400 transition-all">
+                    Refresh
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- KPI Row -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <!-- Total Audits -->
+            <div class="metric-card fade-up" style="animation-delay:.05s">
+                <div class="flex items-start justify-between mb-3">
+                    <span class="text-xs font-medium uppercase tracking-wider text-slate-500">Total Audits</span>
+                    <span class="dot {% if total_audits > 0 %}dot-green{% else %}dot-amber{% endif %}"></span>
+                </div>
+                <div class="mono text-3xl font-medium text-white mb-3">{{ total_audits }}</div>
+                <div class="spark-bar">
+                    {% for val in daily_audits[-14:] %}
+                    <span style="height:{{ [val / (max_daily_audits or 1) * 100, 5] | max }}%"
+                          title="{{ val }} audits"></span>
+                    {% endfor %}
+                    {% if daily_audits | length < 14 %}
+                        {% for _ in range(14 - daily_audits | length) %}
+                        <span style="height:5%; opacity:.2"></span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <span class="text-xs text-slate-600 mt-1.5 block">14-day trend</span>
+            </div>
+
+            <!-- Completed Rate -->
+            <div class="metric-card fade-up" style="animation-delay:.1s">
+                <div class="flex items-start justify-between mb-3">
+                    <span class="text-xs font-medium uppercase tracking-wider text-slate-500">Completion Rate</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="ring-gauge">
+                        <svg viewBox="0 0 36 36" width="72" height="72">
+                            <circle cx="18" cy="18" r="15.5" fill="none" stroke="#1e293b" stroke-width="3"/>
+                            {% set circ = 97.4 %}
+                            {% set comp_offset = circ - (circ * completion_rate / 100) %}
+                            <circle cx="18" cy="18" r="15.5" fill="none"
+                                    stroke="{% if completion_rate >= 80 %}var(--fs-green){% elif completion_rate >= 50 %}var(--fs-amber){% else %}var(--fs-red){% endif %}"
+                                    stroke-width="3"
+                                    stroke-dasharray="{{ circ }}"
+                                    stroke-dashoffset="{{ comp_offset }}"
+                                    stroke-linecap="round"/>
+                        </svg>
+                        <div class="label">
+                            <span class="mono text-sm font-medium text-white">{{ completion_rate }}%</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-slate-400">{{ completed_audits }} / {{ total_audits }}</div>
+                        <div class="text-xs text-slate-600">completed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Captures -->
+            <div class="metric-card fade-up" style="animation-delay:.15s">
+                <div class="flex items-start justify-between mb-3">
+                    <span class="text-xs font-medium uppercase tracking-wider text-slate-500">Email Captures</span>
+                </div>
+                <div class="mono text-3xl font-medium text-white mb-1">{{ email_captures }}</div>
+                <div class="text-sm text-slate-400">
+                    <span class="mono" style="color:var(--fs-teal);">{{ email_capture_rate }}%</span>
+                    conversion
+                </div>
+            </div>
+
+            <!-- Return Visitors -->
+            <div class="metric-card fade-up" style="animation-delay:.2s">
+                <div class="flex items-start justify-between mb-3">
+                    <span class="text-xs font-medium uppercase tracking-wider text-slate-500">Return Visitors</span>
+                </div>
+                <div class="mono text-3xl font-medium text-white mb-1">{{ return_visitors }}</div>
+                <div class="text-sm text-slate-400">
+                    <span class="mono" style="color:var(--fs-teal);">{{ return_rate }}%</span>
+                    re-audit rate
+                </div>
+            </div>
+        </div>
+
+        <!-- Two-column layout: Top Domains + Score Distribution -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-8">
+            <!-- Top Audited Domains -->
+            <div class="lg:col-span-3 metric-card fade-up" style="animation-delay:.25s">
+                <h2 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full" style="background:var(--fs-teal);"></span>
+                    Top Audited Domains
+                </h2>
+                <table class="adopt-table">
+                    <thead>
+                        <tr>
+                            <th>Domain</th>
+                            <th>Audits</th>
+                            <th>Last Score</th>
+                            <th>Last Audit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for domain in top_domains %}
+                        <tr>
+                            <td class="mono text-sm">{{ domain.domain }}</td>
+                            <td class="mono">{{ domain.count }}</td>
+                            <td>
+                                {% if domain.score is not none %}
+                                <span class="mono px-2 py-0.5 rounded text-xs
+                                    {% if domain.score >= 70 %}text-teal-400 bg-teal-500/10
+                                    {% elif domain.score >= 40 %}text-amber-400 bg-amber-500/10
+                                    {% else %}text-red-400 bg-red-500/10{% endif %}">
+                                    {{ domain.score }}
+                                </span>
+                                {% else %}
+                                <span class="text-xs text-slate-600">&mdash;</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-xs text-slate-500">{{ domain.last_audit }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not top_domains %}
+                        <tr>
+                            <td colspan="4" class="text-center text-slate-600 py-8">No audits yet</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Score Distribution -->
+            <div class="lg:col-span-2 metric-card fade-up" style="animation-delay:.3s">
+                <h2 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full" style="background:var(--fs-teal);"></span>
+                    Score Distribution
+                </h2>
+                <div class="space-y-3">
+                    {% for bucket in score_buckets %}
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400">{{ bucket.label }}</span>
+                            <span class="mono text-slate-500">{{ bucket.count }}</span>
+                        </div>
+                        <div class="h-2 rounded-full overflow-hidden" style="background:var(--fs-border);">
+                            <div class="h-full rounded-full transition-all duration-700"
+                                 style="width:{{ bucket.pct }}%; background:{{ bucket.color }};">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if not score_buckets %}
+                    <p class="text-center text-slate-600 py-8">No completed audits</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="metric-card fade-up" style="animation-delay:.35s">
+            <h2 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full" style="background:var(--fs-teal);"></span>
+                Recent Activity
+            </h2>
+            <div class="space-y-0">
+                {% for event in recent_events %}
+                <div class="flex items-center gap-3 py-2.5 border-b border-slate-800/50 last:border-0">
+                    <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0
+                        {% if event.type == 'audit_started' %}bg-teal-500/10 text-teal-400
+                        {% elif event.type == 'audit_completed' %}bg-green-500/10 text-green-400
+                        {% elif event.type == 'email_captured' %}bg-amber-500/10 text-amber-400
+                        {% elif event.type == 'share_clicked' %}bg-blue-500/10 text-blue-400
+                        {% else %}bg-slate-500/10 text-slate-400{% endif %}">
+                        <span class="text-xs mono">
+                            {% if event.type == 'audit_started' %}A
+                            {% elif event.type == 'audit_completed' %}C
+                            {% elif event.type == 'email_captured' %}E
+                            {% elif event.type == 'share_clicked' %}S
+                            {% else %}?{% endif %}
+                        </span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <span class="text-sm text-slate-300">{{ event.description }}</span>
+                    </div>
+                    <span class="text-xs text-slate-600 mono flex-shrink-0">{{ event.time_ago }}</span>
+                </div>
+                {% endfor %}
+                {% if not recent_events %}
+                <p class="text-center text-slate-600 py-8">No events recorded</p>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

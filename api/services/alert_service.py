@@ -109,7 +109,7 @@ class AlertService:
                 alert_type=AlertType.SCORE_DROP,
                 severity=AlertSeverity.WARNING,
                 title=f"Score dropped by {abs(snapshot.score_delta)} points",
-                message=f"Your AI sourceability score for {site.domain} decreased from {previous_snapshot.score_typical} to {snapshot.score_typical}.",
+                message=f"Your Findable Score for {site.domain} decreased from {previous_snapshot.score_typical} to {snapshot.score_typical}.",
                 data={
                     "previous_score": previous_snapshot.score_typical,
                     "current_score": snapshot.score_typical,
@@ -132,7 +132,7 @@ class AlertService:
                 alert_type=AlertType.SCORE_IMPROVEMENT,
                 severity=AlertSeverity.INFO,
                 title=f"Score improved by {snapshot.score_delta} points",
-                message=f"Your AI sourceability score for {site.domain} increased from {previous_snapshot.score_typical} to {snapshot.score_typical}.",
+                message=f"Your Findable Score for {site.domain} increased from {previous_snapshot.score_typical} to {snapshot.score_typical}.",
                 data={
                     "previous_score": previous_snapshot.score_typical,
                     "current_score": snapshot.score_typical,
@@ -160,7 +160,7 @@ class AlertService:
                     alert_type=AlertType.SCORE_CRITICAL,
                     severity=AlertSeverity.CRITICAL,
                     title=f"Score fell below critical threshold ({config.score_critical_threshold})",
-                    message=f"Your AI sourceability score for {site.domain} is now {snapshot.score_typical}, which is below your critical threshold of {config.score_critical_threshold}.",
+                    message=f"Your Findable Score for {site.domain} is now {snapshot.score_typical}, which is below your critical threshold of {config.score_critical_threshold}.",
                     data={
                         "current_score": snapshot.score_typical,
                         "threshold": config.score_critical_threshold,

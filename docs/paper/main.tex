@@ -1,0 +1,979 @@
+% =============================================================================
+% Measuring AI Sourceability: The Findable Score Framework
+% arXiv preprint — February 2026
+% =============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+% --- Standard packages -------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{booktabs}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% --- Custom commands ----------------------------------------------------------
+\newcommand{\findable}{\textsc{Findable Score}}
+\newcommand{\pillar}[1]{\textsc{#1}}
+\newcommand{\obs}[1]{\texttt{obs\_#1}}
+
+% ==============================================================================
+\title{Measuring AI Sourceability: A Multi-Pillar Framework for Predicting\\
+Whether AI Answer Engines Can Retrieve and Cite Web Content}
+
+\author{
+  Joe Barrett\thanks{Corresponding author. Email: joe@findablescore.com}\\
+  Findable Score\\
+}
+
+\date{February 2026 \\ \medskip \small Working Paper}
+
+\begin{document}
+\maketitle
+
+% ==============================================================================
+% ABSTRACT
+% ==============================================================================
+\begin{abstract}
+As AI answer engines (ChatGPT, Perplexity, Google AI Overviews, Gemini)
+increasingly replace traditional search as the primary discovery mechanism for
+web content, a critical measurement gap has emerged: no standardized methodology
+exists for predicting whether a given website will be retrieved and cited by
+these systems. We present the \findable{}, a 0--100 composite metric built on a
+7-pillar scoring framework that measures \emph{AI sourceability} --- the degree
+to which a website's content is accessible, parseable, retrievable, and citable
+by AI answer engines. Our methodology combines deterministic simulation (crawl,
+extract, chunk, embed, retrieve, grade) with observed reality snapshots from
+live AI model outputs, calibrated against 1,275+ ground-truth samples across
+35+ domains. We introduce three novel contributions: (1)~the empirical
+distinction between \emph{mentions} (brand name appears in AI output; 99.8\%
+positive rate, statistically useless) and \emph{citations} (URL explicitly
+cited; 68\% positive rate, predictively meaningful) as calibration targets;
+(2)~a Citation Context layer that classifies websites into 9 content types with
+empirically-derived citation baselines, explaining why technically
+well-optimized sites can receive zero citations; and (3)~a Source Primacy
+classification (\textsc{Primary}/\textsc{Authoritative}/\textsc{Derivative})
+that resolves the Citation Paradox --- the counterintuitive finding that
+low-citation sites often have \emph{higher} technical scores than high-citation
+sites. We report 80.8\% training accuracy and 50.7\% holdout accuracy using
+domain-stratified validation, and discuss why the 30-point gap reveals
+fundamental limits of website-side features in predicting AI citation behavior.
+% TODO: Update with final calibration numbers after recalibration
+\end{abstract}
+
+\bigskip
+\noindent\textbf{Keywords:} AI sourceability, generative engine optimization,
+retrieval-augmented generation, web content citation, findability scoring
+
+% ==============================================================================
+% 1. INTRODUCTION
+% ==============================================================================
+\section{Introduction}\label{sec:introduction}
+
+\subsection{The Shift from Search to Answer Engines}\label{sec:shift}
+
+The information retrieval landscape is undergoing a structural transformation.
+AI answer engines --- systems that generate natural language responses grounded
+in retrieved web content --- are rapidly displacing traditional keyword-based
+search. As of early 2026, ChatGPT processes approximately 2.5 billion prompts
+daily across 700 million weekly active users. Google AI Overviews appear in
+approximately 60\% of US search queries, up from roughly 30\% in mid-2024.
+Perplexity serves 33 million monthly active users. Collectively, these systems
+process over 4 billion prompts per day.
+
+This shift creates a new class of problem for website operators. Traditional
+search engine optimization (SEO) focuses on ranking signals --- backlinks,
+keyword density, page speed, mobile-friendliness --- that determine position in
+a list of ten blue links. AI answer engines operate differently: they retrieve
+content, synthesize it into a coherent response, and optionally \emph{cite} the
+source. The website either appears as a cited source or it does not. There is no
+``rank~7'' --- there is only cited or not cited, mentioned or not mentioned.
+
+Despite the magnitude of this shift, no standardized methodology exists for
+measuring whether a given website is likely to be retrieved and cited by AI
+answer engines. Existing tools either track surface-level metrics (is the brand
+name mentioned?) or operate as opaque scoring systems without disclosed
+methodology. This paper presents a transparent, reproducible framework for
+measuring AI sourceability.
+
+\subsection{Definitions}\label{sec:definitions}
+
+\begin{description}[style=unboxed,leftmargin=0pt]
+  \item[AI Sourceability.] The degree to which a website's content can be
+    accessed, parsed, retrieved, and cited by AI answer engines.
+  \item[\findable{}.] A composite 0--100 metric quantifying AI sourceability
+    across 7 structural pillars.
+  \item[Mention.] The brand name or product name appears in an AI-generated
+    response. (Example: ``Datadog is a monitoring platform.'')
+  \item[Citation.] The AI response explicitly references the website's URL as a
+    source. (Example: ``According to Datadog's documentation
+    [datadog.com/docs/\ldots]'')
+  \item[Source Primacy.] Whether a website is \emph{the} canonical source for
+    its content (\textsc{Primary}), a recognized authority
+    (\textsc{Authoritative}), or one of many equivalent sources
+    (\textsc{Derivative}).
+\end{description}
+
+\subsection{Contributions}\label{sec:contributions}
+
+We make five contributions:
+\begin{enumerate}
+  \item A transparent 7-pillar scoring framework for AI sourceability with
+    disclosed algorithms, weights, and thresholds.
+  \item The empirical demonstration that mention-tracking (99.8\% positive rate)
+    is statistically uninformative, while citation-tracking (68\% positive rate)
+    provides meaningful signal.
+  \item A two-layer scoring model separating \emph{sourceability} (what the
+    website controls) from \emph{citation likelihood} (what depends on content
+    type and competitive context).
+  \item A Source Primacy classification system that resolves the Citation
+    Paradox.
+  \item A domain-stratified calibration methodology using grid search
+    optimization with bias-adjusted metrics.
+\end{enumerate}
+
+% ==============================================================================
+% 2. RELATED WORK
+% ==============================================================================
+\section{Related Work}\label{sec:related}
+
+\subsection{Traditional SEO Scoring}\label{sec:seo-scoring}
+
+Moz's Domain Authority (DA) and Ahrefs' Domain Rating (DR) are the most
+widely-adopted website quality scores. Both predict Google search ranking based
+primarily on backlink profiles. Neither attempts to predict AI answer engine
+behavior, and both operate as proprietary black-box systems without disclosed
+methodology.
+
+\subsection{Generative Engine Optimization}\label{sec:geo}
+
+\citet{aggarwal_2024_geo} introduced the term ``Generative Engine Optimization''
+at KDD~2024, proposing a framework for optimizing content visibility in
+generative search engines. Their work focuses on content-level optimization
+strategies (adding statistics, citing sources, using authoritative language)
+rather than systematic measurement of sourceability across structural
+dimensions.
+
+\subsection{AI Visibility Tracking Tools}\label{sec:ai-tools}
+
+A growing ecosystem of commercial tools tracks AI visibility: Profound
+(prompt-level tracking with 400M+ real prompts), Peec AI (auto-generated prompt
+monitoring), Otterly.ai (multi-platform mention tracking), and others. These
+tools primarily track \emph{outcomes} (was the brand mentioned or cited in a
+specific prompt?) rather than \emph{causes} (what structural properties of the
+website determine citation likelihood?). None disclose their scoring
+methodology.
+
+\subsection{Retrieval-Augmented Generation}\label{sec:rag}
+
+The RAG paradigm \citep{lewis_2020_rag} provides the architectural foundation
+for understanding how AI answer engines interact with web content. The retrieval
+stage --- where content is selected from an index based on query relevance ---
+is the critical bottleneck that our simulation targets. Our framework simulates
+this retrieval stage using the same class of techniques (embedding-based vector
+search, BM25 lexical matching, rank fusion) employed by production RAG systems.
+
+% ==============================================================================
+% 3. METHODOLOGY
+% ==============================================================================
+\section{Methodology}\label{sec:methodology}
+
+\subsection{System Architecture}\label{sec:architecture}
+
+The \findable{} is computed through a 15-step audit pipeline, divided into two
+pathways:
+
+\begin{itemize}
+  \item \textbf{Simulated Findability} (Steps 1--13): A deterministic,
+    reproducible assessment requiring no external API calls to LLM providers.
+    Encompasses technical checks, crawling, extraction, chunking, embedding,
+    question generation, retrieval simulation, scoring, pillar analysis,
+    composite scoring, fix generation, and report assembly.
+  \item \textbf{Observed Findability} (Steps 14--15): Reality snapshots from
+    actual AI model outputs used for validation and calibration.
+\end{itemize}
+
+% TODO: Consider adding a pipeline diagram as a figure here
+% \begin{figure}[ht]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/figure_pipeline.pdf}
+%   \caption{The 15-step audit pipeline.}
+%   \label{fig:pipeline}
+% \end{figure}
+
+\subsection{Content Extraction and Chunking}\label{sec:chunking}
+
+Content is extracted using trafilatura \citep{barbaresi_2021_trafilatura} with
+BeautifulSoup as fallback for pages where trafilatura's heuristics fail.
+Extracted content is split into semantically-coherent chunks with the parameters
+shown in Table~\ref{tab:chunking}.
+
+\begin{table}[ht]
+  \centering
+  \caption{Chunking parameters.}
+  \label{tab:chunking}
+  \begin{tabular}{@{}lrl@{}}
+    \toprule
+    \textbf{Parameter} & \textbf{Value} & \textbf{Rationale} \\
+    \midrule
+    Max chunk size  & 512 tokens  & Optimal for bge-small-en-v1.5 context window \\
+    Min chunk size  & 100 tokens  & Prevents degenerate fragments \\
+    Overlap         & 50 tokens   & Preserves cross-boundary context \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Unlike naive fixed-size chunking, our splitter detects and preserves content
+type boundaries. Tables are detected by pipe-delimited formatting ($>$50\% of
+lines contain pipes), lists by bullet/number prefix patterns, code blocks by
+fenced code markers, and blockquotes by~\texttt{>}~prefix patterns. Each chunk
+stores its nearest heading context and its position ratio within the source
+document, enabling context-aware retrieval. Duplicate chunks are prevented via
+MD5 hashes of normalized content.
+
+\subsection{Question Generation}\label{sec:questions}
+
+Each audit generates approximately 20 test questions across two sources:
+
+\paragraph{Universal questions (15).}
+Five categories --- Identity~(3), Offerings~(4), Contact~(2), Trust~(3),
+Differentiation~(3) --- with per-question difficulty weights ranging from 1.0
+to~1.5. These represent the core information-seeking queries that AI answer
+engines are most likely to encounter about any business entity.
+
+\paragraph{Site-derived questions (up to 5).}
+Generated from the website's own signals: Schema.org structured data (Product,
+LocalBusiness, SoftwareApplication schemas trigger type-specific questions) and
+heading analysis (headings matching pricing, features, or capability patterns
+generate targeted questions). Maximum 3 schema-derived plus 2 heading-derived
+questions prevent over-indexing on site-specific content.
+
+\subsection{Hybrid Retrieval Simulation}\label{sec:retrieval}
+
+For each test question, we simulate the retrieval stage of a RAG pipeline using
+hybrid search combining BM25 lexical matching with dense vector retrieval.
+
+\paragraph{BM25 scoring.}
+The BM25 score for a document~$d$ given query~$q$ is:
+\begin{equation}\label{eq:bm25}
+  \text{BM25}(d, q)
+  = \sum_{t \in q}
+    \text{IDF}(t) \cdot
+    \frac{
+      \text{tf}(t, d) \cdot (k_1 + 1)
+    }{
+      \text{tf}(t, d) + k_1 \cdot
+      \bigl(1 - b + b \cdot |d| / \text{avgdl}\bigr)
+    }
+\end{equation}
+where $k_1 = 1.5$ (term frequency saturation) and $b = 0.75$ (document length
+normalization), and IDF is computed as:
+\begin{equation}\label{eq:idf}
+  \text{IDF}(t) = \log\!\left(\frac{N - \text{df}(t) + 0.5}{\text{df}(t) + 0.5} + 1.0\right)
+\end{equation}
+
+\paragraph{Vector search.}
+Cosine similarity between query embedding and chunk embeddings, using
+bge-small-en-v1.5 \citep{xiao_2023_bge} (384-dimensional, normalized).
+
+\paragraph{Reciprocal Rank Fusion (RRF).}
+Results from both methods are fused using RRF
+\citep{cormack_2009_rrf}:
+\begin{equation}\label{eq:rrf}
+  \text{RRF}(d) = \sum_{s \in \{\text{bm25}, \text{vector}\}}
+    \frac{w_s}{k + \text{rank}_s(d)}
+\end{equation}
+with $k = 60$, $w_{\text{bm25}} = 0.5$, and $w_{\text{vector}} = 0.5$. Top~20
+results from each method are fused, with a diversity constraint (maximum 2
+chunks per source page) applied before selecting the final top~10 results.
+
+\subsection{The Seven Pillars}\label{sec:pillars}
+
+The \findable{} aggregates seven pillar scores, each measuring a distinct
+dimension of AI sourceability. Table~\ref{tab:pillar-weights} summarizes the
+default weights.
+
+\begin{table}[ht]
+  \centering
+  \caption{Default pillar weights.}
+  \label{tab:pillar-weights}
+  \begin{tabular}{@{}llr@{}}
+    \toprule
+    \textbf{Pillar} & \textbf{Dimension} & \textbf{Weight} \\
+    \midrule
+    \pillar{Technical}            & AI crawler accessibility          & 12\% \\
+    \pillar{Structure}            & Content parseability              & 18\% \\
+    \pillar{Schema}               & Structured data richness          & 13\% \\
+    \pillar{Authority}            & Source trustworthiness             & 12\% \\
+    \pillar{Entity Recognition}   & Pre-existing AI knowledge          & 13\% \\
+    \pillar{Retrieval}            & Simulated retrieval performance    & 22\% \\
+    \pillar{Coverage}             & Answer completeness                & 10\% \\
+    \midrule
+    \textbf{Total}                &                                    & \textbf{100\%} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsubsection{Pillar 1: Technical Readiness (12\%)}\label{sec:p-technical}
+
+Measures whether AI crawlers can access the content. Constituent signals
+include: HTTPS enablement (10\% of pillar), robots.txt allowing AI bots with
+specificity bonus (25\%), Time to First Byte below threshold tiers (25\%),
+llms.txt presence with link count bonus (20\%), and JavaScript dependency
+inversely scored (20\%).
+
+\subsubsection{Pillar 2: Semantic Structure (18\%)}\label{sec:p-structure}
+
+Measures whether AI can parse and navigate the content. Signals include heading
+hierarchy (proper H1$\to$H2$\to$H3 nesting), answer-first structure (key
+information appears early), FAQ detection, link density, and content type
+distribution.
+
+\subsubsection{Pillar 3: Schema Richness (13\%)}\label{sec:p-schema}
+
+Measures whether AI can extract structured facts. Signals include JSON-LD
+presence, schema type coverage (FAQ, Article, HowTo, Product, Organization),
+author attribution, freshness signals (datePublished, dateModified), and schema
+validation.
+
+\subsubsection{Pillar 4: Authority Signals (12\%)}\label{sec:p-authority}
+
+Measures whether AI should trust this source. Signals include author
+credentials, authoritative citations, original data presence, content freshness,
+and E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness)
+indicators.
+
+\subsubsection{Pillar 5: Entity Recognition (13\%)}\label{sec:p-entity}
+
+Measures whether AI already knows who this entity is. This pillar was added to
+address a systematic 23\% pessimism bias in early scoring --- well-known brands
+were being scored lower than their actual citation rates because the scoring
+system did not account for pre-existing AI knowledge.
+
+Entity recognition is scored across four signal groups: Wikipedia presence and
+richness (up to 30 points), Wikidata entity linkage (up to 25 points), domain
+provenance including age and TLD quality (up to 20 points), and external
+visibility via news mentions and search presence (up to 25 points). The raw
+0--100 score maps to recognition levels: \emph{limited} ($<$25),
+\emph{partial} (25--50), and \emph{full} ($>$50).
+
+\subsubsection{Pillar 6: Retrieval Simulation (22\%)}\label{sec:p-retrieval}
+
+The largest-weighted pillar. Uses a 4-criterion system evaluating each test
+question:
+\begin{equation}\label{eq:question-score}
+  \text{score}(q) = 0.4 \cdot r_q + 0.4 \cdot s_q + 0.2 \cdot c_q
+\end{equation}
+where $r_q = \min(1.0,\; \text{rrf}_{\text{raw}} / 0.02)$ is the content
+relevance, $s_q = n_{\text{found}} / n_{\text{total}}$ is the signal coverage,
+and $c_q \in \{0.3, 0.6, 1.0\}$ is the answer confidence (\textsc{Low},
+\textsc{Medium}, \textsc{High}).
+
+The total simulation score combines criterion-weighted and category-weighted
+components:
+\begin{equation}\label{eq:sim-total}
+  S_{\text{sim}} = 0.7 \cdot S_{\text{criterion}} + 0.3 \cdot S_{\text{category}}
+\end{equation}
+
+\subsubsection{Pillar 7: Answer Coverage (10\%)}\label{sec:p-coverage}
+
+Measures what proportion of test questions the website can answer, including
+overall coverage percentage, entity-fact coverage, and product/how-to coverage.
+
+\subsection{Score Computation}\label{sec:score-computation}
+
+The composite \findable{} is a weighted sum of pillar scores:
+\begin{equation}\label{eq:findable-score}
+  \boxed{\;
+    F = \sum_{p=1}^{7} \frac{w_p \cdot S_p}{100}
+  \;}
+\end{equation}
+where $S_p \in [0, 100]$ is the raw score of pillar~$p$ and $w_p$ is its
+percentage weight, with the constraint $\sum_{p} w_p = 100$.
+
+When some pillars cannot be evaluated (e.g., observation data unavailable), the
+score is rescaled to preserve the full 0--100 range:
+\begin{equation}\label{eq:adjusted-score}
+  F_{\text{adj}} = \frac{\sum_{p \in \mathcal{E}} w_p \cdot S_p}
+                        {\sum_{p \in \mathcal{E}} w_p} \cdot \frac{100}{100}
+\end{equation}
+where $\mathcal{E}$ denotes the set of evaluated pillars.
+
+The resulting score maps to five findability levels, shown in
+Table~\ref{tab:levels}.
+
+\begin{table}[ht]
+  \centering
+  \caption{Findability levels.}
+  \label{tab:levels}
+  \begin{tabular}{@{}lcl@{}}
+    \toprule
+    \textbf{Score Range} & \textbf{Level} & \textbf{Interpretation} \\
+    \midrule
+    0--39   & Not Yet Findable    & AI crawlers cannot access or cite this content \\
+    40--54  & Partially Findable  & Foundation in place, key signals missing \\
+    55--69  & Findable            & AI can find and cite this content \\
+    70--84  & Highly Findable     & Ahead of most competitors \\
+    85--100 & Optimized           & Top-tier AI sourceability \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ==============================================================================
+% 4. IMPLEMENTATION
+% ==============================================================================
+\section{Implementation}\label{sec:implementation}
+
+The system is implemented in Python~3.11+ with the following architecture:
+
+\begin{itemize}
+  \item \textbf{API layer}: FastAPI (async), serving audit requests and results
+    via a RESTful \texttt{/v1} endpoint.
+  \item \textbf{Task queue}: Redis + RQ for background audit execution.
+  \item \textbf{Database}: PostgreSQL with pgvector extension for hybrid
+    retrieval (BM25 + cosine similarity).
+  \item \textbf{Crawling}: httpx for static pages; Playwright (headless
+    Chromium) triggered when JavaScript render delta exceeds a configurable
+    threshold.
+  \item \textbf{Extraction}: trafilatura with BeautifulSoup fallback.
+  \item \textbf{Embeddings}: bge-small-en-v1.5 via sentence-transformers,
+    producing 384-dimensional normalized vectors.
+  \item \textbf{Hosting}: Railway (separate API and worker services).
+\end{itemize}
+
+The audit pipeline is implemented as a linear async sequence of approximately 15
+steps. Failures in optional sections (observation, calibration) do not halt the
+audit --- they mark sections as \texttt{evaluated=False}. Progress tracking uses
+optimistic locking (\texttt{version\_id\_col}) to prevent race conditions in
+concurrent audit scenarios.
+
+% ==============================================================================
+% 5. RESULTS
+% ==============================================================================
+\section{Results}\label{sec:results}
+
+\subsection{Calibration Corpus}\label{sec:corpus}
+
+% TODO: Update with final calibration numbers after recalibration
+As of February 2026, the calibration corpus contains 1,275+ samples across 35+
+unique domains. Table~\ref{tab:mention-vs-citation} summarizes the critical
+distinction between mentions and citations as calibration targets.
+
+\begin{table}[ht]
+  \centering
+  \caption{Mention vs.\ citation as calibration targets.}
+  \label{tab:mention-vs-citation}
+  \begin{tabular}{@{}lccl@{}}
+    \toprule
+    \textbf{Target} & \textbf{Positive Rate} & \textbf{Negative Samples}
+      & \textbf{Calibration Utility} \\
+    \midrule
+    \obs{mentioned} & 99.8\% & 2 / 865  & Useless --- trivial classifier achieves 99.8\% \\
+    \obs{cited}     & 67.7\% & 279 / 865 & Meaningful --- real signal to learn from \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The explanation is straightforward: AI language models are trained on web-scale
+text corpora that include virtually every recognizable brand. When asked about
+any known entity, the model will mention it from parametric memory alone --- no
+retrieval required. A scoring system calibrated against mentions would report
+100\% findability for sites with 0\% citation rate --- a useless vanity metric.
+
+\subsection{Optimization}\label{sec:optimization}
+
+We use grid search optimization with the following search space:
+\begin{itemize}
+  \item 7 pillar weights, each in $[5, 35]$ with step~5, constrained to
+    $\sum w_p = 100$ (${\sim}4{,}500$ valid combinations).
+  \item Findability threshold: $\{25, 30, 35, 40, 45, 50, 55, 60\}$.
+  \item Source primacy bonus weight: $\{0, 5, 10, 15, 20\}$.
+\end{itemize}
+
+We evaluate using the Matthews Correlation Coefficient (MCC):
+\begin{equation}\label{eq:mcc}
+  \text{MCC} = \frac{\text{TP} \cdot \text{TN} - \text{FP} \cdot \text{FN}}
+    {\sqrt{(\text{TP}+\text{FP})(\text{TP}+\text{FN})(\text{TN}+\text{FP})(\text{TN}+\text{FN})}}
+\end{equation}
+MCC ranges from $-1$ (worst) to $+1$ (perfect) and correctly handles class
+imbalance --- a trivial ``predict all positive'' classifier scores
+$\text{MCC} = 0$, not accuracy~$= 68\%$.
+
+\paragraph{Domain-stratified validation.}
+Calibration samples are split by \emph{domain}, not randomly. All samples from a
+given domain go entirely into training or entirely into holdout --- never split
+between them. This forces the model to predict citation for \emph{unseen
+domains} based on structural properties alone. Constraints: minimum 10 training
+domains, minimum 3 holdout domains, temporal ordering preserved.
+
+\subsection{Calibration Results}\label{sec:calibration-results}
+
+% TODO: Update with final calibration numbers after recalibration
+Table~\ref{tab:calibration-results} shows current calibration performance at
+threshold~$= 30$.
+
+\begin{table}[ht]
+  \centering
+  \caption{Calibration results (threshold $= 30$, default pillar weights).}
+  \label{tab:calibration-results}
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{Metric} & \textbf{Training Set} & \textbf{Holdout Set} \\
+    \midrule
+    Accuracy             & 80.8\% & 50.7\% \\
+    Over-prediction rate & 19.2\% & 49.3\% \\
+    Under-prediction rate & 0.0\% & 0.0\% \\
+    MCC                  & ${\sim}0.15$ & ${\sim}0.01$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The optimized weights shift substantially from defaults (Table~\ref{tab:weight-shift}),
+with authority and coverage increasing while technical and structural signals
+decrease.
+
+\begin{table}[ht]
+  \centering
+  \caption{Weight shift from default to optimized.}
+  \label{tab:weight-shift}
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{Pillar} & \textbf{Default} & \textbf{Optimized} \\
+    \midrule
+    Technical           & 12\% & 5\%  \\
+    Structure           & 18\% & 5\%  \\
+    Schema              & 13\% & 20\% \\
+    Authority           & 12\% & 25\% \\
+    Entity Recognition  & 13\% & 5\%  \\
+    Retrieval           & 22\% & 15\% \\
+    Coverage            & 10\% & 25\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{The Citation Paradox}\label{sec:citation-paradox}
+
+Per-domain analysis revealed a counterintuitive pattern
+(Table~\ref{tab:paradox}): low-citation sites have \emph{higher} pillar scores
+on average than high-citation sites.
+
+\begin{table}[ht]
+  \centering
+  \caption{The Citation Paradox: pillar scores by citation tier.}
+  \label{tab:paradox}
+  \begin{tabular}{@{}lccc@{}}
+    \toprule
+    \textbf{Citation Tier} & \textbf{Avg Authority} & \textbf{Avg Coverage}
+      & \textbf{Avg Technical} \\
+    \midrule
+    HIGH ($>$60\% cited) & 54 & 64 & 78 \\
+    LOW ($<$30\% cited)  & 60 & 95 & 82 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+SaaS marketing sites (Datadog, Intercom, HubSpot) tend to have excellent
+technical infrastructure but produce \emph{generic} content covered by many
+competitors. Documentation sites (docs.python.org, MDN) often have worse
+technical scores but produce \emph{canonical} content that AI must cite because
+no equivalent source exists.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/figure_1_score_distribution.pdf}
+  \caption{Distribution of \findable{} scores across the calibration corpus,
+    showing the separation between cited and uncited domains.}
+  \label{fig:score-distribution}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/figure_2_citation_by_site_type.pdf}
+  \caption{Citation rates by site type. Documentation and reference sites
+    achieve near-universal citation, while SaaS marketing and news sites exhibit
+    the widest variance.}
+  \label{fig:citation-by-type}
+\end{figure}
+
+\subsection{Content Type as Dominant Predictor}\label{sec:content-type}
+
+Across the calibration corpus, content type is the single strongest predictor of
+citation behavior (Table~\ref{tab:content-type-citation}).
+
+\begin{table}[ht]
+  \centering
+  \caption{Citation rates by content type.}
+  \label{tab:content-type-citation}
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{Content Type} & \textbf{Citation Rate} & \textbf{$N$} \\
+    \midrule
+    Documentation    & 100\%     & 16 \\
+    Reference        & 90\%+    & 15 \\
+    Developer Tools  & 84\%     & 51 \\
+    SaaS Marketing   & 0--68\%  & ${\sim}200$ \\
+    News Media       & 0--20\%  & ${\sim}60$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/figure_3_pillar_distributions.pdf}
+  \caption{Distribution of individual pillar scores across citation tiers,
+    illustrating the paradox that low-citation sites score higher on multiple
+    pillars.}
+  \label{fig:pillar-distributions}
+\end{figure}
+
+% ==============================================================================
+% 5b. THE TWO-LAYER MODEL
+% ==============================================================================
+\subsection{Site Type Classification}\label{sec:site-types}
+
+To resolve the Citation Paradox, we classify websites into 9 content types with
+empirically-derived citation baselines (Table~\ref{tab:site-types}).
+
+\begin{table}[ht]
+  \centering
+  \caption{Site type classification with empirical citation baselines.}
+  \label{tab:site-types}
+  \begin{tabular}{@{}lcll@{}}
+    \toprule
+    \textbf{Site Type} & \textbf{Baseline} & \textbf{Range} & \textbf{Examples} \\
+    \midrule
+    Documentation   & 95\%  & 85--100\% & docs.python.org, tailwindcss.com \\
+    Reference       & 85\%  & 75--95\%  & Wikipedia, MDN, W3C, IETF \\
+    Developer Tools & 80\%  & 65--95\%  & GitHub, GitLab, Vercel, NPM \\
+    Blog            & 50\%  & 20--80\%  & Variable by content uniqueness \\
+    SaaS Marketing  & 45\%  & 0--70\%   & HubSpot, Datadog, Intercom \\
+    Ecommerce       & 35\%  & 15--55\%  & Amazon, Etsy, Shopify \\
+    UGC Platform    & 20\%  & 5--35\%   & Reddit, Quora, Yelp \\
+    News Media      & 10\%  & 0--25\%   & BBC, CNN, WSJ, Reuters \\
+    Mixed           & 50\%  & 20--80\%  & No dominant content type \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Detection is deterministic (no ML required): domain pattern matching
+(\texttt{docs.*}, \texttt{*.readthedocs.io} $\to$ Documentation), page type
+distribution ($>$60\% documentation pages $\to$ Documentation), URL pattern
+analysis, and predominant Schema.org markup type.
+
+\subsection{Source Primacy}\label{sec:source-primacy}
+
+Source primacy measures whether a website is \emph{the} canonical source for its
+content:
+
+\begin{table}[ht]
+  \centering
+  \caption{Source primacy levels with expected citation rates.}
+  \label{tab:source-primacy}
+  \begin{tabular}{@{}lccc@{}}
+    \toprule
+    \textbf{Level} & \textbf{Primacy Score} & \textbf{Expected Citation}
+      & \textbf{Example} \\
+    \midrule
+    \textsc{Primary}       & $\geq 0.65$ & ${\sim}90\%$ & docs.python.org for Python \\
+    \textsc{Authoritative}  & 0.40--0.65  & ${\sim}65\%$ & MDN for web standards \\
+    \textsc{Derivative}     & $< 0.40$    & ${\sim}25\%$ & Generic ``best tools'' blog \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Five scoring signals (each producing a value in $[-1.0, +1.0]$) are combined:
+site type signal, content type distribution, URL pattern analysis, domain
+alignment, and self-reference ratio. The raw score is normalized:
+\begin{equation}\label{eq:primacy}
+  P = \text{clamp}\!\left(\frac{\sum_{i=1}^{5} s_i + 5.0}{10.0},\; 0,\; 1\right)
+\end{equation}
+where $s_i \in [-1.0, +1.0]$ for each of the five signals.
+
+\subsection{The Two-Layer Model}\label{sec:two-layer}
+
+The complete framework separates two distinct questions
+(Table~\ref{tab:two-layer}):
+
+\begin{table}[ht]
+  \centering
+  \caption{The two-layer model.}
+  \label{tab:two-layer}
+  \begin{tabular}{@{}lp{3.5cm}p{3.5cm}p{3.5cm}@{}}
+    \toprule
+    \textbf{Layer} & \textbf{Question} & \textbf{Measures} & \textbf{Methodology} \\
+    \midrule
+    \findable{} & ``Can AI find and use your content?''
+      & 7 structural pillars (what the website controls)
+      & Deterministic simulation \\
+    \addlinespace
+    Citation Context & ``Will AI actually cite your URL?''
+      & Site type, source primacy, question-category alignment
+      & Empirical baselines + classification \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+This separation prevents conflating optimization advice. A SaaS marketing site
+with a \findable{} of 80/100 is technically excellent --- but its Citation
+Context may predict only 45\% citation baseline. The correct advice is not
+``improve your technical scores'' (already high) but ``create
+documentation-style content that AI must cite as canonical.''
+
+% ==============================================================================
+% 6. OBSERVATION SYSTEM
+% ==============================================================================
+\section{Observation System}\label{sec:observation}
+
+\subsection{Reality Snapshots}\label{sec:snapshots}
+
+The observation pathway queries live AI models with the same test questions used
+in simulation, then parses responses for mentions and citations using
+regex-based detection.
+
+Citation depth is measured on a 0--5 scale (Table~\ref{tab:citation-depth}).
+Depth~$\geq 3$ constitutes the \emph{citable threshold} --- the point at which
+the AI response directs users to the website.
+
+\begin{table}[ht]
+  \centering
+  \caption{Citation depth scale.}
+  \label{tab:citation-depth}
+  \begin{tabular}{@{}clp{7cm}@{}}
+    \toprule
+    \textbf{Depth} & \textbf{Meaning} & \textbf{Example} \\
+    \midrule
+    0 & Not mentioned       & No reference to brand or content \\
+    1 & Brand mentioned     & ``Datadog is a monitoring platform'' \\
+    2 & Listed as option    & ``Options include Datadog, New Relic, and Grafana'' \\
+    3 & Cited with URL      & ``See Datadog's docs at datadog.com/docs'' \\
+    4 & Recommended         & ``We recommend using Datadog for this use case'' \\
+    5 & Authoritative source & ``According to Datadog's official documentation\ldots'' \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Divergence Analysis}\label{sec:divergence}
+
+Comparing simulated predictions against observed reality produces three
+divergence metrics: prediction accuracy (percentage of questions where
+simulation correctly predicted citation), optimism bias (predicted citation but
+none observed), and pessimism bias (predicted no citation but citation observed).
+Systematic divergence patterns reveal calibration drift as AI models update.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/figure_4_confusion_matrix.pdf}
+  \caption{Confusion matrix for simulation predictions vs.\ observed citations
+    on the holdout set.}
+  \label{fig:confusion-matrix}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/figure_5_citation_by_category.pdf}
+  \caption{Citation rates by question category. Differentiation and identity
+    questions show the highest citation rates, while contact and trust questions
+    are rarely citation-generating.}
+  \label{fig:citation-by-category}
+\end{figure}
+
+% ==============================================================================
+% 7. FIX GENERATION
+% ==============================================================================
+\section{Fix Generation}\label{sec:fixes}
+
+Actionable remediation is generated in three tiers:
+
+\paragraph{Tier C --- Pattern matching (instant).}
+Pre-computed fix templates triggered by specific pillar scores or signal
+patterns. Example: Schema score $< 30$ $\to$ ``Add FAQ schema to your top 5
+pages.'' Each fix includes an estimated point impact.
+
+\paragraph{Tier B --- Synthetic patch (seconds).}
+Generates synthetic content addressing a specific deficiency, then re-scores
+only the affected questions to estimate impact without full re-audit cost.
+
+\paragraph{Tier A --- Full re-score (minutes).}
+Post-implementation verification via complete audit pipeline re-run.
+
+Fixes are organized into an \textbf{Action Center} with three views: quick wins
+(low effort, high impact), high priority (critical blocking issues), and path to
+next milestone (minimum fix set to reach the next findability level). Each fix
+is tagged with a standardized reason code (18 codes across 5 categories:
+content gaps, structure issues, quality issues, trust gaps, technical problems).
+
+% ==============================================================================
+% 8. DISCUSSION
+% ==============================================================================
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Why 50\% Holdout Accuracy Is Honest}\label{sec:honest-accuracy}
+
+The 30-point gap between training (80.8\%) and holdout (50.7\%) accuracy is not
+a failure --- it is a meaningful finding. It demonstrates that
+\textbf{website-side structural features alone are insufficient to fully predict
+AI citation behavior}. Citation depends on factors outside the website's
+control:
+
+\begin{enumerate}
+  \item \textbf{AI model training data}: Whether the model has seen the
+    website's content during pre-training.
+  \item \textbf{Retrieval index composition}: Which websites are in the AI
+    engine's retrieval index at query time.
+  \item \textbf{Query specificity}: Broad queries cite fewer sources than
+    specific technical questions.
+  \item \textbf{Competitive landscape}: Whether alternative sources exist for
+    the same information.
+  \item \textbf{Model behavior drift}: AI models update their citation patterns
+    over time.
+\end{enumerate}
+
+The \findable{} measures what the website \emph{can control} --- structural
+readiness for retrieval and citation. The Citation Context layer provides
+probabilistic prediction of what will \emph{actually happen} given factors
+outside the website's control.
+
+\subsection{Limitations}\label{sec:limitations}
+
+\begin{enumerate}
+  \item \textbf{Corpus size}: 35+ domains is sufficient for initial calibration
+    but insufficient for robust per-site-type weight profiles. We estimate 100+
+    diverse domains are needed.
+  \item \textbf{Model coverage}: Observations currently use a single LLM
+    provider per audit. Multi-model observation would improve robustness.
+  \item \textbf{Temporal stability}: AI models update frequently. Citation
+    patterns observed today may not hold in 3 months. Continuous recalibration
+    is required.
+  \item \textbf{English-only}: All universal questions, chunking heuristics, and
+    citation detection patterns are English-language.
+  \item \textbf{Simulation fidelity}: Our retrieval simulation uses the same
+    class of techniques as production RAG systems but cannot replicate the exact
+    retrieval behavior of any specific AI answer engine.
+\end{enumerate}
+
+\subsection{Ethical Considerations}\label{sec:ethics}
+
+Publishing this methodology creates a dual-use concern: it enables both
+legitimate optimization (making useful content more findable) and potential
+gaming (optimizing low-quality content to appear findable). We mitigate this
+through: pillar design that rewards genuinely useful structural properties,
+authority and entity recognition pillars that are difficult to artificially
+inflate, and continuous recalibration against observed reality that detects and
+corrects for gaming patterns.
+
+% ==============================================================================
+% 9. CONCLUSION
+% ==============================================================================
+\section{Conclusion}\label{sec:conclusion}
+
+We have presented the \findable{}, a transparent methodology for measuring AI
+sourceability. The key contributions are:
+
+\begin{enumerate}
+  \item \textbf{The mention/citation distinction}: A fundamental measurement
+    correction that transforms AI visibility tracking from a vanity metric
+    (99.8\% positive) to an actionable signal (68\% positive).
+  \item \textbf{The two-layer model}: Separating sourceability (what you
+    control) from citation likelihood (what depends on context) provides honest,
+    actionable guidance rather than false precision.
+  \item \textbf{The Citation Paradox resolution}: Site type classification and
+    source primacy explain why technically excellent sites can receive zero
+    citations --- and what to do about it.
+  \item \textbf{Transparent methodology}: Every algorithm, threshold, weight,
+    and formula is disclosed.
+\end{enumerate}
+
+The 50.7\% holdout accuracy represents both the current state and the honest
+frontier of website-side citation prediction. Improving beyond this requires
+features beyond structural analysis --- including AI model behavior modeling,
+real-time retrieval index monitoring, and competitive content analysis --- which
+we propose as future work.
+% TODO: Update with final calibration numbers after recalibration
+
+% ==============================================================================
+% REFERENCES
+% ==============================================================================
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+% ==============================================================================
+% APPENDICES
+% ==============================================================================
+\appendix
+
+\section{Default Pillar Weights}\label{app:weights}
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{@{}lr@{}}
+    \toprule
+    \textbf{Pillar} & \textbf{Weight} \\
+    \midrule
+    technical           & 12\% \\
+    structure           & 18\% \\
+    schema              & 13\% \\
+    authority           & 12\% \\
+    entity\_recognition & 13\% \\
+    retrieval           & 22\% \\
+    coverage            & 10\% \\
+    \midrule
+    \textbf{Total}      & \textbf{100\%} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Findability Threshold}\label{app:threshold}
+
+Default threshold: 30. Lowered from initial 50 based on calibration results
+showing threshold~$= 30$ maximizes training accuracy without excessive
+over-prediction on the holdout set.
+
+\section{Reason Code Taxonomy}\label{app:reason-codes}
+
+\begin{table}[ht]
+  \centering
+  \small
+  \caption{Complete reason code taxonomy for fix generation.}
+  \label{tab:reason-codes}
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    \textbf{Category} & \textbf{Code} & \textbf{Severity} & \textbf{Impact} \\
+    \midrule
+    Content   & MISSING\_DEFINITION    & Critical & 0.30 \\
+    Content   & MISSING\_PRICING       & High     & 0.25 \\
+    Content   & MISSING\_FEATURES      & High     & 0.20 \\
+    Content   & MISSING\_CONTACT       & High     & 0.20 \\
+    Content   & MISSING\_LOCATION      & Medium   & 0.15 \\
+    Content   & MISSING\_SOCIAL\_PROOF & Medium   & 0.15 \\
+    \addlinespace
+    Structure & BURIED\_ANSWER         & Medium   & 0.15 \\
+    Structure & FRAGMENTED\_INFO       & Medium   & 0.10 \\
+    Structure & NO\_DEDICATED\_PAGE    & Medium   & 0.15 \\
+    Structure & POOR\_HEADINGS         & Low      & 0.10 \\
+    \addlinespace
+    Quality   & NOT\_CITABLE           & Medium   & 0.10 \\
+    Quality   & VAGUE\_LANGUAGE        & Medium   & 0.10 \\
+    Quality   & OUTDATED\_INFO         & High     & 0.20 \\
+    Quality   & INCONSISTENT           & Critical & 0.25 \\
+    \addlinespace
+    Trust     & TRUST\_GAP             & Medium   & 0.15 \\
+    Trust     & NO\_AUTHORITY          & Medium   & 0.10 \\
+    Trust     & UNVERIFIED\_CLAIMS     & Medium   & 0.10 \\
+    \addlinespace
+    Technical & RENDER\_REQUIRED       & High     & 0.20 \\
+    Technical & BLOCKED\_BY\_ROBOTS    & Critical & 0.30 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\end{document}

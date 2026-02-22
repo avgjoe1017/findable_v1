@@ -487,11 +487,11 @@ def generate_recommendations(
     # Threshold recommendations
     if metrics.false_positives > metrics.false_negatives * 2:
         recommendations.append(
-            "Consider raising the findable score threshold to reduce false positives"
+            "Consider raising the Findable Score threshold to reduce false positives"
         )
     elif metrics.false_negatives > metrics.false_positives * 2:
         recommendations.append(
-            "Consider lowering the findable score threshold to reduce false negatives"
+            "Consider lowering the Findable Score threshold to reduce false negatives"
         )
 
     # Pillar weight recommendations

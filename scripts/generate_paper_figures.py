@@ -133,7 +133,7 @@ class SampleRecord:
     findable_score: float = 0.0  # computed from pillar_scores + weights
 
     def compute_findable_score(self, weights: dict[str, float] | None = None) -> float:
-        """Compute the findable score from pillar_scores using given weights."""
+        """Compute the Findable Score from pillar_scores using given weights."""
         w = weights or DEFAULT_WEIGHTS
         score = 0.0
         for pillar, weight in w.items():
