@@ -15,6 +15,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Set environment before imports (use CI-compatible credentials when not overridden)
@@ -34,23 +35,108 @@ def _make_session_maker() -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
+async def _create_test_user(db: AsyncSession, user_id: uuid.UUID) -> None:
+    """Create a test user if it doesn't exist (needed for FK chain)."""
+    from sqlalchemy import select
+
+    from api.models.user import User
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    if not result.scalar_one_or_none():
+        user = User(
+            id=user_id,
+            email=f"test-{user_id.hex[:8]}@test.local",
+            hashed_password="not_a_real_password",
+            name="Test User",
+        )
+        db.add(user)
+        await db.flush()
+
+
+async def _create_test_site(db: AsyncSession, site_id: uuid.UUID, user_id: uuid.UUID) -> None:
+    """Create a test site if it doesn't exist (needed for FK chain)."""
+    from sqlalchemy import select
+
+    from api.models.site import Site
+
+    result = await db.execute(select(Site).where(Site.id == site_id))
+    if not result.scalar_one_or_none():
+        site = Site(
+            id=site_id,
+            user_id=user_id,
+            domain="test-integration.example.com",
+            name="Test Integration Site",
+            business_model="unknown",
+        )
+        db.add(site)
+        await db.flush()
+
+
+async def _create_test_run(db: AsyncSession, run_id: uuid.UUID, site_id: uuid.UUID) -> None:
+    """Create a test run if it doesn't exist (needed for FK chain)."""
+    from sqlalchemy import select
+
+    from api.models.run import Run
+
+    result = await db.execute(select(Run).where(Run.id == run_id))
+    if not result.scalar_one_or_none():
+        run = Run(
+            id=run_id,
+            site_id=site_id,
+            run_type="starter_audit",
+            status="complete",
+        )
+        db.add(run)
+        await db.flush()
+
+
+async def _setup_fk_chain(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    site_id: uuid.UUID,
+    run_id: uuid.UUID,
+) -> None:
+    """Create the full User -> Site -> Run FK chain for CalibrationSample tests."""
+    await _create_test_user(db, user_id)
+    await _create_test_site(db, site_id, user_id)
+    await _create_test_run(db, run_id, site_id)
+    await db.flush()
+
+
+async def _cleanup_fk_chain(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    site_id: uuid.UUID,
+    run_id: uuid.UUID,
+) -> None:
+    """Clean up FK chain in reverse order (Run -> Site -> User)."""
+    from api.models.run import Run
+    from api.models.site import Site
+    from api.models.user import User
+
+    await db.execute(delete(Run).where(Run.id == run_id))
+    await db.execute(delete(Site).where(Site.id == site_id))
+    await db.execute(delete(User).where(User.id == user_id))
+    await db.commit()
+
+
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_calibration_sample_creation():
     """Test creating and querying calibration samples."""
-    from sqlalchemy import delete, select
+    from sqlalchemy import select
 
     from api.models.calibration import CalibrationSample, OutcomeMatch
 
     session_maker = _make_session_maker()
     sample_id = uuid.uuid4()
+    user_id = uuid.uuid4()
     site_id = uuid.uuid4()
     run_id = uuid.uuid4()
 
     async with session_maker() as db:
-        # Clean up any existing test samples
-        await db.execute(delete(CalibrationSample).where(CalibrationSample.id == sample_id))
-        await db.commit()
+        # Set up FK chain: User -> Site -> Run
+        await _setup_fk_chain(db, user_id, site_id, run_id)
 
         # Create a calibration sample
         sample = CalibrationSample(
@@ -97,16 +183,17 @@ async def test_calibration_sample_creation():
         assert fetched.pillar_scores["retrieval"] == 90.0
         assert fetched.pillar_scores["entity_recognition"] == 65.0
 
-        # Clean up
+        # Clean up (samples first due to FK, then chain)
         await db.execute(delete(CalibrationSample).where(CalibrationSample.id == sample_id))
         await db.commit()
+        await _cleanup_fk_chain(db, user_id, site_id, run_id)
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_calibration_config_lifecycle():
     """Test creating, validating, and activating calibration configs."""
-    from sqlalchemy import delete, select, update
+    from sqlalchemy import select, update
 
     from api.models.calibration import CalibrationConfig
 
@@ -175,7 +262,7 @@ async def test_calibration_config_lifecycle():
 @pytest.mark.integration
 async def test_calibration_experiment_flow():
     """Test the A/B experiment lifecycle."""
-    from sqlalchemy import delete, select
+    from sqlalchemy import select
 
     from api.models.calibration import (
         CalibrationConfig,
@@ -267,7 +354,7 @@ async def test_calibration_experiment_flow():
 @pytest.mark.integration
 async def test_calibration_drift_alert_creation():
     """Test creating and managing drift alerts."""
-    from sqlalchemy import delete, select
+    from sqlalchemy import select
 
     from api.models.calibration import CalibrationDriftAlert, DriftAlertStatus
 
@@ -313,20 +400,19 @@ async def test_calibration_drift_alert_creation():
 @pytest.mark.integration
 async def test_sample_pillar_score_aggregation():
     """Test that pillar scores can be aggregated across samples."""
-    from sqlalchemy import delete, select
+    from sqlalchemy import select
 
     from api.models.calibration import CalibrationSample, OutcomeMatch
 
     session_maker = _make_session_maker()
+    user_id = uuid.uuid4()
     site_id = uuid.uuid4()
     run_id = uuid.uuid4()
     sample_ids = [uuid.uuid4() for _ in range(5)]
 
     async with session_maker() as db:
-        # Clean up
-        for sid in sample_ids:
-            await db.execute(delete(CalibrationSample).where(CalibrationSample.id == sid))
-        await db.commit()
+        # Set up FK chain: User -> Site -> Run
+        await _setup_fk_chain(db, user_id, site_id, run_id)
 
         # Create multiple samples with varying scores
         pillar_scores_list = [
@@ -419,30 +505,30 @@ async def test_sample_pillar_score_aggregation():
         avg_entity = sum(s.pillar_scores["entity_recognition"] for s in samples) / len(samples)
         assert avg_entity == 40.0  # (40 + 45 + 50 + 35 + 30) / 5
 
-        # Clean up
+        # Clean up (samples first due to FK, then chain)
         for sid in sample_ids:
             await db.execute(delete(CalibrationSample).where(CalibrationSample.id == sid))
         await db.commit()
+        await _cleanup_fk_chain(db, user_id, site_id, run_id)
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_outcome_match_distribution():
     """Test querying samples by outcome match type."""
-    from sqlalchemy import delete, func, select
+    from sqlalchemy import func, select
 
     from api.models.calibration import CalibrationSample, OutcomeMatch
 
     session_maker = _make_session_maker()
+    user_id = uuid.uuid4()
     site_id = uuid.uuid4()
     run_id = uuid.uuid4()
     sample_ids = [uuid.uuid4() for _ in range(6)]
 
     async with session_maker() as db:
-        # Clean up
-        for sid in sample_ids:
-            await db.execute(delete(CalibrationSample).where(CalibrationSample.id == sid))
-        await db.commit()
+        # Set up FK chain: User -> Site -> Run
+        await _setup_fk_chain(db, user_id, site_id, run_id)
 
         # Create samples with different outcomes
         outcomes = [
@@ -508,7 +594,8 @@ async def test_outcome_match_distribution():
         accurate_count = accurate_result.scalar()
         assert accurate_count == 3
 
-        # Clean up
+        # Clean up (samples first due to FK, then chain)
         for sid in sample_ids:
             await db.execute(delete(CalibrationSample).where(CalibrationSample.id == sid))
         await db.commit()
+        await _cleanup_fk_chain(db, user_id, site_id, run_id)
