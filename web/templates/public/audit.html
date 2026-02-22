@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Free Findable Score - Check Your AI Visibility{% endblock %}
+
+{% block head %}
+<meta property="og:title" content="Findable Score - Is AI Citing Your Website?">
+<meta property="og:description" content="Get your free Findable Score. Find out if AI answer engines can find, use, and cite your website.">
+<meta property="og:type" content="website">
+<style>
+    .score-glow {
+        box-shadow: 0 0 60px rgba(20, 184, 166, 0.15);
+    }
+    .input-glow:focus {
+        box-shadow: 0 0 20px rgba(20, 184, 166, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col">
+    <!-- Hero -->
+    <div class="flex-1 flex items-center justify-center px-4 py-16">
+        <div class="max-w-2xl w-full text-center">
+            <!-- Logo -->
+            <div class="mb-8">
+                <span class="text-3xl font-bold text-white">Findable</span>
+                <span class="text-3xl font-light text-teal-400">Score</span>
+            </div>
+
+            <!-- Headline -->
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
+                Can AI find and cite<br>your website?
+            </h1>
+            <p class="text-lg text-slate-400 mb-10 max-w-lg mx-auto">
+                Get your free Findable Score. We crawl your site, simulate AI retrieval,
+                and tell you exactly what to fix.
+            </p>
+
+            <!-- URL Input Form -->
+            <form action="/public/audit/form" method="POST" class="mb-8">
+                <div class="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+                    <input
+                        type="text"
+                        name="url"
+                        placeholder="Enter your website URL..."
+                        required
+                        class="input-glow flex-1 px-5 py-4 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-lg focus:outline-none focus:border-teal-500 transition-all"
+                    >
+                    <button
+                        type="submit"
+                        class="px-8 py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-lg transition-colors whitespace-nowrap"
+                    >
+                        Get Your Score
+                    </button>
+                </div>
+                <p class="text-sm text-slate-500 mt-3">
+                    Free. No signup required. Takes 2-5 minutes.
+                </p>
+            </form>
+
+            <!-- What You Get -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 text-left">
+                <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                    <div class="text-2xl mb-3">&#x1f50d;</div>
+                    <h3 class="text-white font-semibold mb-2">Findable Score</h3>
+                    <p class="text-slate-400 text-sm">A single 0-100 score measuring whether AI can retrieve and use your content as a source.</p>
+                </div>
+                <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                    <div class="text-2xl mb-3">&#x1f4ca;</div>
+                    <h3 class="text-white font-semibold mb-2">7-Pillar Breakdown</h3>
+                    <p class="text-slate-400 text-sm">Technical readiness, structure, schema, authority, entity recognition, retrieval, and coverage scores.</p>
+                </div>
+                <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                    <div class="text-2xl mb-3">&#x1f527;</div>
+                    <h3 class="text-white font-semibold mb-2">Top 3 Fixes</h3>
+                    <p class="text-slate-400 text-sm">Actionable recommendations ranked by impact. Know exactly what to change first.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-6 text-slate-600 text-sm border-t border-slate-900">
+        <a href="https://getfindable.online" class="hover:text-teal-400 transition-colors">Findable Score Analyzer</a>
+        &middot; Measuring AI sourceability
+    </footer>
+</div>
+{% endblock %}

@@ -131,6 +131,7 @@ def analyze_source_primacy(
     page_urls: list[str],
     page_type_results: list[PageTypeResult] | None = None,
     brand_name: str | None = None,
+    pages_content: list[str] | None = None,
 ) -> SourcePrimacyResult:
     """
     Analyze whether a site is a primary, authoritative, or derivative source.
@@ -141,6 +142,7 @@ def analyze_source_primacy(
         page_urls: List of crawled page URLs
         page_type_results: Optional pre-computed page type results
         brand_name: Optional brand name for entity-topic alignment
+        pages_content: Optional extracted text content per page (for content uniqueness)
 
     Returns:
         SourcePrimacyResult with primacy level, score, and signals
@@ -174,7 +176,33 @@ def analyze_source_primacy(
     signals.append(self_ref_signal)
     raw_score += self_ref_signal.score
 
-    # Normalize to 0-1 range (max possible ~5.0 from 5 signals each +-1.0)
+    # 6. Content uniqueness (proprietary data, first-party markers, generic phrasing)
+    if pages_content:
+        try:
+            from worker.extraction.content_uniqueness import analyze_content_uniqueness
+
+            uniqueness_result = analyze_content_uniqueness(
+                pages_content=pages_content,
+                page_urls=page_urls,
+                domain=domain,
+            )
+            # Convert 0-100 score to -1 to +1 range for consistency with other signals
+            # 50 = neutral, 100 = strongly primary, 0 = strongly derivative
+            uniqueness_normalized = (uniqueness_result.score - 50.0) / 50.0
+            uniqueness_signal = PrimacySignal(
+                name="content_uniqueness",
+                score=max(-1.0, min(1.0, uniqueness_normalized)),
+                reason=f"Content uniqueness score: {uniqueness_result.score:.0f}/100 "
+                f"(proprietary={uniqueness_result.proprietary_data_score:.0f}, "
+                f"first_party={uniqueness_result.first_party_score:.0f}, "
+                f"non_generic={uniqueness_result.generic_phrasing_score:.0f})",
+            )
+            signals.append(uniqueness_signal)
+            raw_score += uniqueness_signal.score
+        except Exception as e:
+            logger.warning("content_uniqueness_signal_failed", error=str(e))
+
+    # Normalize to 0-1 range (max possible from N signals each +-1.0)
     max_possible = len(signals)
     primacy_score = max(0.0, min(1.0, (raw_score + max_possible) / (2 * max_possible)))
 

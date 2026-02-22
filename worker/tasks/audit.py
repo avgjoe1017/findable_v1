@@ -887,6 +887,13 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
                         try:
                             from worker.extraction.source_primacy import analyze_source_primacy
 
+                            # Collect page content for content uniqueness analysis
+                            pages_content_list = [
+                                p.main_content
+                                for p in extraction_result.pages
+                                if hasattr(p, "main_content") and p.main_content
+                            ]
+
                             primacy_result = analyze_source_primacy(
                                 domain=domain,
                                 site_type=(
@@ -896,6 +903,7 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
                                 ),
                                 page_urls=page_urls if page_urls else [],
                                 brand_name=company_name,
+                                pages_content=pages_content_list,
                             )
                             # Store as 0-100 to match pillar score scale
                             pillar_scores_snapshot["source_primacy"] = round(
@@ -904,6 +912,71 @@ async def run_audit(run_id: uuid.UUID, site_id: uuid.UUID) -> dict:
                         except Exception as e:
                             logger.warning(
                                 "source_primacy_for_calibration_failed",
+                                error=str(e),
+                            )
+
+                        # Add content uniqueness score directly for optimizer
+                        try:
+                            from worker.extraction.content_uniqueness import (
+                                analyze_content_uniqueness,
+                            )
+
+                            pages_content_list = [
+                                p.main_content
+                                for p in extraction_result.pages
+                                if hasattr(p, "main_content") and p.main_content
+                            ]
+                            if pages_content_list:
+                                uniqueness = analyze_content_uniqueness(
+                                    pages_content=pages_content_list,
+                                    page_urls=page_urls if page_urls else [],
+                                    domain=domain,
+                                )
+                                pillar_scores_snapshot["content_uniqueness"] = round(
+                                    uniqueness.score, 1
+                                )
+                        except Exception as e:
+                            logger.warning(
+                                "content_uniqueness_for_calibration_failed",
+                                error=str(e),
+                            )
+
+                        # Add competitive density score for optimizer
+                        try:
+                            from worker.scoring.competitive_density import (
+                                analyze_competitive_density,
+                            )
+
+                            question_categories = [
+                                q.category if hasattr(q, "category") else "unknown"
+                                for q in questions
+                            ]
+                            # Determine if each question is about the site's own brand
+                            is_own_brand = [
+                                (
+                                    company_name.lower() in q.text.lower()
+                                    or domain.split(".")[0].lower() in q.text.lower()
+                                )
+                                for q in questions
+                            ]
+
+                            density_result = analyze_competitive_density(
+                                site_type=(
+                                    site_type_result.site_type
+                                    if site_type_result
+                                    else SiteType.MIXED
+                                ),
+                                question_categories=question_categories,
+                                is_own_brand_query=is_own_brand,
+                                domain=domain,
+                            )
+                            # Store inverse (high = less competition = better)
+                            pillar_scores_snapshot["competitive_density"] = round(
+                                density_result.inverse_score, 1
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                "competitive_density_for_calibration_failed",
                                 error=str(e),
                             )
 

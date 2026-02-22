@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Analyzing {{ domain }} - Findable Score{% endblock %}
+
+{% block head %}
+<meta property="og:title" content="Analyzing {{ domain }} - Findable Score">
+<meta property="og:description" content="Running Findable Score analysis on {{ domain }}...">
+<style>
+    @keyframes pulse-ring {
+        0% { transform: scale(0.95); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.7; }
+        100% { transform: scale(0.95); opacity: 1; }
+    }
+    .pulse-ring { animation: pulse-ring 2s ease-in-out infinite; }
+
+    @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .spin-slow { animation: spin-slow 3s linear infinite; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4" x-data="progressTracker()">
+    <div class="max-w-lg w-full text-center">
+        <!-- Animated Score Ring -->
+        <div class="relative w-40 h-40 mx-auto mb-8">
+            <svg class="w-full h-full spin-slow" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#1e293b" stroke-width="8"/>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#14b8a6" stroke-width="8"
+                    stroke-dasharray="40 280" stroke-linecap="round" class="pulse-ring"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-teal-400 text-sm font-medium" x-text="statusLabel">Queued</span>
+            </div>
+        </div>
+
+        <h1 class="text-2xl font-bold text-white mb-2">Analyzing {{ domain }}</h1>
+        <p class="text-slate-400 mb-8" x-text="stepDescription">Starting audit...</p>
+
+        <!-- Progress Steps -->
+        <div class="space-y-3 text-left max-w-sm mx-auto mb-8">
+            <template x-for="step in steps" :key="step.id">
+                <div class="flex items-center gap-3" :class="step.active ? 'text-white' : (step.done ? 'text-teal-400' : 'text-slate-600')">
+                    <div class="w-5 h-5 flex-shrink-0">
+                        <template x-if="step.done">
+                            <svg class="w-5 h-5 text-teal-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                            </svg>
+                        </template>
+                        <template x-if="step.active && !step.done">
+                            <div class="w-5 h-5 rounded-full border-2 border-teal-400 border-t-transparent animate-spin"></div>
+                        </template>
+                        <template x-if="!step.active && !step.done">
+                            <div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
+                        </template>
+                    </div>
+                    <span class="text-sm" x-text="step.label"></span>
+                </div>
+            </template>
+        </div>
+
+        <p class="text-sm text-slate-500">
+            This usually takes 2-5 minutes. You can leave this page open.
+        </p>
+    </div>
+</div>
+
+<script>
+function progressTracker() {
+    const STEP_ORDER = [
+        'queued', 'technical_check', 'crawling', 'extracting',
+        'structure_analysis', 'schema_analysis', 'authority_analysis',
+        'entity_recognition', 'chunking', 'embedding',
+        'generating_questions', 'simulating', 'observing',
+        'scoring', 'generating_fixes', 'assembling', 'complete'
+    ];
+
+    const STEP_LABELS = {
+        'queued': 'Queued',
+        'technical_check': 'Technical checks',
+        'crawling': 'Crawling pages',
+        'extracting': 'Extracting content',
+        'structure_analysis': 'Analyzing structure',
+        'schema_analysis': 'Checking schema',
+        'authority_analysis': 'Evaluating authority',
+        'entity_recognition': 'Entity recognition',
+        'chunking': 'Processing content',
+        'embedding': 'Building index',
+        'generating_questions': 'Generating questions',
+        'simulating': 'Simulating AI retrieval',
+        'observing': 'Querying AI models',
+        'scoring': 'Calculating score',
+        'generating_fixes': 'Generating fixes',
+        'assembling': 'Assembling report',
+        'complete': 'Complete'
+    };
+
+    return {
+        statusLabel: '{{ status }}',
+        stepDescription: 'Starting audit...',
+        steps: [
+            { id: 'crawling', label: 'Crawling your site', done: false, active: false },
+            { id: 'extracting', label: 'Extracting content', done: false, active: false },
+            { id: 'analysis', label: 'Analyzing 7 pillars', done: false, active: false },
+            { id: 'simulating', label: 'Simulating AI retrieval', done: false, active: false },
+            { id: 'observing', label: 'Querying real AI models', done: false, active: false },
+            { id: 'scoring', label: 'Calculating Findable Score', done: false, active: false },
+        ],
+
+        init() {
+            this.connectSSE();
+        },
+
+        connectSSE() {
+            const evtSource = new EventSource('/public/audit/{{ shareable_id }}/status');
+
+            evtSource.addEventListener('progress', (e) => {
+                const data = JSON.parse(e.data);
+                this.updateProgress(data.status, data.progress);
+            });
+
+            evtSource.addEventListener('complete', (e) => {
+                const data = JSON.parse(e.data);
+                evtSource.close();
+                // Redirect to score page
+                window.location.reload();
+            });
+
+            evtSource.addEventListener('error', (e) => {
+                if (e.data) {
+                    const data = JSON.parse(e.data);
+                    this.statusLabel = 'Error';
+                    this.stepDescription = data.error || 'Something went wrong';
+                }
+                evtSource.close();
+            });
+        },
+
+        updateProgress(status, progress) {
+            this.statusLabel = STEP_LABELS[status] || status;
+            this.stepDescription = STEP_LABELS[status] || 'Processing...';
+
+            // Update step states
+            const stepIndex = STEP_ORDER.indexOf(status);
+
+            // Crawling
+            if (stepIndex >= STEP_ORDER.indexOf('crawling')) this.steps[0].done = true;
+            if (status === 'crawling') { this.steps[0].active = true; this.steps[0].done = false; }
+
+            // Extracting
+            if (stepIndex >= STEP_ORDER.indexOf('extracting')) this.steps[1].done = true;
+            if (status === 'extracting') { this.steps[1].active = true; this.steps[1].done = false; }
+
+            // Analysis (structure + schema + authority + entity)
+            const analysisSteps = ['structure_analysis', 'schema_analysis', 'authority_analysis', 'entity_recognition'];
+            if (analysisSteps.includes(status)) { this.steps[2].active = true; this.steps[2].done = false; }
+            if (stepIndex > STEP_ORDER.indexOf('entity_recognition')) this.steps[2].done = true;
+
+            // Simulating
+            if (stepIndex >= STEP_ORDER.indexOf('simulating')) this.steps[3].done = true;
+            if (status === 'simulating') { this.steps[3].active = true; this.steps[3].done = false; }
+
+            // Observing
+            if (stepIndex >= STEP_ORDER.indexOf('observing')) this.steps[4].done = true;
+            if (status === 'observing') { this.steps[4].active = true; this.steps[4].done = false; }
+
+            // Scoring + fixes
+            if (stepIndex >= STEP_ORDER.indexOf('scoring')) this.steps[5].done = true;
+            if (['scoring', 'generating_fixes', 'assembling'].includes(status)) {
+                this.steps[5].active = true;
+                this.steps[5].done = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

@@ -8,6 +8,7 @@ from api.models.alert import (
     AlertStatus,
     AlertType,
 )
+from api.models.analytics import AnalyticsEvent
 from api.models.base import BaseModel, TimestampMixin, UUIDMixin
 from api.models.billing import (
     BillingEvent,
@@ -36,6 +37,8 @@ from api.models.snapshot import MonitoringSchedule, Snapshot, SnapshotTrigger
 from api.models.user import PlanTier, User
 
 __all__ = [
+    # Analytics
+    "AnalyticsEvent",
     # Base
     "BaseModel",
     "TimestampMixin",

@@ -115,10 +115,14 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
 
     # Register routers
-    from api.routers import health, v1, web
+    from api.routers import health, public, v1, web
 
     # Web routes (HTML pages) - registered first for UI priority
     app.include_router(web.router)
+
+    # Public routes (no auth required — free audit tool)
+    app.include_router(public.router)
+    app.include_router(public.score_router)  # /score/{id} and /audit pages
 
     # API routes
     app.include_router(health.router, prefix="/api")

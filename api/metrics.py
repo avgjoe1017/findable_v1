@@ -98,6 +98,12 @@ JOB_PROCESSING_TIME = Histogram(
     buckets=[1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0, 600.0],
 )
 
+# Public audit adoption metrics
+PUBLIC_AUDITS_TOTAL = Counter("findable_public_audits_total", "Total public audits started")
+EMAIL_CAPTURES_TOTAL = Counter("findable_email_captures_total", "Email capture conversions")
+SHARES_TOTAL = Counter("findable_shares_total", "Social shares", ["platform"])
+RETURN_AUDITS_TOTAL = Counter("findable_return_audits_total", "Return audits from same IP")
+
 
 def get_metrics() -> bytes:
     """Generate Prometheus metrics output."""
@@ -234,3 +240,23 @@ def update_queue_size(queue: str, size: int) -> None:
 def record_job_duration(job_type: str, duration: float) -> None:
     """Record job processing duration."""
     JOB_PROCESSING_TIME.labels(job_type=job_type).observe(duration)
+
+
+def record_public_audit() -> None:
+    """Record a public audit started."""
+    PUBLIC_AUDITS_TOTAL.inc()
+
+
+def record_email_capture() -> None:
+    """Record an email capture conversion."""
+    EMAIL_CAPTURES_TOTAL.inc()
+
+
+def record_share(platform: str) -> None:
+    """Record a social share."""
+    SHARES_TOTAL.labels(platform=platform).inc()
+
+
+def record_return_audit() -> None:
+    """Record a return audit from same IP."""
+    RETURN_AUDITS_TOTAL.inc()

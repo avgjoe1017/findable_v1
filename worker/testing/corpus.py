@@ -221,6 +221,322 @@ KNOWN_CITED_SITES = [
         authority_level="high",
         notes="Primary source for Claude/Anthropic information",
     ),
+    # Documentation Sites (HIGH citation — these are THE canonical source)
+    TestSite(
+        url="https://docs.python.org",
+        name="Python Docs",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "python list comprehension",
+            "python asyncio documentation",
+            "python string methods",
+        ],
+        industry="Programming",
+        authority_level="high",
+        notes="Canonical Python documentation, ~100% citation rate",
+    ),
+    TestSite(
+        url="https://react.dev",
+        name="React Docs",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "react hooks tutorial",
+            "react useEffect documentation",
+            "react component lifecycle",
+        ],
+        industry="Web Development",
+        authority_level="high",
+        notes="Official React documentation, canonical source",
+    ),
+    TestSite(
+        url="https://docs.stripe.com",
+        name="Stripe Docs",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "stripe payment integration",
+            "stripe webhook setup",
+            "stripe subscription billing",
+        ],
+        industry="Fintech",
+        authority_level="high",
+        notes="Official Stripe API documentation, primary source",
+    ),
+    TestSite(
+        url="https://docs.github.com",
+        name="GitHub Docs",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "github actions documentation",
+            "github pull request workflow",
+            "github api reference",
+        ],
+        industry="Developer Tools",
+        authority_level="high",
+        notes="Official GitHub documentation",
+    ),
+    TestSite(
+        url="https://kubernetes.io",
+        name="Kubernetes Docs",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "kubernetes pod documentation",
+            "kubernetes deployment yaml",
+            "kubectl commands reference",
+        ],
+        industry="DevOps",
+        authority_level="high",
+        notes="Official Kubernetes documentation, canonical source",
+    ),
+    TestSite(
+        url="https://docs.docker.com",
+        name="Docker Docs",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "dockerfile reference",
+            "docker compose tutorial",
+            "docker networking guide",
+        ],
+        industry="DevOps",
+        authority_level="high",
+        notes="Official Docker documentation",
+    ),
+    TestSite(
+        url="https://www.terraform.io",
+        name="Terraform Docs",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "terraform aws provider",
+            "terraform state management",
+            "terraform modules guide",
+        ],
+        industry="DevOps",
+        authority_level="high",
+        notes="Official Terraform/HashiCorp documentation",
+    ),
+    TestSite(
+        url="https://www.typescriptlang.org",
+        name="TypeScript Docs",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "typescript generics tutorial",
+            "typescript interface vs type",
+            "typescript utility types",
+        ],
+        industry="Programming",
+        authority_level="high",
+        notes="Official TypeScript documentation, canonical source",
+    ),
+    TestSite(
+        url="https://tailwindcss.com",
+        name="Tailwind CSS",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "tailwind css flexbox classes",
+            "tailwind responsive design",
+            "tailwind custom configuration",
+        ],
+        industry="Web Development",
+        authority_level="high",
+        notes="Official Tailwind CSS documentation",
+    ),
+    TestSite(
+        url="https://nextjs.org",
+        name="Next.js Docs",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "next.js app router",
+            "next.js server components",
+            "next.js api routes",
+        ],
+        industry="Web Development",
+        authority_level="high",
+        notes="Official Next.js documentation, Vercel maintained",
+    ),
+    # Reference Sites (HIGH citation — provide unique authoritative answers)
+    TestSite(
+        url="https://stackoverflow.com",
+        name="Stack Overflow",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "how to parse JSON in python",
+            "javascript promise error handling",
+            "git merge vs rebase",
+        ],
+        industry="Developer Q&A",
+        authority_level="high",
+        notes="Largest developer Q&A site, frequently cited for code solutions",
+    ),
+    TestSite(
+        url="https://en.wikipedia.org",
+        name="Wikipedia",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "history of the internet",
+            "machine learning definition",
+            "what is TCP/IP",
+        ],
+        industry="Encyclopedia",
+        authority_level="high",
+        notes="Universal reference, extremely high citation rate for definitions",
+    ),
+    TestSite(
+        url="https://www.investopedia.com",
+        name="Investopedia",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "what is a mutual fund",
+            "how does compound interest work",
+            "stock market basics",
+        ],
+        industry="Finance",
+        authority_level="high",
+        notes="Financial reference authority, strong citation for finance queries",
+    ),
+    TestSite(
+        url="https://www.mayoclinic.org",
+        name="Mayo Clinic",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "symptoms of diabetes",
+            "high blood pressure treatment",
+            "vitamin D deficiency",
+        ],
+        industry="Healthcare",
+        authority_level="high",
+        notes="Medical reference authority, highly cited for health queries",
+    ),
+    TestSite(
+        url="https://www.law.cornell.edu",
+        name="Cornell Law",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "first amendment text",
+            "what is habeas corpus",
+            "contract law basics",
+        ],
+        industry="Legal",
+        authority_level="high",
+        notes="Legal reference, canonical source for US law text",
+    ),
+    # Developer Tools (HIGH citation — primary source for their own product)
+    TestSite(
+        url="https://github.com",
+        name="GitHub",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "github repository management",
+            "git version control",
+            "open source projects",
+        ],
+        industry="Developer Tools",
+        authority_level="high",
+        notes="Largest code hosting platform, cited for repos and tools",
+    ),
+    TestSite(
+        url="https://vercel.com",
+        name="Vercel",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "vercel deployment guide",
+            "serverless functions vercel",
+            "edge functions documentation",
+        ],
+        industry="Cloud Platform",
+        authority_level="high",
+        notes="Major deployment platform, cited for its own product",
+    ),
+    TestSite(
+        url="https://www.cloudflare.com",
+        name="Cloudflare",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "cloudflare CDN setup",
+            "what is a CDN",
+            "DDoS protection",
+        ],
+        industry="Cloud Infrastructure",
+        authority_level="high",
+        notes="Major CDN/security provider, cited for infrastructure topics",
+    ),
+    TestSite(
+        url="https://aws.amazon.com",
+        name="AWS",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "AWS S3 documentation",
+            "AWS Lambda tutorial",
+            "cloud computing services",
+        ],
+        industry="Cloud Infrastructure",
+        authority_level="high",
+        notes="Largest cloud provider, canonical source for AWS services",
+    ),
+    # Blogs that ARE cited (high-authority, original content)
+    TestSite(
+        url="https://www.smashingmagazine.com",
+        name="Smashing Magazine",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "web design best practices",
+            "CSS grid layout tutorial",
+            "responsive design patterns",
+        ],
+        industry="Web Design",
+        authority_level="high",
+        notes="Authoritative web development publication, frequently cited",
+    ),
+    TestSite(
+        url="https://css-tricks.com",
+        name="CSS-Tricks",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "CSS flexbox guide",
+            "CSS grid complete guide",
+            "CSS animation examples",
+        ],
+        industry="Web Development",
+        authority_level="high",
+        notes="Canonical CSS reference blog, extremely well-cited",
+    ),
+    # Government / Institutional (primary sources, highly cited)
+    TestSite(
+        url="https://www.cdc.gov",
+        name="CDC",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "vaccine recommendations",
+            "disease prevention guidelines",
+            "public health data",
+        ],
+        industry="Government Health",
+        authority_level="high",
+        notes="Government health authority, primary source, highly cited",
+    ),
+    TestSite(
+        url="https://www.irs.gov",
+        name="IRS",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "tax filing deadlines",
+            "tax brackets",
+            "1099 form instructions",
+        ],
+        industry="Government",
+        authority_level="high",
+        notes="Official tax authority, canonical source for US tax info",
+    ),
+    TestSite(
+        url="https://www.nist.gov",
+        name="NIST",
+        category=SiteCategory.KNOWN_CITED,
+        expected_queries=[
+            "cybersecurity framework",
+            "measurement standards",
+        ],
+        industry="Government Standards",
+        authority_level="high",
+        notes="National standards body, primary source for tech standards",
+    ),
 ]
 
 
@@ -482,6 +798,300 @@ KNOWN_UNCITED_SITES = [
         authority_level="medium",
         notes="UGC review aggregator, not an authoritative source for AI",
     ),
+    # E-commerce sites — AI doesn't cite product listings
+    TestSite(
+        url="https://www.amazon.com",
+        name="Amazon",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "best wireless headphones",
+            "laptop deals",
+        ],
+        industry="E-commerce",
+        authority_level="high",
+        notes="Largest e-commerce platform but AI doesn't cite product listings",
+    ),
+    TestSite(
+        url="https://www.ebay.com",
+        name="eBay",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "buy used electronics",
+            "online auction platform",
+        ],
+        industry="E-commerce",
+        authority_level="high",
+        notes="Major marketplace, AI prefers authoritative product reviews",
+    ),
+    TestSite(
+        url="https://www.target.com",
+        name="Target",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "home decor shopping",
+            "best kitchen appliances",
+        ],
+        industry="Retail",
+        authority_level="high",
+        notes="Major retailer, product pages not cited by AI",
+    ),
+    TestSite(
+        url="https://www.bestbuy.com",
+        name="Best Buy",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "best gaming monitors",
+            "laptop buying guide",
+        ],
+        industry="Electronics Retail",
+        authority_level="high",
+        notes="Electronics retailer, AI cites tech publications instead",
+    ),
+    TestSite(
+        url="https://www.wayfair.com",
+        name="Wayfair",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "buy furniture online",
+            "home office desk",
+        ],
+        industry="Furniture E-commerce",
+        authority_level="medium",
+        notes="Furniture e-commerce, product listings not cited",
+    ),
+    # SaaS marketing — high pillar scores but low citation rates
+    TestSite(
+        url="https://www.zendesk.com",
+        name="Zendesk",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "customer support software",
+            "help desk ticketing system",
+        ],
+        industry="SaaS",
+        authority_level="medium",
+        notes="SaaS marketing, AI cites category leaders or docs instead",
+    ),
+    TestSite(
+        url="https://www.asana.com",
+        name="Asana",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "project management tools",
+            "team collaboration software",
+        ],
+        industry="SaaS",
+        authority_level="medium",
+        notes="Project management SaaS, competes with many alternatives",
+    ),
+    TestSite(
+        url="https://www.monday.com",
+        name="Monday.com",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "work management platform",
+            "project tracking software",
+        ],
+        industry="SaaS",
+        authority_level="medium",
+        notes="Work management SaaS, generic marketing content",
+    ),
+    TestSite(
+        url="https://www.notion.so",
+        name="Notion",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "note-taking app comparison",
+            "productivity tools",
+        ],
+        industry="SaaS",
+        authority_level="medium",
+        notes="Productivity SaaS, marketing pages not cited (docs might be)",
+    ),
+    TestSite(
+        url="https://mailchimp.com",
+        name="Mailchimp",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "email marketing platform",
+            "email automation tools",
+        ],
+        industry="Marketing Tech",
+        authority_level="medium",
+        notes="Email marketing SaaS, marketing content generic",
+    ),
+    TestSite(
+        url="https://www.intercom.com",
+        name="Intercom",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "customer messaging platform",
+            "live chat software",
+        ],
+        industry="SaaS",
+        authority_level="medium",
+        notes="Customer messaging SaaS, generic marketing site",
+    ),
+    # News/media — AI trains on but rarely cites
+    TestSite(
+        url="https://www.reuters.com",
+        name="Reuters",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "breaking news",
+            "world news updates",
+        ],
+        industry="News",
+        authority_level="high",
+        notes="Major wire service, but AI avoids citing news for factual queries",
+    ),
+    TestSite(
+        url="https://techcrunch.com",
+        name="TechCrunch",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "startup funding news",
+            "tech industry trends",
+        ],
+        industry="Tech News",
+        authority_level="high",
+        notes="Major tech news site, time-sensitive content not cited for evergreen queries",
+    ),
+    TestSite(
+        url="https://www.theverge.com",
+        name="The Verge",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "technology news",
+            "gadget reviews",
+        ],
+        industry="Tech News",
+        authority_level="high",
+        notes="Tech news/reviews, AI prefers manufacturer docs",
+    ),
+    TestSite(
+        url="https://www.wired.com",
+        name="Wired",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "technology culture",
+            "science and tech reporting",
+        ],
+        industry="Tech Media",
+        authority_level="high",
+        notes="Tech media, content is commentary not primary source",
+    ),
+    TestSite(
+        url="https://arstechnica.com",
+        name="Ars Technica",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "tech analysis",
+            "science news",
+        ],
+        industry="Tech Media",
+        authority_level="high",
+        notes="In-depth tech reporting but not primary source material",
+    ),
+    # UGC / Community platforms
+    TestSite(
+        url="https://www.quora.com",
+        name="Quora",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "expert answers to questions",
+            "community knowledge sharing",
+        ],
+        industry="Q&A Platform",
+        authority_level="medium",
+        notes="UGC Q&A platform, AI models don't cite crowd-sourced answers",
+    ),
+    TestSite(
+        url="https://www.tripadvisor.com",
+        name="TripAdvisor",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "best restaurants in Paris",
+            "hotel reviews",
+        ],
+        industry="Travel",
+        authority_level="medium",
+        notes="Travel UGC platform, AI summarizes rather than cites",
+    ),
+    TestSite(
+        url="https://www.imdb.com",
+        name="IMDB",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "best movies of all time",
+            "movie ratings and reviews",
+        ],
+        industry="Entertainment",
+        authority_level="high",
+        notes="Movie database, AI knows the data but rarely cites IMDB URLs",
+    ),
+    TestSite(
+        url="https://www.producthunt.com",
+        name="Product Hunt",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "new startup launches",
+            "best new apps",
+        ],
+        industry="Tech Community",
+        authority_level="medium",
+        notes="Product launch UGC platform, not cited as authoritative",
+    ),
+    # Mixed / Social platforms
+    TestSite(
+        url="https://medium.com",
+        name="Medium",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "technology blog posts",
+            "startup advice articles",
+        ],
+        industry="Publishing Platform",
+        authority_level="medium",
+        notes="Publishing platform, individual articles rarely cited (not authoritative)",
+    ),
+    TestSite(
+        url="https://substack.com",
+        name="Substack",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "newsletter platforms",
+            "independent journalism",
+        ],
+        industry="Publishing Platform",
+        authority_level="medium",
+        notes="Newsletter platform, individual writers not canonical sources",
+    ),
+    # Affiliate / listicle sites
+    TestSite(
+        url="https://www.tomsguide.com",
+        name="Tom's Guide",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "best phones 2025",
+            "tech product recommendations",
+        ],
+        industry="Tech Reviews",
+        authority_level="medium",
+        notes="Affiliate review site, AI prefers manufacturer sources",
+    ),
+    TestSite(
+        url="https://www.cnet.com",
+        name="CNET",
+        category=SiteCategory.KNOWN_UNCITED,
+        expected_queries=[
+            "technology reviews",
+            "best streaming services",
+        ],
+        industry="Tech Reviews",
+        authority_level="medium",
+        notes="Tech review/affiliate site, derivative content",
+    ),
 ]
 
 
@@ -548,6 +1158,30 @@ COMPETITOR_SITES = [
         authority_level="medium",
         notes="Agency content on GEO - often cited for GEO definitions",
     ),
+    TestSite(
+        url="https://www.peec.ai",
+        name="Peec AI",
+        category=SiteCategory.COMPETITOR,
+        expected_queries=[
+            "AI search optimization",
+            "GEO monitoring tool",
+        ],
+        industry="AI SEO",
+        authority_level="medium",
+        notes="Direct competitor - AI visibility tool, $29M funded",
+    ),
+    TestSite(
+        url="https://scrunch.ai",
+        name="Scrunch AI",
+        category=SiteCategory.COMPETITOR,
+        expected_queries=[
+            "AI content optimization",
+            "AI search rankings",
+        ],
+        industry="AI SEO",
+        authority_level="medium",
+        notes="Direct competitor - AI optimization tool, $26M funded",
+    ),
 ]
 
 
@@ -576,11 +1210,13 @@ class TestCorpus:
     @classmethod
     def quick(cls) -> "TestCorpus":
         """Get a quick test corpus (subset for fast runs)."""
+        # Pick a representative sample: 1 cited authority, 1 cited docs, 1 uncited SaaS, own properties
         return cls(
             sites=[
-                KNOWN_CITED_SITES[0],  # Moz
-                KNOWN_CITED_SITES[6],  # Schema.org
-                KNOWN_UNCITED_SITES[0],  # Backlinko
+                KNOWN_CITED_SITES[0],  # Moz (SEO authority)
+                KNOWN_CITED_SITES[6],  # Schema.org (technical reference)
+                KNOWN_UNCITED_SITES[0],  # Reddit SEO (UGC)
+                KNOWN_UNCITED_SITES[3],  # Lemlist (SaaS marketing)
             ]
             + OWN_PROPERTY_SITES,
             name="quick",
